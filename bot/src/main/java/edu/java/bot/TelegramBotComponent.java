@@ -7,7 +7,6 @@ import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.EditMessageText;
-import com.pengrad.telegrambot.request.GetMyCommands;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.BaseResponse;
@@ -16,7 +15,6 @@ import edu.java.bot.configuration.ApplicationConfig;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.EditMessageTextChains;
 import edu.java.bot.requests.chains.SendMessageChains;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -31,9 +29,10 @@ public final class TelegramBotComponent extends TelegramBot {
     private final Map<String, CommandFunction> commandFunctions = new HashMap<>();
     private final Map<Long, User> users = new HashMap<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(TelegramBotComponent.class);
+    /*package-private*/ static final Command[] COMMANDS =
+        new Command[] {Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST};
     /*package-private*/ static final String USER_REGISTER_FAILED_MESSAGE_FORMAT = "User %s already registered!";
     /*package-private*/ static final String USER_REGISTER_SUCCESS_MESSAGE_FORMAT = "User %s was registered!";
-    /*package-private*/ static final String NO_BOT_COMMANDS_ERROR = "There is no commands in bot!";
     /*package-private*/ static final String UNREGISTERED_USER_ERROR = "You must register before use bot!";
     /*package-private*/ static final String NO_TRACKING_LINKS_ERROR = "There is no tracking links!";
     /*package-private*/ static final String TRACK_DESCRIPTION_MESSAGE =
@@ -55,17 +54,10 @@ public final class TelegramBotComponent extends TelegramBot {
         LOGGER.debug("Finished TelegramBot constructor");
         setUpdatesListener(this::updateListener, this::exceptionHandler);
         LOGGER.debug("Set updateListener & exceptionHandler");
-        setCommands(Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST);
+        setCommands(COMMANDS);
         LOGGER.debug("Set setCommands START HELP TRACK UNTRACK LIST");
         LOGGER.debug("Created bot with token " + this.getToken());
     }
-
-//    @PostConstruct
-//    public void init() {
-//        setCommands(Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST);
-//        LOGGER.debug("Set setCommands START HELP TRACK UNTRACK LIST");
-//        LOGGER.debug("Created bot with token " + this.getToken());
-//    }
 
     /*package-private*/ void addUser(long id, User user) {
         users.put(id, user);
@@ -164,7 +156,7 @@ public final class TelegramBotComponent extends TelegramBot {
     }
 
     public void setCommands(final Command... commands) {
-        execute(new SetMyCommands(Arrays.stream(commands).map(command -> {
+        BaseResponse response = execute(new SetMyCommands(Arrays.stream(commands).map(command -> {
             commandFunctions.put("/" + command.name(), command.function());
             return new BotCommand(command.name(), command.description());
         }).toArray(BotCommand[]::new)));

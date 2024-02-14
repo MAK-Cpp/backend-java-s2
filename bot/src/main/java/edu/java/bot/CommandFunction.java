@@ -40,13 +40,9 @@ public interface CommandFunction {
     }
 
     static String createHelp(final TelegramBotComponent bot) {
-        final BotCommand[] commands = bot.execute(new GetMyCommands()).commands();
-        if (commands.length == 0) {
-            return TelegramBotComponent.NO_BOT_COMMANDS_ERROR;
-        }
         final StringBuilder help = new StringBuilder("Usage:\n");
-        for (BotCommand command : commands) {
-            help.append('/').append(command.command()).append(" - ").append(command.description()).append('\n');
+        for (Command command : TelegramBotComponent.COMMANDS) {
+            help.append('/').append(command.name()).append(" - ").append(command.description()).append('\n');
         }
         return help.toString();
     }
