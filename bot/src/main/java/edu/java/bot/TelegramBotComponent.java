@@ -16,7 +16,6 @@ import edu.java.bot.configuration.ApplicationConfig;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.EditMessageTextChains;
 import edu.java.bot.requests.chains.SendMessageChains;
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,12 +56,12 @@ public final class TelegramBotComponent extends TelegramBot {
         LOGGER.debug("Set updateListener & exceptionHandler");
     }
 
-    @PostConstruct
-    public void init() {
-        setCommands(Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST);
-        LOGGER.debug("Set setCommands START HELP TRACK UNTRACK LIST");
-        LOGGER.debug("Created bot with token " + this.getToken());
-    }
+//    @PostConstruct
+//    public void init() {
+//        setCommands(Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST);
+//        LOGGER.debug("Set setCommands START HELP TRACK UNTRACK LIST");
+//        LOGGER.debug("Created bot with token " + this.getToken());
+//    }
 
     /*package-private*/ void addUser(long id, User user) {
         users.put(id, user);
