@@ -51,8 +51,11 @@ public final class TelegramBotComponent extends TelegramBot {
     @Autowired
     public TelegramBotComponent(ApplicationConfig config) {
         super(config.telegramToken());
+        LOGGER.debug("Finished TelegramBot constructor");
         setUpdatesListener(this::updateListener, this::exceptionHandler);
+        LOGGER.debug("Set updateListener & exceptionHandler");
         setCommands(Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST);
+        LOGGER.debug("Set setCommands START HELP TRACK UNTRACK LIST");
         LOGGER.debug("Created bot with token " + config.telegramToken());
     }
 
