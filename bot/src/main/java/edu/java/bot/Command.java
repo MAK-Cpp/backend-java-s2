@@ -1,6 +1,9 @@
 package edu.java.bot;
 
-public record Command(String name, String description, CommandFunction function) {
+import jakarta.validation.constraints.NotEmpty;
+import org.jetbrains.annotations.NotNull;
+
+public record Command(@NotEmpty String name, @NotEmpty String description, @NotNull CommandFunction function) {
     public static final Command START = new Command("start", "register a user", CommandFunction.START);
     public static final Command HELP = new Command("help", "display commands list", CommandFunction.HELP);
     public static final Command TRACK = new Command("track", "start tracking link(s)", CommandFunction.TRACK);
