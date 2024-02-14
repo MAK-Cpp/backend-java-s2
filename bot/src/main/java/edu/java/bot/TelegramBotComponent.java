@@ -1,6 +1,7 @@
 package edu.java.bot;
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.TelegramException;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.model.Message;
@@ -47,11 +48,10 @@ public final class TelegramBotComponent extends TelegramBot {
     /*package-private*/ static final String NO_BUTTON_TEXT = "No";
     /*package-private*/ static final String CANCEL_BUTTON_TEXT = "Cancel";
 
-
     @Autowired
-    private TelegramBotComponent(ApplicationConfig config) {
+    public TelegramBotComponent(ApplicationConfig config) {
         super(config.telegramToken());
-        setUpdatesListener(this::updateListener);
+        setUpdatesListener(this::updateListener, this::exceptionHandler);
         setCommands(Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST);
         LOGGER.debug("Created bot with token " + config.telegramToken());
     }
@@ -131,6 +131,18 @@ public final class TelegramBotComponent extends TelegramBot {
             }
         });
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
+    }
+
+    @SuppressWarnings("checkstyle:RegexpSinglelineJava")
+    void exceptionHandler(TelegramException e) {
+        if (e.response() != null) {
+            // got bad response from telegram
+            e.response().errorCode();
+            e.response().description();
+        } else {
+            // probably network error
+            e.printStackTrace();
+        }
     }
 
     private void unknownCommand(Update update) {
