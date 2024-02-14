@@ -17,6 +17,7 @@ import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.EditMessageTextChains;
 import edu.java.bot.requests.chains.SendMessageChains;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,9 @@ public final class TelegramBotComponent extends TelegramBot {
         LOGGER.debug("Finished TelegramBot constructor");
         setUpdatesListener(this::updateListener, this::exceptionHandler);
         LOGGER.debug("Set updateListener & exceptionHandler");
+        setCommands(Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST);
+        LOGGER.debug("Set setCommands START HELP TRACK UNTRACK LIST");
+        LOGGER.debug("Created bot with token " + this.getToken());
     }
 
 //    @PostConstruct
@@ -160,16 +164,18 @@ public final class TelegramBotComponent extends TelegramBot {
     }
 
     public void setCommands(final Command... commands) {
-        execute(new SetMyCommands());
-        addCommands(commands);
+        execute(new SetMyCommands(Arrays.stream(commands).map(command -> {
+            commandFunctions.put("/" + command.name(), command.function());
+            return new BotCommand(command.name(), command.description());
+        }).toArray(BotCommand[]::new)));
     }
 
-    public void addCommands(final Command... newCommands) {
-        ArrayList<BotCommand> commands = new java.util.ArrayList<>(List.of(execute(new GetMyCommands()).commands()));
-        for (Command command : newCommands) {
-            commands.add(new BotCommand(command.name(), command.description()));
-            commandFunctions.put("/" + command.name(), command.function());
-        }
-        execute(new SetMyCommands(commands.toArray(BotCommand[]::new)));
-    }
+//    public void addCommands(final Command... newCommands) {
+//        ArrayList<BotCommand> commands = new java.util.ArrayList<>(List.of(execute(new GetMyCommands()).commands()));
+//        for (Command command : newCommands) {
+//            commands.add(new BotCommand(command.name(), command.description()));
+//            commandFunctions.put("/" + command.name(), command.function());
+//        }
+//        execute(new SetMyCommands(commands.toArray(BotCommand[]::new)));
+//    }
 }
