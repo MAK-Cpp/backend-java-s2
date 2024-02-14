@@ -1,11 +1,9 @@
 package edu.java.bot;
 
-import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
-import com.pengrad.telegrambot.request.GetMyCommands;
 import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.SendMessageChains;
