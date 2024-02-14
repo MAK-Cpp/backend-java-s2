@@ -3,8 +3,8 @@ package edu.java.bot.requests.chains;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.EditMessageText;
-import com.pengrad.telegrambot.request.SendMessage;
 
+@SuppressWarnings("checkstyle:MethodName")
 public class EditMessageTextChains extends AbstractChains<EditMessageTextChains, EditMessageText> {
     // chain functions
     private static final ChainFunction<EditMessageText> MARKDOWN_FUNC =

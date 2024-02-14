@@ -1,11 +1,11 @@
 package edu.java.bot;
 
-import lombok.Getter;
-import lombok.Setter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
+import lombok.Setter;
 
 public class User {
     private final Map<String, Link> links = new HashMap<>();

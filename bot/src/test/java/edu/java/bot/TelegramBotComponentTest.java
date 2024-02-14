@@ -6,6 +6,7 @@ import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.SendResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -16,6 +17,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -25,13 +27,13 @@ import static edu.java.bot.CommandFunction.createParseResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
 public class TelegramBotComponentTest {
+    private static final SecureRandom RANDOM = new SecureRandom();
     private static final UserRecord TEST_USER_1 = new UserRecord(123456789L, "TEST_USER_1");
     private static final UserRecord TEST_USER_2 = new UserRecord(1556L, "TEST_USER_2");
     private static final Link MAXIM_TELEGRAM = new Link("Maxim Primakov", "t.me/MAK_Cpp");
@@ -58,12 +60,20 @@ public class TelegramBotComponentTest {
         }
     }
 
-    private Update newUpdateMock(final RequestType type, long chatId, final String username, final String text) {
+    private Update newUpdateMock(
+        final RequestType type,
+        final long chatId,
+        final int messageId,
+        final String username,
+        final String text
+    ) {
         Update update = mock(Update.class);
         switch (type) {
             case SEND_MESSAGE -> {
                 Message message = mock(Message.class);
+                Message botMessage = mock(Message.class);
                 Chat chat = mock(Chat.class);
+                SendResponse response = mock(SendResponse.class);
                 when(update.message()).thenReturn(message);
                 // message
                 when(message.chat()).thenReturn(chat);
@@ -73,6 +83,10 @@ public class TelegramBotComponentTest {
                 when(chat.username()).thenReturn(username);
                 // callbackQuery
                 when(update.callbackQuery()).thenReturn(null);
+                // response
+                Mockito.doReturn(response).when(bot).execute(any(SendMessage.class));
+                when(response.message()).thenReturn(botMessage);
+                when(botMessage.messageId()).thenReturn(messageId);
             }
             case EDIT_MESSAGE_TEXT -> {
                 CallbackQuery callbackQuery = mock(CallbackQuery.class);
@@ -91,9 +105,9 @@ public class TelegramBotComponentTest {
         return update;
     }
 
-    private void testSendMessage(final Request request) {
+    private void testSendMessage(final Request request, final int messageId) {
         final Update update =
-            newUpdateMock(RequestType.SEND_MESSAGE, request.user.id, request.user.name, request.command);
+            newUpdateMock(RequestType.SEND_MESSAGE, request.user.id, messageId, request.user.name, request.command);
 
         bot.updateListener(List.of(update));
         verify(bot, atLeastOnce()).execute(sendMessageArgumentCaptor.capture());
@@ -103,14 +117,16 @@ public class TelegramBotComponentTest {
         assertThat(arguments.get("text")).isEqualTo(request.out);
     }
 
-    private void testEditMessageText(final Request request) {
-        final Update update =
-            newUpdateMock(RequestType.EDIT_MESSAGE_TEXT, request.user.id, request.user.name, request.command);
-
+    private void testEditMessageText(final Request request, final int messageId) {
+        final Update update = newUpdateMock(
+            RequestType.EDIT_MESSAGE_TEXT, request.user.id, messageId, request.user.name, request.command
+        );
         bot.updateListener(List.of(update));
         verify(bot, atLeastOnce()).execute(editMessageTextArgumentCaptor.capture());
         final Map<String, Object> arguments = editMessageTextArgumentCaptor.getValue().getParameters();
-        System.out.println(arguments);
+        assertThat(arguments.get("chat_id")).isEqualTo(update.callbackQuery().from().id());
+        assertThat(arguments.get("message_id")).isEqualTo(messageId);
+        assertThat(arguments.get("text")).isEqualTo(request.out);
     }
 
     private static Request test(final UserRecord userRecord, final String text, final String result) {
@@ -130,15 +146,30 @@ public class TelegramBotComponentTest {
         return new Pair<>(request, type);
     }
 
+    private static Request register(final UserRecord userRecord) {
+        return test(
+            userRecord, "/start",
+            String.format(TelegramBotComponent.USER_REGISTER_SUCCESS_MESSAGE_FORMAT, userRecord.name)
+        );
+    }
+
+    private static Request registerFailed(final UserRecord userRecord) {
+        return test(
+            userRecord, "/start",
+            String.format(TelegramBotComponent.USER_REGISTER_FAILED_MESSAGE_FORMAT, userRecord.name)
+        );
+    }
+
     private static Request help(final UserRecord userRecord) {
         return new Request(userRecord, "/help", HELP);
     }
 
     private static Request track(final UserRecord userRecord) {
-        return new Request(userRecord, "/track", TelegramBotComponent.TRACK_DESCRIPTION);
+        return new Request(userRecord, "/track", TelegramBotComponent.TRACK_DESCRIPTION_MESSAGE);
     }
+
     private static Request untrack(final UserRecord userRecord) {
-        return new Request(userRecord, "/untrack", TelegramBotComponent.UNTRACK_DESCRIPTION);
+        return new Request(userRecord, "/untrack", TelegramBotComponent.UNTRACK_DESCRIPTION_MESSAGE);
     }
 
     private static Request list(final UserRecord userRecord, final Link... links) {
@@ -183,28 +214,16 @@ public class TelegramBotComponentTest {
         return Arguments.of(List.of(requests));
     }
 
-    private static Request register(final UserRecord userRecord) {
-        return test(userRecord, "/start", "User " + userRecord.name + " was registered!");
-    }
-
-    private static String links(final String... links) {
-        final StringBuilder text = new StringBuilder();
-        for (final String link : links) {
-            text.append(link).append('\n');
-        }
-        return text.toString();
-    }
-
     public static Stream<Arguments> testCommandStart() {
         return Stream.of(
             tests(
-                test(TEST_USER_1, "/start", "User TEST_USER_1 was registered!")
+                register(TEST_USER_1)
             ),
             tests(
-                test(TEST_USER_2, "/start", "User TEST_USER_2 was registered!"),
-                test(TEST_USER_1, "/start", "User TEST_USER_1 was registered!"),
-                test(TEST_USER_2, "/start", "User TEST_USER_2 already registered!"),
-                test(TEST_USER_1, "/start", "User TEST_USER_1 already registered!")
+                register(TEST_USER_2),
+                register(TEST_USER_1),
+                registerFailed(TEST_USER_2),
+                registerFailed(TEST_USER_1)
             )
         );
     }
@@ -243,7 +262,7 @@ public class TelegramBotComponentTest {
                 register(TEST_USER_2),
                 test(TEST_USER_2, "/untrack", TelegramBotComponent.NO_TRACKING_LINKS_ERROR),
                 test(TEST_USER_2, "/list", TelegramBotComponent.NO_TRACKING_LINKS_ERROR),
-                test(TEST_USER_2, "/track", TelegramBotComponent.TRACK_DESCRIPTION),
+                track(TEST_USER_2),
                 test(TEST_USER_2, "/list", TelegramBotComponent.NO_TRACKING_LINKS_ERROR),
                 test(TEST_USER_2, "/untrack", TelegramBotComponent.NO_TRACKING_LINKS_ERROR)
             )
@@ -293,7 +312,7 @@ public class TelegramBotComponentTest {
     })
     void testSendMessageCommands(final List<Request> inputs) {
         for (final Request input : inputs) {
-            testSendMessage(input);
+            testSendMessage(input, RANDOM.nextInt());
         }
     }
 
@@ -303,7 +322,32 @@ public class TelegramBotComponentTest {
                 test(register(TEST_USER_1), RequestType.SEND_MESSAGE),
                 test(track(TEST_USER_1), RequestType.SEND_MESSAGE),
                 test(links(TEST_USER_1, correct(MAXIM_TELEGRAM), correct(GOOGLE)), RequestType.SEND_MESSAGE),
-                test(untrack(TEST_USER_1), RequestType.SEND_MESSAGE)
+                test(untrack(TEST_USER_1), RequestType.SEND_MESSAGE),
+                test(
+                    test(TEST_USER_1, TelegramBotComponent.CANCEL_BUTTON_TEXT, TelegramBotComponent.UNTRACK_ABORTED_MESSAGE),
+                    RequestType.EDIT_MESSAGE_TEXT
+                )
+            ),
+            tests(
+                test(register(TEST_USER_2), RequestType.SEND_MESSAGE),
+                test(track(TEST_USER_2), RequestType.SEND_MESSAGE),
+                test(
+                    links(TEST_USER_2, incorrect(MAXIM_TELEGRAM), correct(GOOGLE), correct(THIS_REPO)),
+                    RequestType.SEND_MESSAGE
+                ),
+                test(list(TEST_USER_2, GOOGLE, THIS_REPO), RequestType.SEND_MESSAGE),
+                test(untrack(TEST_USER_2), RequestType.SEND_MESSAGE),
+                test(test(
+                    TEST_USER_2,
+                    GOOGLE.getAlias(),
+                    String.format(TelegramBotComponent.UNTRACK_CONFIRM_MESSAGE_FORMAT, GOOGLE)
+                ), RequestType.EDIT_MESSAGE_TEXT),
+                test(test(
+                    TEST_USER_2,
+                    TelegramBotComponent.YES_BUTTON_TEXT,
+                    String.format(TelegramBotComponent.UNTRACK_SUCCESS_MESSAGE_FORMAT, GOOGLE)
+                ), RequestType.EDIT_MESSAGE_TEXT),
+                test(list(TEST_USER_2, THIS_REPO), RequestType.SEND_MESSAGE)
             )
         );
     }
@@ -311,10 +355,14 @@ public class TelegramBotComponentTest {
     @ParameterizedTest
     @MethodSource({"testUntrackCommand"})
     void testAllCommands(final List<Pair<Request, RequestType>> inputs) {
+        int lastMessageId = -1;
         for (Pair<Request, RequestType> input : inputs) {
             switch (input.second) {
-                case SEND_MESSAGE -> testSendMessage(input.first);
-                case EDIT_MESSAGE_TEXT -> testEditMessageText(input.first);
+                case SEND_MESSAGE -> {
+                    lastMessageId = RANDOM.nextInt();
+                    testSendMessage(input.first, lastMessageId);
+                }
+                case EDIT_MESSAGE_TEXT -> testEditMessageText(input.first, lastMessageId);
             }
         }
     }

@@ -1,10 +1,10 @@
 package edu.java.bot;
 
-import lombok.Getter;
 import java.net.URI;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.Getter;
 
 public class Link {
     @Getter private final String alias;

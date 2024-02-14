@@ -9,13 +9,17 @@ import com.pengrad.telegrambot.request.GetMyCommands;
 import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.SendMessageChains;
-import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import static edu.java.bot.requests.chains.EditMessageTextChains.*;
-import static edu.java.bot.requests.chains.SendMessageChains.*;
+import org.jetbrains.annotations.NotNull;
+import static edu.java.bot.requests.chains.EditMessageTextChains.EMT_DISABLE_PREVIEW;
+import static edu.java.bot.requests.chains.EditMessageTextChains.EMT_MARKDOWN;
+import static edu.java.bot.requests.chains.EditMessageTextChains.EMT_REPLY_MARKUP;
+import static edu.java.bot.requests.chains.SendMessageChains.SM_DISABLE_PREVIEW;
+import static edu.java.bot.requests.chains.SendMessageChains.SM_MARKDOWN;
+import static edu.java.bot.requests.chains.SendMessageChains.SM_REPLY_MARKUP;
 
 @FunctionalInterface
 public interface CommandFunction {
@@ -75,7 +79,8 @@ public interface CommandFunction {
         if ((i & 1) == 1) {
             result.addRow(buttons[0]);
         }
-        return result.addRow(new InlineKeyboardButton("Cancel").callbackData("Cancel"));
+        return result.addRow(new InlineKeyboardButton(TelegramBotComponent.CANCEL_BUTTON_TEXT).callbackData(
+            TelegramBotComponent.CANCEL_BUTTON_TEXT));
     }
 
     // END - when function does not have any more steps
@@ -90,14 +95,14 @@ public interface CommandFunction {
         final Chat chat = update.message().chat();
         long chatId = chat.id();
         final String username = chat.username();
-        final String text;
+        final String resultFormat;
         if (bot.containUser(chatId)) {
-            text = "User " + username + " already registered!";
+            resultFormat = TelegramBotComponent.USER_REGISTER_FAILED_MESSAGE_FORMAT;
         } else {
             bot.addUser(chatId, new User());
-            text = "User " + username + " was registered!";
+            resultFormat = TelegramBotComponent.USER_REGISTER_SUCCESS_MESSAGE_FORMAT;
         }
-        bot.sendMessage(chatId, text);
+        bot.sendMessage(chatId, String.format(resultFormat, username));
         return END;
     };
 
@@ -140,21 +145,22 @@ public interface CommandFunction {
         if (!isRegistered(bot, chatId)) {
             return END;
         }
-        bot.sendMessage(chatId, TelegramBotComponent.TRACK_DESCRIPTION);
+        bot.sendMessage(chatId, TelegramBotComponent.TRACK_DESCRIPTION_MESSAGE);
         return TRACK_PARSE_LINKS;
     };
 
     // UNTRACK - stop tracking link
     // 3) confirm untrack
+    @SuppressWarnings("checkstyle:MethodName")
     static CommandFunction UNTRACK_CONFIRM_DELETE(int messageId, final String linkAlias) {
         return (bot, update) -> {
             final String chose = update.callbackQuery().data();
             final long chatId = update.callbackQuery().from().id();
             final User user = bot.getUser(chatId);
-            if (Objects.equals(chose, "Yes")) {
+            if (Objects.equals(chose, TelegramBotComponent.YES_BUTTON_TEXT)) {
                 bot.editMessageText(
                     chatId, messageId,
-                    "Link " + user.removeLink(linkAlias) + " now untracked",
+                    String.format(TelegramBotComponent.UNTRACK_SUCCESS_MESSAGE_FORMAT, user.removeLink(linkAlias)),
                     EMT_MARKDOWN, EMT_DISABLE_PREVIEW
                 );
                 return END;
@@ -162,7 +168,7 @@ public interface CommandFunction {
             final InlineKeyboardMarkup buttons = getLinksButtons(user.aliasSet());
             bot.editMessageText(
                 chatId, messageId,
-                "choose link to untrack",
+                TelegramBotComponent.UNTRACK_DESCRIPTION_MESSAGE,
                 EMT_REPLY_MARKUP(buttons), EMT_DISABLE_PREVIEW
             );
             return UNTRACK_CHOOSE_LINK(messageId);
@@ -170,23 +176,26 @@ public interface CommandFunction {
     }
 
     // 2) stop tracking link
+    @SuppressWarnings("checkstyle:MethodName")
     static CommandFunction UNTRACK_CHOOSE_LINK(int messageId) {
         return (bot, update) -> {
             final String alias = update.callbackQuery().data();
             final long chatId = update.callbackQuery().from().id();
-            if (Objects.equals(alias, "Cancel")) {
-                bot.editMessageText(chatId, messageId, "Cancelled untrack command");
+            if (Objects.equals(alias, TelegramBotComponent.CANCEL_BUTTON_TEXT)) {
+                bot.editMessageText(chatId, messageId, TelegramBotComponent.UNTRACK_ABORTED_MESSAGE);
                 return END;
             }
             final Link link = bot.getUser(chatId).getLink(alias);
             final InlineKeyboardMarkup yesNo =
                 new InlineKeyboardMarkup(
-                    new InlineKeyboardButton("Yes").callbackData("Yes"),
-                    new InlineKeyboardButton("No").callbackData("No")
+                    new InlineKeyboardButton(TelegramBotComponent.YES_BUTTON_TEXT)
+                        .callbackData(TelegramBotComponent.YES_BUTTON_TEXT),
+                    new InlineKeyboardButton(TelegramBotComponent.NO_BUTTON_TEXT)
+                        .callbackData(TelegramBotComponent.NO_BUTTON_TEXT)
                 );
             bot.editMessageText(
                 chatId, messageId,
-                "Are you sure you want to untrack link " + link + "?",
+                String.format(TelegramBotComponent.UNTRACK_CONFIRM_MESSAGE_FORMAT, link),
                 EMT_MARKDOWN, EMT_DISABLE_PREVIEW, EMT_REPLY_MARKUP(yesNo)
             );
             return UNTRACK_CONFIRM_DELETE(messageId, alias);
@@ -200,8 +209,8 @@ public interface CommandFunction {
             return END;
         }
         final InlineKeyboardMarkup buttons = getLinksButtons(bot.getUser(chatId).aliasSet());
-        SendMessageChains chains = Chains.allOf(SM_REPLY_MARKUP(buttons), SM_DISABLE_PREVIEW);
-        SendResponse response = bot.sendMessage(chatId, TelegramBotComponent.UNTRACK_DESCRIPTION, chains);
+        final SendMessageChains chains = Chains.allOf(SM_REPLY_MARKUP(buttons), SM_DISABLE_PREVIEW);
+        final SendResponse response = bot.sendMessage(chatId, TelegramBotComponent.UNTRACK_DESCRIPTION_MESSAGE, chains);
         return UNTRACK_CHOOSE_LINK(response.message().messageId());
     };
     // LIST - show list of tracked links
@@ -215,5 +224,5 @@ public interface CommandFunction {
     };
 
     @NotNull
-    CommandFunction apply(final TelegramBotComponent bot, final Update update);
+    CommandFunction apply(TelegramBotComponent bot, Update update);
 }

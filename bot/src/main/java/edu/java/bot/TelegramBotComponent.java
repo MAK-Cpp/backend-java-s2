@@ -15,28 +15,38 @@ import edu.java.bot.configuration.ApplicationConfig;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.EditMessageTextChains;
 import edu.java.bot.requests.chains.SendMessageChains;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public final class TelegramBotComponent extends TelegramBot {
     private final Map<String, CommandFunction> commandFunctions = new HashMap<>();
     private final Map<Long, User> users = new HashMap<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(TelegramBotComponent.class);
+    /*package-private*/ static final String USER_REGISTER_FAILED_MESSAGE_FORMAT = "User %s already registered!";
+    /*package-private*/ static final String USER_REGISTER_SUCCESS_MESSAGE_FORMAT = "User %s was registered!";
     /*package-private*/ static final String NO_BOT_COMMANDS_ERROR = "There is no commands in bot!";
     /*package-private*/ static final String UNREGISTERED_USER_ERROR = "You must register before use bot!";
     /*package-private*/ static final String NO_TRACKING_LINKS_ERROR = "There is no tracking links!";
-    /*package-private*/ static final String TRACK_DESCRIPTION =
+    /*package-private*/ static final String TRACK_DESCRIPTION_MESSAGE =
         "Send link(s) for tracking\nFormat:\nlink_alias1 - link1\nlink_alias2 - link2\n...";
     /*package-private*/ static final String LINK_MARKDOWN_FORMAT = "[%s](%s)";
     /*package-private*/ static final String LINK_PARSE_REGEX = "^(.+)\\s+-\\s+(.+)$";
-    /*package-private*/ static final String UNTRACK_DESCRIPTION = "choose link to untrack";
+    /*package-private*/ static final String UNTRACK_DESCRIPTION_MESSAGE = "choose link to untrack";
+    /*package-private*/ static final String UNTRACK_ABORTED_MESSAGE = "Cancelled untrack command";
+    /*package-private*/ static final String UNTRACK_CONFIRM_MESSAGE_FORMAT =
+        "Are you sure you want to untrack link %s?";
+    /*package-private*/ static final String UNTRACK_SUCCESS_MESSAGE_FORMAT = "Link %s now untracked";
+    /*package-private*/ static final String YES_BUTTON_TEXT = "Yes";
+    /*package-private*/ static final String NO_BUTTON_TEXT = "No";
+    /*package-private*/ static final String CANCEL_BUTTON_TEXT = "Cancel";
+
 
     @Autowired
     private TelegramBotComponent(ApplicationConfig config) {
