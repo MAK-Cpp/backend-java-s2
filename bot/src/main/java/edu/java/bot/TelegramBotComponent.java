@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.BaseResponse;
 import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.commands.Command;
@@ -146,6 +147,7 @@ public final class TelegramBotComponent extends TelegramBot {
             botCommands[i] = new BotCommand(command.getName(), command.getDescription());
             LOGGER.debug("added command " + command.getName() + " to bot");
         }
+        execute(new SetMyCommands(botCommands));
         return result.toString();
     }
 }
