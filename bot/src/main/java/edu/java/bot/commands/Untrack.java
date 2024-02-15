@@ -4,7 +4,6 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.response.SendResponse;
-import edu.java.bot.CommandFunction;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
 import edu.java.bot.User;

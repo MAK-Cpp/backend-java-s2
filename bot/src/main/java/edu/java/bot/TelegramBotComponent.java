@@ -11,6 +11,7 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.BaseResponse;
 import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.commands.Command;
+import edu.java.bot.commands.CommandFunction;
 import edu.java.bot.configuration.ApplicationConfig;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.EditMessageTextChains;

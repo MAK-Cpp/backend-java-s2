@@ -1,6 +1,5 @@
 package edu.java.bot.commands;
 
-import edu.java.bot.CommandFunction;
 import edu.java.bot.TelegramBotComponent;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;

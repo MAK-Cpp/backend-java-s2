@@ -1,7 +1,6 @@
 package edu.java.bot.commands;
 
 import com.pengrad.telegrambot.model.Update;
-import edu.java.bot.CommandFunction;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
 import org.springframework.stereotype.Component;
