@@ -7,6 +7,10 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.SendResponse;
+import edu.java.bot.commands.Command;
+import edu.java.bot.commands.Start;
+import edu.java.bot.commands.Track;
+import edu.java.bot.commands.Untrack;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -21,9 +25,8 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import static edu.java.bot.CommandFunction.createHelp;
-import static edu.java.bot.CommandFunction.createLinksList;
-import static edu.java.bot.CommandFunction.createParseResult;
+import static edu.java.bot.commands.List.createLinksList;
+import static edu.java.bot.commands.Track.createParseResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -56,7 +59,7 @@ public class TelegramBotComponentTest {
     public void init() {
         bot.deleteAllUsers();
         if (HELP == null) {
-            HELP = createHelp(bot);
+            HELP = bot.getUsage();
         }
     }
 
@@ -149,14 +152,14 @@ public class TelegramBotComponentTest {
     private static Request register(final UserRecord userRecord) {
         return test(
             userRecord, "/start",
-            String.format(TelegramBotComponent.USER_REGISTER_SUCCESS_MESSAGE_FORMAT, userRecord.name)
+            String.format(Start.USER_REGISTER_SUCCESS_MESSAGE_FORMAT, userRecord.name)
         );
     }
 
     private static Request registerFailed(final UserRecord userRecord) {
         return test(
             userRecord, "/start",
-            String.format(TelegramBotComponent.USER_REGISTER_FAILED_MESSAGE_FORMAT, userRecord.name)
+            String.format(Start.USER_REGISTER_FAILED_MESSAGE_FORMAT, userRecord.name)
         );
     }
 
@@ -165,11 +168,11 @@ public class TelegramBotComponentTest {
     }
 
     private static Request track(final UserRecord userRecord) {
-        return new Request(userRecord, "/track", TelegramBotComponent.TRACK_DESCRIPTION_MESSAGE);
+        return new Request(userRecord, "/track", Track.DESCRIPTION_MESSAGE);
     }
 
     private static Request untrack(final UserRecord userRecord) {
-        return new Request(userRecord, "/untrack", TelegramBotComponent.UNTRACK_DESCRIPTION_MESSAGE);
+        return new Request(userRecord, "/untrack", Untrack.DESCRIPTION_MESSAGE);
     }
 
     private static Request list(final UserRecord userRecord, final Link... links) {
@@ -239,14 +242,14 @@ public class TelegramBotComponentTest {
     public static Stream<Arguments> testCallCommandsWhileUnregistered() {
         return Stream.of(
             tests(
-                test(TEST_USER_1, "/track", TelegramBotComponent.UNREGISTERED_USER_ERROR),
-                test(TEST_USER_1, "/untrack", TelegramBotComponent.UNREGISTERED_USER_ERROR),
-                test(TEST_USER_1, "/list", TelegramBotComponent.UNREGISTERED_USER_ERROR)
+                test(TEST_USER_1, "/track", Command.UNREGISTERED_USER_ERROR),
+                test(TEST_USER_1, "/untrack", Command.UNREGISTERED_USER_ERROR),
+                test(TEST_USER_1, "/list", Command.UNREGISTERED_USER_ERROR)
             ),
             tests(
-                test(TEST_USER_2, "/track", TelegramBotComponent.UNREGISTERED_USER_ERROR),
-                test(TEST_USER_2, "/untrack", TelegramBotComponent.UNREGISTERED_USER_ERROR),
-                test(TEST_USER_2, "/list", TelegramBotComponent.UNREGISTERED_USER_ERROR)
+                test(TEST_USER_2, "/track", Command.UNREGISTERED_USER_ERROR),
+                test(TEST_USER_2, "/untrack", Command.UNREGISTERED_USER_ERROR),
+                test(TEST_USER_2, "/list", Command.UNREGISTERED_USER_ERROR)
             )
         );
     }
@@ -255,16 +258,16 @@ public class TelegramBotComponentTest {
         return Stream.of(
             tests(
                 register(TEST_USER_1),
-                test(TEST_USER_1, "/list", TelegramBotComponent.NO_TRACKING_LINKS_ERROR),
-                test(TEST_USER_1, "/untrack", TelegramBotComponent.NO_TRACKING_LINKS_ERROR)
+                test(TEST_USER_1, "/list", Command.NO_TRACKING_LINKS_ERROR),
+                test(TEST_USER_1, "/untrack", Command.NO_TRACKING_LINKS_ERROR)
             ),
             tests(
                 register(TEST_USER_2),
-                test(TEST_USER_2, "/untrack", TelegramBotComponent.NO_TRACKING_LINKS_ERROR),
-                test(TEST_USER_2, "/list", TelegramBotComponent.NO_TRACKING_LINKS_ERROR),
+                test(TEST_USER_2, "/untrack", Command.NO_TRACKING_LINKS_ERROR),
+                test(TEST_USER_2, "/list", Command.NO_TRACKING_LINKS_ERROR),
                 track(TEST_USER_2),
-                test(TEST_USER_2, "/list", TelegramBotComponent.NO_TRACKING_LINKS_ERROR),
-                test(TEST_USER_2, "/untrack", TelegramBotComponent.NO_TRACKING_LINKS_ERROR)
+                test(TEST_USER_2, "/list", Command.NO_TRACKING_LINKS_ERROR),
+                test(TEST_USER_2, "/untrack", Command.NO_TRACKING_LINKS_ERROR)
             )
         );
     }
@@ -296,7 +299,7 @@ public class TelegramBotComponentTest {
                 register(TEST_USER_2),
                 track(TEST_USER_2),
                 links(TEST_USER_2, incorrect(THIS_REPO)),
-                test(TEST_USER_2, "/list", TelegramBotComponent.NO_TRACKING_LINKS_ERROR)
+                test(TEST_USER_2, "/list", Command.NO_TRACKING_LINKS_ERROR)
             )
         );
     }
@@ -324,7 +327,7 @@ public class TelegramBotComponentTest {
                 test(links(TEST_USER_1, correct(MAXIM_TELEGRAM), correct(GOOGLE)), RequestType.SEND_MESSAGE),
                 test(untrack(TEST_USER_1), RequestType.SEND_MESSAGE),
                 test(
-                    test(TEST_USER_1, TelegramBotComponent.CANCEL_BUTTON_TEXT, TelegramBotComponent.UNTRACK_ABORTED_MESSAGE),
+                    test(TEST_USER_1, Untrack.CANCEL_BUTTON_TEXT, Untrack.ABORTED_MESSAGE),
                     RequestType.EDIT_MESSAGE_TEXT
                 )
             ),
@@ -340,12 +343,12 @@ public class TelegramBotComponentTest {
                 test(test(
                     TEST_USER_2,
                     GOOGLE.getAlias(),
-                    String.format(TelegramBotComponent.UNTRACK_CONFIRM_MESSAGE_FORMAT, GOOGLE)
+                    String.format(Untrack.CONFIRM_MESSAGE_FORMAT, GOOGLE)
                 ), RequestType.EDIT_MESSAGE_TEXT),
                 test(test(
                     TEST_USER_2,
-                    TelegramBotComponent.YES_BUTTON_TEXT,
-                    String.format(TelegramBotComponent.UNTRACK_SUCCESS_MESSAGE_FORMAT, GOOGLE)
+                    Untrack.YES_BUTTON_TEXT,
+                    String.format(Untrack.SUCCESS_MESSAGE_FORMAT, GOOGLE)
                 ), RequestType.EDIT_MESSAGE_TEXT),
                 test(list(TEST_USER_2, THIS_REPO), RequestType.SEND_MESSAGE)
             )

@@ -8,17 +8,17 @@ import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.BaseResponse;
 import com.pengrad.telegrambot.response.SendResponse;
+import edu.java.bot.commands.Command;
 import edu.java.bot.configuration.ApplicationConfig;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.EditMessageTextChains;
 import edu.java.bot.requests.chains.SendMessageChains;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,54 +28,34 @@ import org.springframework.stereotype.Component;
 public final class TelegramBotComponent extends TelegramBot {
     private final Map<String, CommandFunction> commandFunctions = new HashMap<>();
     private final Map<Long, User> users = new HashMap<>();
+    @Getter private final String usage;
     private static final Logger LOGGER = LoggerFactory.getLogger(TelegramBotComponent.class);
-    /*package-private*/ static final Command[] COMMANDS =
-        new Command[] {Command.START, Command.HELP, Command.TRACK, Command.UNTRACK, Command.LIST};
-    /*package-private*/ static final String USER_REGISTER_FAILED_MESSAGE_FORMAT = "User %s already registered!";
-    /*package-private*/ static final String USER_REGISTER_SUCCESS_MESSAGE_FORMAT = "User %s was registered!";
-    /*package-private*/ static final String UNREGISTERED_USER_ERROR = "You must register before use bot!";
-    /*package-private*/ static final String NO_TRACKING_LINKS_ERROR = "There is no tracking links!";
-    /*package-private*/ static final String TRACK_DESCRIPTION_MESSAGE =
-        "Send link(s) for tracking\nFormat:\nlink_alias1 - link1\nlink_alias2 - link2\n...";
-    /*package-private*/ static final String LINK_MARKDOWN_FORMAT = "[%s](%s)";
-    /*package-private*/ static final String LINK_PARSE_REGEX = "^(.+)\\s+-\\s+(.+)$";
-    /*package-private*/ static final String UNTRACK_DESCRIPTION_MESSAGE = "choose link to untrack";
-    /*package-private*/ static final String UNTRACK_ABORTED_MESSAGE = "Cancelled untrack command";
-    /*package-private*/ static final String UNTRACK_CONFIRM_MESSAGE_FORMAT =
-        "Are you sure you want to untrack link %s?";
-    /*package-private*/ static final String UNTRACK_SUCCESS_MESSAGE_FORMAT = "Link %s now untracked";
-    /*package-private*/ static final String YES_BUTTON_TEXT = "Yes";
-    /*package-private*/ static final String NO_BUTTON_TEXT = "No";
-    /*package-private*/ static final String CANCEL_BUTTON_TEXT = "Cancel";
 
     @Autowired
-    public TelegramBotComponent(ApplicationConfig config) {
+    public TelegramBotComponent(ApplicationConfig config, List<Command> commands) {
         super(config.telegramToken());
-        LOGGER.debug("Finished TelegramBot constructor");
         setUpdatesListener(this::updateListener, this::exceptionHandler);
-        LOGGER.debug("Set updateListener & exceptionHandler");
-        setCommands(COMMANDS);
-        LOGGER.debug("Set setCommands START HELP TRACK UNTRACK LIST");
+        usage = setCommands(commands);
         LOGGER.debug("Created bot with token " + this.getToken());
     }
 
-    /*package-private*/ void addUser(long id, User user) {
+    public void addUser(long id, User user) {
         users.put(id, user);
     }
 
-    /*package-private*/ void deleteUser(long id) {
+    public void deleteUser(long id) {
         users.remove(id);
     }
 
-    /*package-private*/ void deleteAllUsers() {
+    public void deleteAllUsers() {
         users.clear();
     }
 
-    /*package-private*/ boolean containUser(long id) {
+    public boolean containUser(long id) {
         return users.containsKey(id);
     }
 
-    /*package-private*/ User getUser(long id) {
+    public User getUser(long id) {
         return users.get(id);
     }
 
@@ -102,10 +82,8 @@ public final class TelegramBotComponent extends TelegramBot {
 
     private void callbackParse(Update update) {
         final long chatId = update.callbackQuery().from().id();
-        if (CommandFunction.isRegistered(this, chatId)) {
-            final User user = users.get(chatId);
-            user.setWaitingFunction(user.getWaitingFunction().apply(this, update));
-        }
+        final User user = users.get(chatId);
+        user.setWaitingFunction(user.getWaitingFunction().apply(this, update));
     }
 
     private void messageParse(Update update) {
@@ -127,10 +105,12 @@ public final class TelegramBotComponent extends TelegramBot {
 
     /*package-private*/ int updateListener(List<Update> updatesList) {
         updatesList.parallelStream().forEach(update -> {
-            if (update.message() == null) {
+            if (update.callbackQuery() != null) {
                 callbackParse(update);
-            } else {
+            } else if (update.message() != null) {
                 messageParse(update);
+            } else {
+                throw new RuntimeException("unknown update: " + update);
             }
         });
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
@@ -155,19 +135,16 @@ public final class TelegramBotComponent extends TelegramBot {
         execute(new SendMessage(chatId, "Unknown command " + command + ", type /help to get help."));
     }
 
-    public void setCommands(final Command... commands) {
-        BaseResponse response = execute(new SetMyCommands(Arrays.stream(commands).map(command -> {
-            commandFunctions.put("/" + command.name(), command.function());
-            return new BotCommand(command.name(), command.description());
-        }).toArray(BotCommand[]::new)));
+    public String setCommands(List<Command> commands) {
+        final StringBuilder result = new StringBuilder("Usage:\n");
+        final BotCommand[] botCommands = new BotCommand[commands.size()];
+        for (int i = 0; i < commands.size(); i++) {
+            final Command command = commands.get(i);
+            result.append('/').append(command.getName()).append(" - ").append(command.getDescription()).append('\n');
+            commandFunctions.put("/" + command.getName(), command.getFunction());
+            botCommands[i] = new BotCommand(command.getName(), command.getDescription());
+            LOGGER.debug("added command " + command.getName() + " to bot");
+        }
+        return result.toString();
     }
-
-//    public void addCommands(final Command... newCommands) {
-//        ArrayList<BotCommand> commands = new java.util.ArrayList<>(List.of(execute(new GetMyCommands()).commands()));
-//        for (Command command : newCommands) {
-//            commands.add(new BotCommand(command.name(), command.description()));
-//            commandFunctions.put("/" + command.name(), command.function());
-//        }
-//        execute(new SetMyCommands(commands.toArray(BotCommand[]::new)));
-//    }
 }
