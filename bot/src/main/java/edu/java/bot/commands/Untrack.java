@@ -10,6 +10,7 @@ import edu.java.bot.User;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.SendMessageChains;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 import static edu.java.bot.requests.chains.EditMessageTextChains.EMT_DISABLE_PREVIEW;
@@ -29,7 +30,7 @@ public class Untrack extends Command {
     public static final String NO_BUTTON_TEXT = "No";
     public static final String CANCEL_BUTTON_TEXT = "Cancel";
 
-    private static InlineKeyboardMarkup getLinksButtons(final Set<String> aliasSet) {
+    /*package-private*/ static InlineKeyboardMarkup getLinksButtons(final Set<String> aliasSet) {
         InlineKeyboardButton[] buttons = new InlineKeyboardButton[2];
         final InlineKeyboardMarkup result = new InlineKeyboardMarkup();
         int i = 0;
@@ -47,17 +48,21 @@ public class Untrack extends Command {
         return result.addRow(new InlineKeyboardButton(CANCEL_BUTTON_TEXT).callbackData(CANCEL_BUTTON_TEXT));
     }
 
-    static CommandFunction confirmDelete(int messageId, final String linkAlias) {
+    /*package-private*/ static CommandFunction confirmDelete(int messageId, final String linkAlias) {
         return (bot, update) -> {
             final String chose = update.callbackQuery().data();
             final long chatId = update.callbackQuery().from().id();
-            final User user = bot.getUser(chatId);
+            final Optional<User> optUser = bot.getUser(chatId);
+            if (optUser.isEmpty()) {
+                return CommandFunction.END;
+            }
+            final User user = optUser.get();
             if (Objects.equals(chose, YES_BUTTON_TEXT)) {
-                bot.editMessageText(
-                    chatId, messageId,
-                    String.format(SUCCESS_MESSAGE_FORMAT, user.removeLink(linkAlias)),
-                    EMT_MARKDOWN, EMT_DISABLE_PREVIEW
-                );
+                user.removeLink(linkAlias).ifPresent(link -> bot.editMessageText(
+                        chatId, messageId,
+                        String.format(SUCCESS_MESSAGE_FORMAT, link),
+                        EMT_MARKDOWN, EMT_DISABLE_PREVIEW
+                ));
                 return CommandFunction.END;
             }
             final InlineKeyboardMarkup buttons = getLinksButtons(user.aliasSet());
@@ -70,7 +75,7 @@ public class Untrack extends Command {
         };
     }
 
-    private static CommandFunction chooseLink(int messageId) {
+    /*package-private*/ static CommandFunction chooseLink(int messageId) {
         return (bot, update) -> {
             final String alias = update.callbackQuery().data();
             final long chatId = update.callbackQuery().from().id();
@@ -78,7 +83,15 @@ public class Untrack extends Command {
                 bot.editMessageText(chatId, messageId, ABORTED_MESSAGE);
                 return CommandFunction.END;
             }
-            final Link link = bot.getUser(chatId).getLink(alias);
+            final Optional<User> optUser = bot.getUser(chatId);
+            if (optUser.isEmpty()) {
+                return CommandFunction.END;
+            }
+            final Optional<Link> optLink = optUser.get().getLink(alias);
+            if (optLink.isEmpty()) {
+                return CommandFunction.END;
+            }
+            final Link link = optLink.get();
             final InlineKeyboardMarkup yesNo =
                 new InlineKeyboardMarkup(
                     new InlineKeyboardButton(YES_BUTTON_TEXT).callbackData(YES_BUTTON_TEXT),
@@ -93,12 +106,16 @@ public class Untrack extends Command {
         };
     }
 
-    private static CommandFunction untrack(TelegramBotComponent bot, Update update) {
+    /*package-private*/ static CommandFunction untrack(TelegramBotComponent bot, Update update) {
         final long chatId = update.message().chat().id();
         if (!(isRegistered(bot, chatId) && containsLinks(bot, chatId))) {
             return CommandFunction.END;
         }
-        final InlineKeyboardMarkup buttons = getLinksButtons(bot.getUser(chatId).aliasSet());
+        final Optional<User> optUser = bot.getUser(chatId);
+        if (optUser.isEmpty()) {
+            return CommandFunction.END;
+        }
+        final InlineKeyboardMarkup buttons = getLinksButtons(optUser.get().aliasSet());
         final SendMessageChains chains = Chains.allOf(SM_REPLY_MARKUP(buttons), SM_DISABLE_PREVIEW);
         final SendResponse response = bot.sendMessage(chatId, DESCRIPTION_MESSAGE, chains);
         return chooseLink(response.message().messageId());

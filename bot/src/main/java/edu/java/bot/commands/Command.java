@@ -1,7 +1,9 @@
 package edu.java.bot.commands;
 
 import edu.java.bot.TelegramBotComponent;
+import edu.java.bot.User;
 import jakarta.validation.constraints.NotEmpty;
+import java.util.Optional;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +24,12 @@ public abstract class Command {
     }
 
     protected static boolean containsLinks(final TelegramBotComponent bot, long chatId) {
-        if (bot.getUser(chatId).hasNoLinks()) {
+        Optional<User> optUser = bot.getUser(chatId);
+        if (optUser.isEmpty()) {
+            return false;
+        }
+        User user = optUser.get();
+        if (user.hasNoLinks()) {
             bot.sendMessage(chatId, NO_TRACKING_LINKS_ERROR);
             return false;
         }

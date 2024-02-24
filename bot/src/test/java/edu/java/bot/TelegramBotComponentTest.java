@@ -22,11 +22,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import static edu.java.bot.commands.List.createLinksList;
-import static edu.java.bot.commands.Track.createParseResult;
+import static edu.java.bot.commands.Track.createResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -39,9 +40,9 @@ public class TelegramBotComponentTest {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final UserRecord TEST_USER_1 = new UserRecord(123456789L, "TEST_USER_1");
     private static final UserRecord TEST_USER_2 = new UserRecord(1556L, "TEST_USER_2");
-    private static final Link MAXIM_TELEGRAM = new Link("Maxim Primakov", "t.me/MAK_Cpp");
-    private static final Link GOOGLE = new Link("Google", "google.com");
-    private static final Link THIS_REPO =
+    public static final Link MAXIM_TELEGRAM = new Link("Maxim Primakov", "t.me/MAK_Cpp");
+    public static final Link GOOGLE = new Link("Google", "google.com");
+    public static final Link THIS_REPO =
         new Link("Backend Java season 2 repository", "https://github.com/MAK-Cpp/backend-java-s2");
 
     @Autowired
@@ -187,26 +188,21 @@ public class TelegramBotComponentTest {
         return new LinkWithCorrectness(link, false);
     }
 
-    private static Request links(final UserRecord userRecord, final LinkWithCorrectness... links) {
+    public static Request links(final UserRecord userRecord, final LinkWithCorrectness... links) {
         final StringBuilder text = new StringBuilder();
-        final StringBuilder result = new StringBuilder("Result:\n");
-        int countCorrect = 0;
+        List<Map.Entry<String, Boolean>> results = new ArrayList<>();
         for (LinkWithCorrectness link : links) {
             final String line;
-            final String parseResult;
             if (link.isCorrect) {
-                countCorrect++;
                 line = link.link.getAlias() + " - " + link.link.getUri();
-                parseResult = link.link.toString();
+                results.add(Map.entry(link.link.toString(), true));
             } else {
                 line = link.link.getAlias() + link.link.getUri();
-                parseResult = line;
+                results.add(Map.entry(line, false));
             }
             text.append(line).append('\n');
-            result.append(createParseResult(parseResult, link.isCorrect)).append('\n');
         }
-        result.append("\nSUCCEED: ").append(countCorrect).append("\nFAILED: ").append(links.length - countCorrect);
-        return new Request(userRecord, text.toString(), result.toString());
+        return new Request(userRecord, text.toString(), createResult(results));
     }
 
     private static Arguments tests(final Request... requests) {
@@ -372,19 +368,19 @@ public class TelegramBotComponentTest {
 
     // TEST RECORDS, ENUMS, CLASSES AND INTERFACES
 
-    private record UserRecord(long id, String name) {
+    public record UserRecord(long id, String name) {
     }
 
-    private record Request(UserRecord user, String command, String out) {
+    public record Request(UserRecord user, String command, String out) {
     }
 
-    private record LinkWithCorrectness(Link link, Boolean isCorrect) {
+    public record LinkWithCorrectness(Link link, Boolean isCorrect) {
     }
 
-    private enum RequestType {
+    public enum RequestType {
         SEND_MESSAGE, EDIT_MESSAGE_TEXT;
     }
 
-    private record Pair<T, V>(T first, V second) {
+    public record Pair<T, V>(T first, V second) {
     }
 }

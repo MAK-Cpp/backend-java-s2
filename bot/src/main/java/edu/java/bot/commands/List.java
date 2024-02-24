@@ -3,6 +3,8 @@ package edu.java.bot.commands;
 import com.pengrad.telegrambot.model.Update;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
+import edu.java.bot.User;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 import static edu.java.bot.requests.chains.SendMessageChains.SM_DISABLE_PREVIEW;
 import static edu.java.bot.requests.chains.SendMessageChains.SM_MARKDOWN;
@@ -21,7 +23,11 @@ public class List extends Command {
     private static CommandFunction list(TelegramBotComponent bot, Update update) {
         final long chatId = update.message().chat().id();
         if (isRegistered(bot, chatId) && containsLinks(bot, chatId)) {
-            final Link[] links = bot.getUser(chatId).allLinks().toArray(Link[]::new);
+            Optional<User> optUser = bot.getUser(chatId);
+            if (optUser.isEmpty()) {
+                return CommandFunction.END;
+            }
+            final Link[] links = optUser.get().allLinks().toArray(Link[]::new);
             bot.sendMessage(chatId, createLinksList(links), SM_MARKDOWN, SM_DISABLE_PREVIEW);
         }
         return CommandFunction.END;

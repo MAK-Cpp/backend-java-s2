@@ -17,9 +17,10 @@ import edu.java.bot.configuration.ApplicationConfig;
 import edu.java.bot.requests.chains.Chains;
 import edu.java.bot.requests.chains.EditMessageTextChains;
 import edu.java.bot.requests.chains.SendMessageChains;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,10 +29,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 public final class TelegramBotComponent extends TelegramBot {
-    private final Map<String, CommandFunction> commandFunctions = new HashMap<>();
-    private final Map<Long, User> users = new HashMap<>();
+    private final ConcurrentMap<String, CommandFunction> commandFunctions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Long, User> users = new ConcurrentHashMap<>();
     @Getter private final String usage;
     private static final Logger LOGGER = LoggerFactory.getLogger(TelegramBotComponent.class);
+
+    public static <T> Optional<T> maybe(final T value) {
+        return value != null ? Optional.of(value) : Optional.empty();
+    }
 
     @Autowired
     public TelegramBotComponent(ApplicationConfig config, List<Command> commands) {
@@ -41,12 +46,12 @@ public final class TelegramBotComponent extends TelegramBot {
         LOGGER.debug("Created bot with token " + this.getToken());
     }
 
-    public void addUser(long id, User user) {
-        users.put(id, user);
+    public Optional<User> addUser(long id, User user) {
+        return maybe(users.put(id, user));
     }
 
-    public void deleteUser(long id) {
-        users.remove(id);
+    public Optional<User> deleteUser(long id) {
+        return maybe(users.remove(id));
     }
 
     public void deleteAllUsers() {
@@ -57,20 +62,16 @@ public final class TelegramBotComponent extends TelegramBot {
         return users.containsKey(id);
     }
 
-    public User getUser(long id) {
-        return users.get(id);
-    }
-
-    public SendResponse sendMessage(long chatId, final String text) {
-        return execute(new SendMessage(chatId, text));
+    public Optional<User> getUser(long id) {
+        return maybe(users.get(id));
     }
 
     public SendResponse sendMessage(long chatId, final String text, final SendMessageChains... operations) {
-        return execute(Chains.allOf(operations).apply(new SendMessage(chatId, text)));
-    }
-
-    public BaseResponse editMessageText(long chatId, int messageId, final String text) {
-        return execute(new EditMessageText(chatId, messageId, text));
+        SendMessage toExecute = new SendMessage(chatId, text);
+        if (operations.length > 0) {
+            toExecute = Chains.allOf(operations).apply(toExecute);
+        }
+        return execute(toExecute);
     }
 
     public BaseResponse editMessageText(
@@ -79,7 +80,11 @@ public final class TelegramBotComponent extends TelegramBot {
         final String text,
         final EditMessageTextChains... operations
     ) {
-        return execute(Chains.allOf(operations).apply(new EditMessageText(chatId, messageId, text)));
+        EditMessageText toExecute = new EditMessageText(chatId, messageId, text);
+        if (operations.length > 0) {
+            toExecute = Chains.allOf(operations).apply(toExecute);
+        }
+        return execute(toExecute);
     }
 
     private void callbackParse(Update update) {
