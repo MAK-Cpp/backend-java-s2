@@ -35,7 +35,7 @@ public final class TelegramBotComponent extends TelegramBot {
     private static final Logger LOGGER = LoggerFactory.getLogger(TelegramBotComponent.class);
 
     public static <T> Optional<T> maybe(final T value) {
-        return value != null ? Optional.of(value) : Optional.empty();
+        return Optional.ofNullable(value);
     }
 
     @Autowired
@@ -97,14 +97,15 @@ public final class TelegramBotComponent extends TelegramBot {
         final Message message = update.message();
         final String command = message.text();
         final long chatId = message.chat().id();
-        if (commandFunctions.containsKey(command)) {
-            CommandFunction waitingFunction = commandFunctions.get(command).apply(this, update);
-            if (users.containsKey(chatId)) {
-                users.get(chatId).setWaitingFunction(waitingFunction);
-            }
-        } else if (users.containsKey(chatId) && users.get(chatId).getWaitingFunction() != CommandFunction.END) {
-            final CommandFunction waitingFunction = users.get(chatId).getWaitingFunction();
-            users.get(chatId).setWaitingFunction(waitingFunction.apply(this, update));
+        final Optional<User> optionalUser = maybe(users.get(chatId));
+        final Optional<CommandFunction> optionalFunction = maybe(commandFunctions.get(command));
+        if (optionalFunction.isPresent()) {
+            final CommandFunction waitingFunction = optionalFunction.get().apply(this, update);
+            optionalUser.ifPresent(user -> user.setWaitingFunction(waitingFunction));
+        } else if (optionalUser.isPresent() && optionalUser.get().getWaitingFunction() != CommandFunction.END) {
+            final User user = optionalUser.get();
+            final CommandFunction waitingFunction = user.getWaitingFunction();
+            user.setWaitingFunction(waitingFunction.apply(this, update));
         } else {
             unknownCommand(update);
         }
