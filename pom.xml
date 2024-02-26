@@ -31,6 +31,7 @@
         <!-- Tests -->
         <testcontainers.version>1.19.4</testcontainers.version>
         <wiremock.version>3.3.1</wiremock.version>
+        <wiremock-standalone.version>3.3.1</wiremock-standalone.version>
 
         <!-- Plugins -->
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
@@ -60,7 +61,7 @@
             <dependency>
                 <groupId>org.wiremock</groupId>
                 <artifactId>wiremock-standalone</artifactId>
-                <version>${wiremock.version}</version>
+                <version>${wiremock-standalone.version}</version>
             </dependency>
 
             <dependency>
