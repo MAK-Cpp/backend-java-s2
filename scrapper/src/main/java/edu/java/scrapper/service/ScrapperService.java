@@ -1,12 +1,12 @@
 package edu.java.scrapper.service;
 
+import edu.java.dto.response.LinkResponse;
+import edu.java.dto.response.ListLinkResponse;
 import edu.java.exception.LinkNotFoundException;
 import edu.java.exception.NonExistentChatException;
 import edu.java.exception.WrongParametersException;
-import edu.java.dto.response.LinkResponse;
 import java.net.URI;
 import java.net.URISyntaxException;
-import edu.java.dto.response.ListLinkResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
