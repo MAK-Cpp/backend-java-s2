@@ -1,4 +1,4 @@
-package edu.java.dto;
+package edu.java.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LinkUpdateRequest {
-    private int id;
+    private long id;
     private String url;
     private String description;
-    private int[] tgChatIds;
+    private long[] tgChatIds;
 }
