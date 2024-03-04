@@ -1,4 +1,4 @@
-package edu.java.scrapper.response;
+package edu.java.dto.response;
 
 import java.net.URI;
 import lombok.AllArgsConstructor;

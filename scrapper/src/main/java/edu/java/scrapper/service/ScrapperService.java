@@ -1,11 +1,12 @@
 package edu.java.scrapper.service;
 
-import edu.java.scrapper.exception.LinkNotFoundException;
-import edu.java.scrapper.exception.NonExistentChatException;
-import edu.java.scrapper.exception.WrongRequestParametersException;
-import edu.java.scrapper.response.LinkResponse;
+import edu.java.exception.LinkNotFoundException;
+import edu.java.exception.NonExistentChatException;
+import edu.java.exception.WrongParametersException;
+import edu.java.dto.response.LinkResponse;
 import java.net.URI;
 import java.net.URISyntaxException;
+import edu.java.dto.response.ListLinkResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,62 +20,78 @@ public class ScrapperService {
     private static final String SUCCESS_CHAT_DELETED_FORMAT = "chat with id=%d deleted successfully";
     private static final int DELETE_ME = 10;
 
-    private static void checkId(int id) {
-        if (id < 0) {
-            throw new WrongRequestParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        } else if (id > DELETE_ME) { // TODO: replace to check if chat exist
-            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
-        }
+    private boolean isChatExists(long id) {
+        // TODO: replace to check if chat exist
+        return id <= DELETE_ME;
     }
 
-    public void registerChat(int id) {
-        checkId(id);
+    public void registerChat(long id) throws WrongParametersException {
+        if (id < 0) {
+            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
+        }
         LOGGER.debug(String.format(SUCCESS_CHAT_REGISTER_FORMAT, id));
     }
 
-    public void deleteChat(int id) {
-        checkId(id);
+    public void deleteChat(long id) throws WrongParametersException, NonExistentChatException {
+        if (id < 0) {
+            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
+        } else if (!isChatExists(id)) {
+            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
+        }
         LOGGER.debug(String.format(SUCCESS_CHAT_DELETED_FORMAT, id));
     }
 
-    public LinkResponse[] getAllLinks(int id) {
-        checkId(id);
-        LinkResponse[] result;
+    public ListLinkResponse getAllLinks(long id) throws NonExistentChatException, WrongParametersException {
+        if (id < 0) {
+            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
+        } else if (!isChatExists(id)) {
+            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
+        }
+        ListLinkResponse result;
         try {
-            result = new LinkResponse[] {
+            result = new ListLinkResponse(new LinkResponse[] {
                 new LinkResponse(1, new URI("https://github.com/MAK-Cpp/backend-java-s2")),
                 new LinkResponse(2, new URI("https://stackoverflow.com/questions/11828270/how-do-i-exit-vim"))
-            };
+            }, 2);
         } catch (URISyntaxException ignore) {
-            result = new LinkResponse[] {};
+            result = new ListLinkResponse(new LinkResponse[] {}, 0);
         }
         return result;
     }
 
-    public LinkResponse addLink(int id, String uri) {
-        checkId(id);
+    public LinkResponse addLink(long id, String uri) throws WrongParametersException, NonExistentChatException {
+        if (id < 0) {
+            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
+        } else if (!isChatExists(id)) {
+            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
+        }
         try {
             URI parsedUri = new URI(uri);
             // TODO: add link
             return new LinkResponse(1, parsedUri);
         } catch (URISyntaxException e) {
-            throw new WrongRequestParametersException(e.getMessage(), e);
+            throw new WrongParametersException(e.getMessage(), e);
         }
     }
 
-    public LinkResponse removeLink(int id, String uri) {
-        checkId(id);
+    public LinkResponse removeLink(long id, String uri)
+        throws WrongParametersException, NonExistentChatException, LinkNotFoundException {
+        if (id < 0) {
+            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
+        } else if (!isChatExists(id)) {
+            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
+        }
         try {
-            URI parsedUri = new URI(uri);
-            // TODO: check is there a link
-            boolean isUriExist = true;
+            boolean isUriExist = !uri.equals("not exists");
             if (!isUriExist) {
                 throw new LinkNotFoundException("there is no link " + uri);
             }
+            URI parsedUri = new URI(uri);
+            // TODO: check is there a link
             // TODO: remove link
             return new LinkResponse(1, parsedUri);
         } catch (URISyntaxException e) {
-            throw new WrongRequestParametersException(e.getMessage(), e);
+            throw new WrongParametersException(e.getMessage(), e);
         }
     }
 }

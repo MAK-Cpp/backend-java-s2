@@ -1,9 +1,9 @@
 package edu.java.bot.exception.handler;
 
-import edu.java.bot.exception.WrongRequestParametersException;
-import edu.java.bot.request.LinkUpdateRequest;
-import edu.java.bot.response.ApiErrorResponse;
+import edu.java.dto.request.LinkUpdateRequest;
+import edu.java.dto.response.ApiErrorResponse;
 import java.util.Arrays;
+import edu.java.exception.WrongParametersException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -13,15 +13,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class BotExceptionHandler {
     private static final String BAD_REQUEST_PARAMETERS = "Некорректные параметры запроса";
 
-    @ExceptionHandler(value = WrongRequestParametersException.class)
+    @ExceptionHandler(value = WrongParametersException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse wrongRequestParametersException(WrongRequestParametersException exception, LinkUpdateRequest request) {
+    public ApiErrorResponse wrongRequestParametersException(
+        WrongParametersException exception
+    ) {
         String[] stacktrace =
             Arrays.stream(exception.getStackTrace()).map(StackTraceElement::toString).toArray(String[]::new);
         return new ApiErrorResponse(
             BAD_REQUEST_PARAMETERS,
             "400",
-            exception.getClass().getName(),
+            exception.getClass().getSimpleName(),
             exception.getMessage(),
             stacktrace
         );

@@ -18,3 +18,8 @@ logging:
 client:
   github-url: unset
   stack-overflow-url: unset
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    enabled: true

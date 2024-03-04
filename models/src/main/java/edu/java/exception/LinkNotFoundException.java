@@ -1,4 +1,4 @@
-package edu.java.scrapper.exception;
+package edu.java.exception;
 
 import lombok.experimental.StandardException;
 
