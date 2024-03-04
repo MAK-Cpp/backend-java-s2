@@ -1,4 +1,4 @@
-package edu.java.bot.request;
+package edu.java.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
