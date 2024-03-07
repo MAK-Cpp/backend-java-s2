@@ -1,4 +1,4 @@
-package edu.java.response;
+package edu.java.scrapper.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

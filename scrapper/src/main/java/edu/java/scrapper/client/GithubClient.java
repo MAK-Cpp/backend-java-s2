@@ -1,8 +1,8 @@
-package edu.java.client;
+package edu.java.scrapper.client;
 
-import edu.java.response.CommitResponse;
-import edu.java.response.IssueResponse;
-import edu.java.response.PullRequestResponse;
+import edu.java.scrapper.response.CommitResponse;
+import edu.java.scrapper.response.IssueResponse;
+import edu.java.scrapper.response.PullRequestResponse;
 import java.util.List;
 import reactor.core.publisher.Mono;
 

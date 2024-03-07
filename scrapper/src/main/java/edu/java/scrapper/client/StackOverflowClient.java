@@ -1,6 +1,6 @@
-package edu.java.client;
+package edu.java.scrapper.client;
 
-import edu.java.response.AnswerResponse;
+import edu.java.scrapper.response.AnswerResponse;
 import reactor.core.publisher.Mono;
 
 public interface StackOverflowClient {

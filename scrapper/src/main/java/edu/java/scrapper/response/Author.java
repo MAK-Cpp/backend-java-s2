@@ -1,4 +1,4 @@
-package edu.java.response;
+package edu.java.scrapper.response;
 
 import java.time.OffsetDateTime;
 import lombok.AllArgsConstructor;

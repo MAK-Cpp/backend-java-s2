@@ -1,19 +1,22 @@
-package edu.java.client;
+package edu.java.scrapper.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
-import edu.java.response.Author;
-import edu.java.response.Commit;
-import edu.java.response.CommitResponse;
-import edu.java.response.Committer;
-import edu.java.response.IssueResponse;
-import edu.java.response.PullRequestResponse;
+import edu.java.scrapper.client.GithubClient;
+import edu.java.scrapper.client.GithubClientImpl;
+import edu.java.scrapper.response.Author;
+import edu.java.scrapper.response.Commit;
+import edu.java.scrapper.response.CommitResponse;
+import edu.java.scrapper.response.Committer;
+import edu.java.scrapper.response.IssueResponse;
+import edu.java.scrapper.response.PullRequestResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.reactive.function.client.WebClient;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Stream;
@@ -28,7 +31,7 @@ public class GithubClientImplTest {
     private WireMockServer wireMockServer;
     private static final int HTTP_ENDPOINT_PORT = 8123;
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final GithubClient githubClient = new GithubClientImpl(URL);
+    private static final GithubClient githubClient = new GithubClientImpl(WebClient.builder(), URL);
 
     @BeforeEach
     public void beforeEach() {

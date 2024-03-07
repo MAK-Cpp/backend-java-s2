@@ -1,8 +1,8 @@
-package edu.java.client;
+package edu.java.scrapper.client;
 
-import edu.java.response.CommitResponse;
-import edu.java.response.IssueResponse;
-import edu.java.response.PullRequestResponse;
+import edu.java.scrapper.response.CommitResponse;
+import edu.java.scrapper.response.IssueResponse;
+import edu.java.scrapper.response.PullRequestResponse;
 import java.util.List;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -11,12 +11,12 @@ public class GithubClientImpl implements GithubClient {
     private static final String BASE_GITHUB_API_URL = "https://api.github.com";
     private final WebClient githubWebClient;
 
-    public GithubClientImpl(String baseUrl) {
-        githubWebClient = WebClient.builder().baseUrl(baseUrl).build();
+    public GithubClientImpl(WebClient.Builder webClientBuilder, String baseUrl) {
+        githubWebClient = webClientBuilder.baseUrl(baseUrl).build();
     }
 
-    public GithubClientImpl() {
-        this(BASE_GITHUB_API_URL);
+    public GithubClientImpl(WebClient.Builder webClientBuilder) {
+        this(webClientBuilder, BASE_GITHUB_API_URL);
     }
 
     @Override

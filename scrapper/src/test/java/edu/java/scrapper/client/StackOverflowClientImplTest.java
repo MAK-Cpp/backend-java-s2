@@ -1,27 +1,29 @@
-package edu.java.client;
+package edu.java.scrapper.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
-import edu.java.response.Answer;
-import edu.java.response.AnswerOwner;
-import edu.java.response.AnswerResponse;
+import edu.java.scrapper.client.StackOverflowClient;
+import edu.java.scrapper.client.StackOverflowClientImpl;
+import edu.java.scrapper.response.Answer;
+import edu.java.scrapper.response.AnswerOwner;
+import edu.java.scrapper.response.AnswerResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
-import reactor.core.publisher.Mono;
+import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Stream;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static edu.java.client.StackOverflowClientImpl.FILTER;
-import static edu.java.client.StackOverflowClientImpl.ORDER;
-import static edu.java.client.StackOverflowClientImpl.SITE;
-import static edu.java.client.StackOverflowClientImpl.SORT;
+import static edu.java.scrapper.client.StackOverflowClientImpl.FILTER;
+import static edu.java.scrapper.client.StackOverflowClientImpl.ORDER;
+import static edu.java.scrapper.client.StackOverflowClientImpl.SITE;
+import static edu.java.scrapper.client.StackOverflowClientImpl.SORT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -29,7 +31,7 @@ class StackOverflowClientImplTest {
     private WireMockServer wireMockServer;
     private static final int HTTP_ENDPOINT_PORT = 8123;
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final StackOverflowClient stackOverflowClient = new StackOverflowClientImpl(URL);
+    private static final StackOverflowClient stackOverflowClient = new StackOverflowClientImpl(WebClient.builder(), URL);
 
     public static Stream<Arguments> testGetQuestionAnswers() {
         return Stream.of(

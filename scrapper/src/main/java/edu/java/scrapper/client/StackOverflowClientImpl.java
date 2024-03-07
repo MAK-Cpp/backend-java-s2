@@ -1,6 +1,6 @@
-package edu.java.client;
+package edu.java.scrapper.client;
 
-import edu.java.response.AnswerResponse;
+import edu.java.scrapper.response.AnswerResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -12,14 +12,14 @@ public class StackOverflowClientImpl implements StackOverflowClient {
     public static final String SORT = "creation";
     private final WebClient githubWebClient;
 
-    public StackOverflowClientImpl(String baseUrl) {
-        githubWebClient = WebClient.builder()
+    public StackOverflowClientImpl(WebClient.Builder webClientBuilder, String baseUrl) {
+        githubWebClient = webClientBuilder
             .baseUrl(baseUrl)
             .build();
     }
 
-    public StackOverflowClientImpl() {
-        this(BASE_STACK_OVERFLOW_API_URL);
+    public StackOverflowClientImpl(WebClient.Builder webClientBuilder) {
+        this(webClientBuilder, BASE_STACK_OVERFLOW_API_URL);
     }
 
     @Override

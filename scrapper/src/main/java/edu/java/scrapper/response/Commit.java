@@ -1,4 +1,4 @@
-package edu.java.response;
+package edu.java.scrapper.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
