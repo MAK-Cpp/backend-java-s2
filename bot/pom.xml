@@ -13,6 +13,12 @@
     <version>${revision}</version>
 
     <dependencies>
+        <!--models-->
+        <dependency>
+            <groupId>edu.java</groupId>
+            <artifactId>models</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
