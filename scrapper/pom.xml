@@ -13,7 +13,7 @@
     <version>${revision}</version>
 
     <dependencies>
-        <!--models-->
+        <!-- models -->
         <dependency>
             <groupId>edu.java</groupId>
             <artifactId>models</artifactId>
@@ -73,6 +73,18 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <!-- Database -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Tests -->
