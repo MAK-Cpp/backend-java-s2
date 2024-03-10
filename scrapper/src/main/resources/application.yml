@@ -1,8 +1,9 @@
 app:
   scheduler:
     enable: true
-    interval: 10s
-    force-check-delay: 10s
+    interval: PT10S
+    force-check-delay: PT10S
+
 
 spring:
   application:
@@ -13,3 +14,7 @@ server:
 
 logging:
   config: classpath:log4j2-plain.xml
+
+client:
+  github-url: unset
+  stack-overflow-url: unset
