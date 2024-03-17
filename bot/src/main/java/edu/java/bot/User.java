@@ -1,6 +1,6 @@
 package edu.java.bot;
 
-import edu.java.bot.commands.CommandFunction;
+import edu.java.bot.command.CommandFunction;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
