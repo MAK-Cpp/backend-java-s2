@@ -30,24 +30,24 @@
 ```java
 @SpringBootTest
 public class JdbcLinkTest extends IntegrationEnvironment {
-       @Autowired
-       private JdbcLinkDao linkRepository;
-       @Autowired
-       private JdbcTgChatRepository chatRepository;
-       @Autowired
-       private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private JdbcLinkDao linkRepository;
+    @Autowired
+    private JdbcTgChatRepository chatRepository;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+   
+    @Test
+    @Transactional
+    @Rollback
+    void addTest() {
+    }
 
     @Test
-       @Transactional
-       @Rollback
-       void addTest() {
-       }
-
-    @Test
-       @Transactional
-       @Rollback
-       void removeTest() {
-       }
+    @Transactional
+    @Rollback
+    void removeTest() {
+    }
 }
 ```
 
