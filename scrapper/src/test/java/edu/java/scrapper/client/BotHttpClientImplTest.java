@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.WebClient;
 import java.util.stream.Stream;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
@@ -23,7 +24,7 @@ class BotHttpClientImplTest {
     private WireMockServer wireMockServer;
     private static final int HTTP_ENDPOINT_PORT = 8123;
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final BotHttpClient botHttpClient = new BotHttpClientImpl(URL);
+    private static final BotHttpClient botHttpClient = new BotHttpClientImpl(WebClient.builder(), URL);
 
     public static Stream<Arguments> testSendUpdates() {
         return Stream.of(

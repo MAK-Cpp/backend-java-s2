@@ -1,4 +1,4 @@
-package edu.java.scrapper.client;
+package edu.java.bot.client;
 
 import edu.java.dto.request.AddLinkRequest;
 import edu.java.dto.request.RemoveLinkRequest;
@@ -9,8 +9,6 @@ import edu.java.exception.LinkNotFoundException;
 import edu.java.exception.NonExistentChatException;
 import edu.java.exception.WrongParametersException;
 import java.util.Objects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -24,14 +22,13 @@ public class ScrapperHttpClientImpl implements ScrapperHttpClient {
     private static final String LINKS_URI = "/links";
     private static final String CHAT_ID_HEADER = "tgChatId";
     private final WebClient scrapperWebClient;
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScrapperHttpClientImpl.class);
 
-    public ScrapperHttpClientImpl(String baseUrl) {
-        scrapperWebClient = WebClient.builder().baseUrl(baseUrl).build();
+    public ScrapperHttpClientImpl(WebClient.Builder webClientBuilder, String baseUrl) {
+        scrapperWebClient = webClientBuilder.baseUrl(baseUrl).build();
     }
 
-    public ScrapperHttpClientImpl() {
-        this(BASE_SCRAPPER_URI);
+    public ScrapperHttpClientImpl(WebClient.Builder webClientBuilder) {
+        this(webClientBuilder, BASE_SCRAPPER_URI);
     }
 
     private static Mono<? extends Throwable> badRequestFunction(ClientResponse clientResponse) {

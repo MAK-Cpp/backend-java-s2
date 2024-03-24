@@ -1,4 +1,4 @@
-package edu.java.scrapper.client;
+package edu.java.bot.client;
 
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;

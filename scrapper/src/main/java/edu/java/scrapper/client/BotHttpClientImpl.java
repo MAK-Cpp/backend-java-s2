@@ -9,15 +9,15 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 public class BotHttpClientImpl implements BotHttpClient {
-    private static final String BASE_SCRAPPER_URI = "https://localhost:8080";
+    private static final String BASE_BOT_URI = "https://localhost:8080";
     private final WebClient botWebClient;
 
-    public BotHttpClientImpl(String baseUrl) {
-        botWebClient = WebClient.builder().baseUrl(baseUrl).build();
+    public BotHttpClientImpl(WebClient.Builder webClientBuilder, String baseUrl) {
+        botWebClient = webClientBuilder.baseUrl(baseUrl).build();
     }
 
-    public BotHttpClientImpl() {
-        this(BASE_SCRAPPER_URI);
+    public BotHttpClientImpl(WebClient.Builder webClientBuilder) {
+        this(webClientBuilder, BASE_BOT_URI);
     }
 
     private static Mono<? extends Throwable> badRequestFunction(ClientResponse clientResponse) {

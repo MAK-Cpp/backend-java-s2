@@ -1,4 +1,4 @@
-package edu.java.scrapper.client;
+package edu.java.bot.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.WebClient;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
@@ -33,7 +34,7 @@ class ScrapperHttpClientImplTest {
     private WireMockServer wireMockServer;
     private static final int HTTP_ENDPOINT_PORT = 8123;
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final ScrapperHttpClient scrapperHttpClient = new ScrapperHttpClientImpl(URL);
+    private static final ScrapperHttpClient scrapperHttpClient = new ScrapperHttpClientImpl(WebClient.builder(), URL);
 
     public static Stream<Arguments> testRegisterChat() {
         return Stream.of(
