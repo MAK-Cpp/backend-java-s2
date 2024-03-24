@@ -8,6 +8,9 @@ app:
 spring:
   application:
     name: scrapper
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
 
 server:
   port: 8080
@@ -18,3 +21,8 @@ logging:
 client:
   github-url: unset
   stack-overflow-url: unset
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    enabled: true
