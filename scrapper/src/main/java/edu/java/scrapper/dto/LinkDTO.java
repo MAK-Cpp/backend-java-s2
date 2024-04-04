@@ -1,4 +1,6 @@
 package edu.java.scrapper.dto;
 
-public record LinkDTO(Long linkId, String uri) {
+import java.net.URI;
+
+public record LinkDTO(Long linkId, URI uri) {
 }

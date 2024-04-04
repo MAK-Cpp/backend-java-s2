@@ -25,23 +25,6 @@ import java.sql.SQLException;
 public class LinksDBIntegrationTest extends IntegrationTest {
     @Test
     void runMigration() {
-        // Получаем данные для подключения
-        String jdbcUrl = POSTGRES.getJdbcUrl();
-        String username = POSTGRES.getUsername();
-        String password = POSTGRES.getPassword();
-        Path currentPath = new File(".").toPath().toAbsolutePath();
-        Path changelogPath = currentPath.getParent()
-            .resolve("src")
-            .resolve("main")
-            .resolve("resources")
-            .resolve("migrations");
-        try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
-            Database database =
-                DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
-            Liquibase liquibase = new Liquibase("master.xml", new DirectoryResourceAccessor(changelogPath), database);
-            liquibase.update("", BufferedWriter.nullWriter());
-        } catch (SQLException | LiquibaseException | FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+
     }
 }

@@ -7,8 +7,11 @@ import edu.java.exception.NonExistentChatException;
 import edu.java.exception.WrongParametersException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import edu.java.scrapper.repository.JdbcChatRepository;
+import edu.java.scrapper.repository.JdbcLinkRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,28 +23,37 @@ public class ScrapperService {
     private static final String SUCCESS_CHAT_DELETED_FORMAT = "chat with id=%d deleted successfully";
     private static final int DELETE_ME = 10;
 
+    private final JdbcChatRepository chatRepository;
+    private final JdbcLinkRepository linkRepository;
+
+    @Autowired
+    public ScrapperService(JdbcChatRepository chatRepository, JdbcLinkRepository linkRepository) {
+        this.chatRepository = chatRepository;
+        this.linkRepository = linkRepository;
+    }
+
     private boolean isChatExists(long id) {
         // TODO: replace to check if chat exist
         return id <= DELETE_ME;
     }
 
-    public void registerChat(long id) throws WrongParametersException {
+    public void registerChat(Long id) throws WrongParametersException {
         if (id < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         }
+        chatRepository.add(id);
         LOGGER.debug(String.format(SUCCESS_CHAT_REGISTER_FORMAT, id));
     }
 
-    public void deleteChat(long id) throws WrongParametersException, NonExistentChatException {
+    public void deleteChat(Long id) throws WrongParametersException, NonExistentChatException {
         if (id < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        } else if (!isChatExists(id)) {
-            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
         }
+        chatRepository.remove(id);
         LOGGER.debug(String.format(SUCCESS_CHAT_DELETED_FORMAT, id));
     }
 
-    public ListLinkResponse getAllLinks(long id) throws NonExistentChatException, WrongParametersException {
+    public ListLinkResponse getAllLinks(Long id) throws NonExistentChatException, WrongParametersException {
         if (id < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         } else if (!isChatExists(id)) {
@@ -59,7 +71,7 @@ public class ScrapperService {
         return result;
     }
 
-    public LinkResponse addLink(long id, String uri) throws WrongParametersException, NonExistentChatException {
+    public LinkResponse addLink(Long id, String uri) throws WrongParametersException, NonExistentChatException {
         if (id < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         } else if (!isChatExists(id)) {
@@ -74,7 +86,7 @@ public class ScrapperService {
         }
     }
 
-    public LinkResponse removeLink(long id, String uri)
+    public LinkResponse removeLink(Long id, String uri)
         throws WrongParametersException, NonExistentChatException, LinkNotFoundException {
         if (id < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);

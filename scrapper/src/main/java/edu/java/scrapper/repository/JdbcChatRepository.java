@@ -2,34 +2,37 @@ package edu.java.scrapper.repository;
 
 import edu.java.scrapper.dto.ChatDTO;
 import java.util.List;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class JdbcChatRepository {
-    private final JdbcTemplate jdbcTemplate;
+@Transactional
+public class JdbcChatRepository extends JdbcTemplate {
+    private static final RowMapper<ChatDTO> CHAT_DTO_ROW_MAPPER =
+        (rs, rowNum) -> new ChatDTO(rs.getLong("chat_id"));
 
     @Autowired
-    public JdbcChatRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public JdbcChatRepository(DataSource dataSource) {
+        super(dataSource);
     }
 
-    @Transactional
-    public void add(Long chatId, String username) {
-        jdbcTemplate.update("INSERT INTO chats (chat_id, username) VALUES (?, ?)", chatId, username);
+    public Long add(Long chatId) {
+        update("INSERT INTO chats (chat_id) VALUES (?) ON CONFLICT DO NOTHING", chatId);
+        return chatId;
     }
 
-    @Transactional
     public void remove(Long chatId) {
-        jdbcTemplate.update("DELETE FROM chats WHERE chat_id = ?", chatId);
+        update("DELETE FROM chats WHERE chat_id = ?", chatId);
     }
 
     public List<ChatDTO> findAll() {
-        return jdbcTemplate.query(
-            "SELECT chat_id, username FROM chats",
-            (rs, rowNum) -> new ChatDTO(rs.getLong("chat_id"), rs.getString("username"))
+        return query(
+            "SELECT chat_id FROM chats",
+            CHAT_DTO_ROW_MAPPER
         );
     }
 }

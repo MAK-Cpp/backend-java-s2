@@ -1,35 +1,57 @@
 package edu.java.scrapper.repository;
 
 import edu.java.scrapper.dto.LinkDTO;
+import edu.java.scrapper.exception.UnexpectedValuesCountException;
+import java.net.URI;
 import java.util.List;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class JdbcLinkRepository {
-    private final JdbcTemplate jdbcTemplate;
+@Transactional
+public class JdbcLinkRepository extends JdbcTemplate {
+    public static final RowMapper<LinkDTO> LINK_DTO_ROW_MAPPER =
+        (rs, rowNum) -> new LinkDTO(rs.getLong("link_id"), URI.create(rs.getString("uri")));
 
     @Autowired
-    public JdbcLinkRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public JdbcLinkRepository(DataSource dataSource) {
+        super(dataSource);
     }
 
-    @Transactional
-    public void add(String uri) {
-        jdbcTemplate.update("INSERT INTO links (uri) VALUES (?)", uri);
+    public Long add(URI uri) {
+        List<LinkDTO> isLinkIn = findAll(uri);
+        return switch (isLinkIn.size()) {
+            case 1 -> isLinkIn.getFirst().linkId();
+            case 0 -> query(
+                "INSERT INTO links (uri) VALUES (?) RETURNING link_id, uri",
+                LINK_DTO_ROW_MAPPER,
+                uri.toString()
+            ).getFirst().linkId();
+            default ->
+                throw new UnexpectedValuesCountException("Expected <= 1 links " + uri + ", got " + isLinkIn.size());
+        };
     }
 
-    @Transactional
     public void remove(Long linkId) {
-        jdbcTemplate.update("DELETE FROM links WHERE link_id = ?", linkId);
+        update("DELETE FROM links WHERE link_id = ?", linkId);
     }
 
     public List<LinkDTO> findAll() {
-        return jdbcTemplate.query(
+        return query(
             "SELECT link_id, uri FROM links",
-            (rs, rowNum) -> new LinkDTO(rs.getLong("link_id"), rs.getString("uri"))
+            LINK_DTO_ROW_MAPPER
+        );
+    }
+
+    public List<LinkDTO> findAll(URI uri) {
+        return query(
+            "SELECT link_id, uri FROM links WHERE uri = ?",
+            LINK_DTO_ROW_MAPPER,
+            uri.toString()
         );
     }
 }
