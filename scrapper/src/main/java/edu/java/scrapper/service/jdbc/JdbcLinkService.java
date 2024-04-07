@@ -1,4 +1,4 @@
-package edu.java.scrapper.service;
+package edu.java.scrapper.service.jdbc;
 
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
@@ -9,27 +9,26 @@ import edu.java.scrapper.dto.LinkDTO;
 import edu.java.scrapper.repository.JdbcChatRepository;
 import edu.java.scrapper.repository.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.repository.JdbcLinkRepository;
+import edu.java.scrapper.service.LinkService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j
-public class ScrapperService {
+public class JdbcLinkService implements LinkService {
     private static final String NEGATE_ID_EXCEPTION_MESSAGE = "id cannot be negate";
     private static final String NON_EXISTENT_CHAT_EXCEPTION_FORMAT = "there is no chat with id=%d";
-    private static final String SUCCESS_CHAT_REGISTER_FORMAT = "chat with id=%d registered successfully";
-    private static final String SUCCESS_CHAT_DELETED_FORMAT = "chat with id=%d deleted successfully";
 
     private final JdbcChatRepository chatRepository;
     private final JdbcLinkRepository linkRepository;
     private final JdbcChatsAndLinksRepository chatsAndLinksRepository;
 
     @Autowired
-    public ScrapperService(JdbcChatRepository chatRepository, JdbcLinkRepository linkRepository,
+    public JdbcLinkService(
+        JdbcChatRepository chatRepository,
+        JdbcLinkRepository linkRepository,
         JdbcChatsAndLinksRepository chatsAndLinksRepository
     ) {
         this.chatRepository = chatRepository;
@@ -37,29 +36,17 @@ public class ScrapperService {
         this.chatsAndLinksRepository = chatsAndLinksRepository;
     }
 
-    public void registerChat(Long chatId) throws WrongParametersException {
-        if (chatId < 0) {
-            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        }
-        chatRepository.add(chatId);
-        log.info(String.format(SUCCESS_CHAT_REGISTER_FORMAT, chatId));
-    }
-
-    public void deleteChat(Long chatId) throws WrongParametersException, NonExistentChatException {
-        if (chatId < 0) {
-            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        }
-        chatsAndLinksRepository.remove(chatId);
-        chatRepository.remove(chatId);
-        log.info(String.format(SUCCESS_CHAT_DELETED_FORMAT, chatId));
-    }
-
-    public ListLinkResponse getAllLinks(Long chatId) throws NonExistentChatException, WrongParametersException {
+    private void validateChatId(Long chatId) throws NonExistentChatException, WrongParametersException {
         if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         } else if (!chatRepository.exists(chatId)) {
             throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, chatId));
         }
+    }
+
+    @Override
+    public ListLinkResponse getAllLinks(Long chatId) throws NonExistentChatException, WrongParametersException {
+        validateChatId(chatId);
         LinkResponse[] links = chatsAndLinksRepository
             .findAll(chatId)
             .stream()
@@ -68,12 +55,9 @@ public class ScrapperService {
         return new ListLinkResponse(links, links.length);
     }
 
+    @Override
     public LinkResponse addLink(Long chatId, String link) throws WrongParametersException, NonExistentChatException {
-        if (chatId < 0) {
-            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        } else if (!chatRepository.exists(chatId)) {
-            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, chatId));
-        }
+        validateChatId(chatId);
         try {
             final URI uri = new URI(link);
             final Long linkId = linkRepository.add(uri);
@@ -84,13 +68,10 @@ public class ScrapperService {
         }
     }
 
+    @Override
     public LinkResponse removeLink(Long chatId, String link)
         throws WrongParametersException, NonExistentChatException, LinkNotFoundException {
-        if (chatId < 0) {
-            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        } else if (!chatRepository.exists(chatId)) {
-            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, chatId));
-        }
+        validateChatId(chatId);
         try {
             URI uri = new URI(link);
             List<LinkDTO> linkDTO = linkRepository.findAll(uri);

@@ -8,7 +8,8 @@ import edu.java.dto.response.ListLinkResponse;
 import edu.java.exception.LinkNotFoundException;
 import edu.java.exception.NonExistentChatException;
 import edu.java.exception.WrongParametersException;
-import edu.java.scrapper.service.ScrapperService;
+import edu.java.scrapper.service.ChatService;
+import edu.java.scrapper.service.LinkService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.info.Contact;
@@ -34,11 +35,13 @@ import org.springframework.web.bind.annotation.RestController;
     contact = @Contact(name = "Maxim Primakov", email = "spartmenik@gmail.com")
 ))
 public class ScrapperController {
-    private final ScrapperService scrapperService;
+    private final LinkService linkService;
+    private final ChatService chatService;
 
     @Autowired
-    public ScrapperController(ScrapperService scrapperService) {
-        this.scrapperService = scrapperService;
+    public ScrapperController(LinkService linkService, ChatService chatService) {
+        this.linkService = linkService;
+        this.chatService = chatService;
     }
 
     @PostMapping("/tg-chat/{id}")
@@ -51,7 +54,7 @@ public class ScrapperController {
                                         schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     public ResponseEntity<Void> registerChat(@PathVariable long id) throws WrongParametersException {
-        scrapperService.registerChat(id);
+        chatService.registerChat(id);
         return ResponseEntity.ok().build();
     }
 
@@ -70,7 +73,7 @@ public class ScrapperController {
     })
     public ResponseEntity<Void> deleteChat(@PathVariable long id)
         throws WrongParametersException, NonExistentChatException {
-        scrapperService.deleteChat(id);
+        chatService.deleteChat(id);
         return ResponseEntity.ok().build();
     }
 
@@ -91,7 +94,7 @@ public class ScrapperController {
     })
     public ResponseEntity<ListLinkResponse> getAllTrackingLinks(@RequestHeader long tgChatId)
         throws WrongParametersException, NonExistentChatException {
-        return ResponseEntity.ok(scrapperService.getAllLinks(tgChatId));
+        return ResponseEntity.ok(linkService.getAllLinks(tgChatId));
     }
 
     @PostMapping("/links")
@@ -115,7 +118,7 @@ public class ScrapperController {
         return ResponseEntity
             .ok()
             .contentType(MediaType.APPLICATION_JSON)
-            .body(scrapperService.addLink(tgChatId, request.getLink()));
+            .body(linkService.addLink(tgChatId, request.getLink()));
     }
 
     @DeleteMapping("/links")
@@ -139,6 +142,6 @@ public class ScrapperController {
         return ResponseEntity
             .ok()
             .contentType(MediaType.APPLICATION_JSON)
-            .body(scrapperService.removeLink(tgChatId, request.getLink()));
+            .body(linkService.removeLink(tgChatId, request.getLink()));
     }
 }
