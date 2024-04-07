@@ -1,10 +1,9 @@
 package edu.java.scrapper.service;
 
-import edu.java.exception.NonExistentChatException;
-import edu.java.exception.WrongParametersException;
+import edu.java.exception.DTOException;
 
 public interface ChatService {
-    void registerChat(Long chatId) throws WrongParametersException;
+    void registerChat(Long chatId) throws DTOException;
 
-    void deleteChat(Long chatId) throws WrongParametersException, NonExistentChatException;
+    void deleteChat(Long chatId) throws DTOException;
 }

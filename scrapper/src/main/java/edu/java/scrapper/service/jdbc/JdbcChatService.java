@@ -1,5 +1,6 @@
 package edu.java.scrapper.service.jdbc;
 
+import edu.java.exception.DTOException;
 import edu.java.exception.NonExistentChatException;
 import edu.java.exception.WrongParametersException;
 import edu.java.scrapper.repository.JdbcChatRepository;
@@ -26,7 +27,7 @@ public class JdbcChatService implements ChatService {
     }
 
     @Override
-    public void registerChat(Long chatId) throws WrongParametersException {
+    public void registerChat(Long chatId) throws DTOException {
         if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         }
@@ -35,7 +36,7 @@ public class JdbcChatService implements ChatService {
     }
 
     @Override
-    public void deleteChat(Long chatId) throws WrongParametersException, NonExistentChatException {
+    public void deleteChat(Long chatId) throws DTOException {
         if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         }

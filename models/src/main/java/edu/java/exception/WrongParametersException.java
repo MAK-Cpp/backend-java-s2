@@ -1,7 +1,12 @@
 package edu.java.exception;
 
-import lombok.experimental.StandardException;
 
-@StandardException
-public class WrongParametersException extends RuntimeException {
+public class WrongParametersException extends DTOException {
+    public WrongParametersException(String message) {
+        super(message);
+    }
+
+    public WrongParametersException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

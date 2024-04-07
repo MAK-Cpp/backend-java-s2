@@ -2,15 +2,12 @@ package edu.java.scrapper.service;
 
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
-import edu.java.exception.LinkNotFoundException;
-import edu.java.exception.NonExistentChatException;
-import edu.java.exception.WrongParametersException;
+import edu.java.exception.DTOException;
 
 public interface LinkService {
-    ListLinkResponse getAllLinks(Long chatId) throws NonExistentChatException, WrongParametersException;
+    ListLinkResponse getAllLinks(Long chatId) throws DTOException;
 
-    LinkResponse addLink(Long chatId, String link) throws WrongParametersException, NonExistentChatException;
+    LinkResponse addLink(Long chatId, String link) throws DTOException;
 
-    LinkResponse removeLink(Long chatId, String link)
-        throws WrongParametersException, NonExistentChatException, LinkNotFoundException;
+    LinkResponse removeLink(Long chatId, String link) throws DTOException;
 }

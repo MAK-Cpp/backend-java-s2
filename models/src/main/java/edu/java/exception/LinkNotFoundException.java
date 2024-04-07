@@ -1,7 +1,12 @@
 package edu.java.exception;
 
-import lombok.experimental.StandardException;
 
-@StandardException
-public class LinkNotFoundException extends RuntimeException {
+public class LinkNotFoundException extends DTOException {
+    public LinkNotFoundException(String message) {
+        super(message);
+    }
+
+    public LinkNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
