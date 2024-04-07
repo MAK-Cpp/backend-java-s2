@@ -112,8 +112,8 @@ class ScrapperHttpClientImplTest {
                     "}",
                 new ListLinkResponse(
                     new LinkResponse[] {
-                        new LinkResponse(1, new URI("https://github.com/MAK-Cpp/backend-java-s2")),
-                        new LinkResponse(2, new URI("https://stackoverflow.com/questions/11828270/how-do-i-exit-vim"))
+                        new LinkResponse(1L, new URI("https://github.com/MAK-Cpp/backend-java-s2")),
+                        new LinkResponse(2L, new URI("https://stackoverflow.com/questions/11828270/how-do-i-exit-vim"))
                     },
                     2
                 )
@@ -157,7 +157,7 @@ class ScrapperHttpClientImplTest {
                     "  \"id\": 1,\n" +
                     "  \"url\": \"t.me/MAK_Cpp\"\n" +
                     "}",
-                new LinkResponse(1, new URI("t.me/MAK_Cpp"))
+                new LinkResponse(1L, new URI("t.me/MAK_Cpp"))
             ),
             Arguments.of(
                 -1L,
@@ -200,7 +200,7 @@ class ScrapperHttpClientImplTest {
                     "  \"id\": 1,\n" +
                     "  \"url\": \"YouTube.com\"\n" +
                     "}",
-                new LinkResponse(1, new URI("YouTube.com"))
+                new LinkResponse(1L, new URI("YouTube.com"))
             ),
             Arguments.of(
                 1L,

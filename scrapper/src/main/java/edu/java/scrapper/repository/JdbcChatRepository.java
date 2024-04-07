@@ -1,6 +1,7 @@
 package edu.java.scrapper.repository;
 
 import edu.java.scrapper.dto.ChatDTO;
+import java.sql.ResultSetMetaData;
 import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,10 @@ public class JdbcChatRepository extends JdbcTemplate {
 
     public void remove(Long chatId) {
         update("DELETE FROM chats WHERE chat_id = ?", chatId);
+    }
+
+    public boolean exists(Long chatId) {
+        return !query("SELECT chat_id FROM chats WHERE chat_id = ?", CHAT_DTO_ROW_MAPPER, chatId).isEmpty();
     }
 
     public List<ChatDTO> findAll() {

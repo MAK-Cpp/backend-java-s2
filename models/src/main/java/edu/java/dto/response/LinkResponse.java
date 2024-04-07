@@ -7,6 +7,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class LinkResponse {
-    private int id;
-    private URI url;
+    private Long id;
+    private URI uri;
 }

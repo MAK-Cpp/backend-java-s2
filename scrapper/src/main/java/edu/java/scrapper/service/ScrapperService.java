@@ -5,103 +5,101 @@ import edu.java.dto.response.ListLinkResponse;
 import edu.java.exception.LinkNotFoundException;
 import edu.java.exception.NonExistentChatException;
 import edu.java.exception.WrongParametersException;
+import edu.java.scrapper.dto.LinkDTO;
+import edu.java.scrapper.repository.JdbcChatRepository;
+import edu.java.scrapper.repository.JdbcChatsAndLinksRepository;
+import edu.java.scrapper.repository.JdbcLinkRepository;
 import java.net.URI;
 import java.net.URISyntaxException;
-import edu.java.scrapper.repository.JdbcChatRepository;
-import edu.java.scrapper.repository.JdbcLinkRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class ScrapperService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScrapperService.class);
     private static final String NEGATE_ID_EXCEPTION_MESSAGE = "id cannot be negate";
     private static final String NON_EXISTENT_CHAT_EXCEPTION_FORMAT = "there is no chat with id=%d";
     private static final String SUCCESS_CHAT_REGISTER_FORMAT = "chat with id=%d registered successfully";
     private static final String SUCCESS_CHAT_DELETED_FORMAT = "chat with id=%d deleted successfully";
-    private static final int DELETE_ME = 10;
 
     private final JdbcChatRepository chatRepository;
     private final JdbcLinkRepository linkRepository;
+    private final JdbcChatsAndLinksRepository chatsAndLinksRepository;
 
     @Autowired
-    public ScrapperService(JdbcChatRepository chatRepository, JdbcLinkRepository linkRepository) {
+    public ScrapperService(JdbcChatRepository chatRepository, JdbcLinkRepository linkRepository,
+        JdbcChatsAndLinksRepository chatsAndLinksRepository
+    ) {
         this.chatRepository = chatRepository;
         this.linkRepository = linkRepository;
+        this.chatsAndLinksRepository = chatsAndLinksRepository;
     }
 
-    private boolean isChatExists(long id) {
-        // TODO: replace to check if chat exist
-        return id <= DELETE_ME;
-    }
-
-    public void registerChat(Long id) throws WrongParametersException {
-        if (id < 0) {
+    public void registerChat(Long chatId) throws WrongParametersException {
+        if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         }
-        chatRepository.add(id);
-        LOGGER.debug(String.format(SUCCESS_CHAT_REGISTER_FORMAT, id));
+        chatRepository.add(chatId);
+        log.info(String.format(SUCCESS_CHAT_REGISTER_FORMAT, chatId));
     }
 
-    public void deleteChat(Long id) throws WrongParametersException, NonExistentChatException {
-        if (id < 0) {
+    public void deleteChat(Long chatId) throws WrongParametersException, NonExistentChatException {
+        if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         }
-        chatRepository.remove(id);
-        LOGGER.debug(String.format(SUCCESS_CHAT_DELETED_FORMAT, id));
+        chatsAndLinksRepository.remove(chatId);
+        chatRepository.remove(chatId);
+        log.info(String.format(SUCCESS_CHAT_DELETED_FORMAT, chatId));
     }
 
-    public ListLinkResponse getAllLinks(Long id) throws NonExistentChatException, WrongParametersException {
-        if (id < 0) {
+    public ListLinkResponse getAllLinks(Long chatId) throws NonExistentChatException, WrongParametersException {
+        if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        } else if (!isChatExists(id)) {
-            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
+        } else if (!chatRepository.exists(chatId)) {
+            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, chatId));
         }
-        ListLinkResponse result;
-        try {
-            result = new ListLinkResponse(new LinkResponse[] {
-                new LinkResponse(1, new URI("https://github.com/MAK-Cpp/backend-java-s2")),
-                new LinkResponse(2, new URI("https://stackoverflow.com/questions/11828270/how-do-i-exit-vim"))
-            }, 2);
-        } catch (URISyntaxException ignore) {
-            result = new ListLinkResponse(new LinkResponse[] {}, 0);
-        }
-        return result;
+        LinkResponse[] links = chatsAndLinksRepository
+            .findAll(chatId)
+            .stream()
+            .map(linkDTO -> new LinkResponse(linkDTO.linkId(), linkDTO.uri()))
+            .toArray(LinkResponse[]::new);
+        return new ListLinkResponse(links, links.length);
     }
 
-    public LinkResponse addLink(Long id, String uri) throws WrongParametersException, NonExistentChatException {
-        if (id < 0) {
+    public LinkResponse addLink(Long chatId, String link) throws WrongParametersException, NonExistentChatException {
+        if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        } else if (!isChatExists(id)) {
-            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
+        } else if (!chatRepository.exists(chatId)) {
+            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, chatId));
         }
         try {
-            URI parsedUri = new URI(uri);
-            // TODO: add link
-            return new LinkResponse(1, parsedUri);
+            final URI uri = new URI(link);
+            final Long linkId = linkRepository.add(uri);
+            chatsAndLinksRepository.add(chatId, linkId);
+            return new LinkResponse(linkId, uri);
         } catch (URISyntaxException e) {
             throw new WrongParametersException(e.getMessage(), e);
         }
     }
 
-    public LinkResponse removeLink(Long id, String uri)
+    public LinkResponse removeLink(Long chatId, String link)
         throws WrongParametersException, NonExistentChatException, LinkNotFoundException {
-        if (id < 0) {
+        if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        } else if (!isChatExists(id)) {
-            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, id));
+        } else if (!chatRepository.exists(chatId)) {
+            throw new NonExistentChatException(String.format(NON_EXISTENT_CHAT_EXCEPTION_FORMAT, chatId));
         }
         try {
-            boolean isUriExist = !uri.equals("not exists");
-            if (!isUriExist) {
-                throw new LinkNotFoundException("there is no link " + uri);
+            URI uri = new URI(link);
+            List<LinkDTO> linkDTO = linkRepository.findAll(uri);
+            if (linkDTO.isEmpty()) {
+                throw new LinkNotFoundException("there is no link " + link);
             }
-            URI parsedUri = new URI(uri);
-            // TODO: check is there a link
-            // TODO: remove link
-            return new LinkResponse(1, parsedUri);
+            final Long linkId = linkDTO.getFirst().linkId();
+            chatsAndLinksRepository.remove(chatId, linkId);
+            return new LinkResponse(linkId, uri);
         } catch (URISyntaxException e) {
             throw new WrongParametersException(e.getMessage(), e);
         }
