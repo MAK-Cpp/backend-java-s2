@@ -1,7 +1,6 @@
 package edu.java.scrapper.repository;
 
-import edu.java.scrapper.dto.ChatDTO;
-import java.sql.ResultSetMetaData;
+import edu.java.dto.response.ChatResponse;
 import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @Transactional
 public class JdbcChatRepository extends JdbcTemplate {
-    private static final RowMapper<ChatDTO> CHAT_DTO_ROW_MAPPER =
-        (rs, rowNum) -> new ChatDTO(rs.getLong("chat_id"));
+    private static final RowMapper<ChatResponse> CHAT_DTO_ROW_MAPPER =
+        (rs, rowNum) -> new ChatResponse(rs.getLong("chat_id"));
 
     @Autowired
     public JdbcChatRepository(DataSource dataSource) {
@@ -34,7 +33,7 @@ public class JdbcChatRepository extends JdbcTemplate {
         return !query("SELECT chat_id FROM chats WHERE chat_id = ?", CHAT_DTO_ROW_MAPPER, chatId).isEmpty();
     }
 
-    public List<ChatDTO> findAll() {
+    public List<ChatResponse> findAll() {
         return query(
             "SELECT chat_id FROM chats",
             CHAT_DTO_ROW_MAPPER

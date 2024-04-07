@@ -1,6 +1,6 @@
 package edu.java.scrapper.repository;
 
-import edu.java.scrapper.dto.LinkDTO;
+import edu.java.dto.response.LinkResponse;
 import edu.java.scrapper.exception.UnexpectedValuesCountException;
 import java.net.URI;
 import java.util.List;
@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @Transactional
 public class JdbcLinkRepository extends JdbcTemplate {
-    public static final RowMapper<LinkDTO> LINK_DTO_ROW_MAPPER =
-        (rs, rowNum) -> new LinkDTO(rs.getLong("link_id"), URI.create(rs.getString("uri")));
+    public static final RowMapper<LinkResponse> LINK_DTO_ROW_MAPPER =
+        (rs, rowNum) -> new LinkResponse(rs.getLong("link_id"), URI.create(rs.getString("uri")));
 
     @Autowired
     public JdbcLinkRepository(DataSource dataSource) {
@@ -23,14 +23,14 @@ public class JdbcLinkRepository extends JdbcTemplate {
     }
 
     public Long add(URI uri) {
-        List<LinkDTO> isLinkIn = findAll(uri);
+        List<LinkResponse> isLinkIn = findAll(uri);
         return switch (isLinkIn.size()) {
-            case 1 -> isLinkIn.getFirst().linkId();
+            case 1 -> isLinkIn.getFirst().getId();
             case 0 -> query(
                 "INSERT INTO links (uri) VALUES (?) RETURNING link_id, uri",
                 LINK_DTO_ROW_MAPPER,
                 uri.toString()
-            ).getFirst().linkId();
+            ).getFirst().getId();
             default ->
                 throw new UnexpectedValuesCountException("Expected <= 1 links " + uri + ", got " + isLinkIn.size());
         };
@@ -40,14 +40,14 @@ public class JdbcLinkRepository extends JdbcTemplate {
         update("DELETE FROM links WHERE link_id = ?", linkId);
     }
 
-    public List<LinkDTO> findAll() {
+    public List<LinkResponse> findAll() {
         return query(
             "SELECT link_id, uri FROM links",
             LINK_DTO_ROW_MAPPER
         );
     }
 
-    public List<LinkDTO> findAll(URI uri) {
+    public List<LinkResponse> findAll(URI uri) {
         return query(
             "SELECT link_id, uri FROM links WHERE uri = ?",
             LINK_DTO_ROW_MAPPER,

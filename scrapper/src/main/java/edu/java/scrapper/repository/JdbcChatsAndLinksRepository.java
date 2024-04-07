@@ -1,6 +1,6 @@
 package edu.java.scrapper.repository;
 
-import edu.java.scrapper.dto.LinkDTO;
+import edu.java.dto.response.LinkResponse;
 import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ public class JdbcChatsAndLinksRepository extends JdbcTemplate {
         update("DELETE FROM chats_and_links WHERE chat_id = ?", chatId);
     }
 
-    public List<LinkDTO> findAll(Long chatId) {
+    public List<LinkResponse> findAll(Long chatId) {
         return query(FIND_ALL_SQL, JdbcLinkRepository.LINK_DTO_ROW_MAPPER, chatId);
     }
 }

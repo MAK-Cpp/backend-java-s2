@@ -5,16 +5,15 @@ import edu.java.dto.response.ListLinkResponse;
 import edu.java.exception.LinkNotFoundException;
 import edu.java.exception.NonExistentChatException;
 import edu.java.exception.WrongParametersException;
-import edu.java.scrapper.dto.LinkDTO;
 import edu.java.scrapper.repository.JdbcChatRepository;
 import edu.java.scrapper.repository.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.repository.JdbcLinkRepository;
 import edu.java.scrapper.service.LinkService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 @Service
 public class JdbcLinkService implements LinkService {
@@ -49,8 +48,6 @@ public class JdbcLinkService implements LinkService {
         validateChatId(chatId);
         LinkResponse[] links = chatsAndLinksRepository
             .findAll(chatId)
-            .stream()
-            .map(linkDTO -> new LinkResponse(linkDTO.linkId(), linkDTO.uri()))
             .toArray(LinkResponse[]::new);
         return new ListLinkResponse(links, links.length);
     }
@@ -74,11 +71,11 @@ public class JdbcLinkService implements LinkService {
         validateChatId(chatId);
         try {
             URI uri = new URI(link);
-            List<LinkDTO> linkDTO = linkRepository.findAll(uri);
+            List<LinkResponse> linkDTO = linkRepository.findAll(uri);
             if (linkDTO.isEmpty()) {
                 throw new LinkNotFoundException("there is no link " + link);
             }
-            final Long linkId = linkDTO.getFirst().linkId();
+            final Long linkId = linkDTO.getFirst().getId();
             chatsAndLinksRepository.remove(chatId, linkId);
             return new LinkResponse(linkId, uri);
         } catch (URISyntaxException e) {
