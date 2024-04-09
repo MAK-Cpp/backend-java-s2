@@ -1,4 +1,4 @@
-package edu.java.exception;
+package edu.java.dto.exception;
 
 
 public class LinkNotFoundException extends DTOException {

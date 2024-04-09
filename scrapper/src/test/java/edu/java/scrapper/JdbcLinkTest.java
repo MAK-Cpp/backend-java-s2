@@ -28,7 +28,7 @@ public class JdbcLinkTest extends IntegrationTest {
     private List<LinkResponse> linksInRepository;
 
     private void fillDB() {
-        linksInRepository = Arrays.stream(LINKS).map(link -> new LinkResponse(this.linkRepository.add(link), link)).toList();
+        linksInRepository = Arrays.stream(LINKS).map(linkRepository::add).toList();
     }
 
     @Test
@@ -38,7 +38,7 @@ public class JdbcLinkTest extends IntegrationTest {
         fillDB();
         final URI link = URI.create("https://chat.openai.com");
         final List<LinkResponse> result = new ArrayList<>(linksInRepository);
-        result.add(new LinkResponse(linkRepository.add(link), link));
+        result.add(linkRepository.add(link));
         assertThat(linkRepository.findAll()).isEqualTo(result);
     }
 

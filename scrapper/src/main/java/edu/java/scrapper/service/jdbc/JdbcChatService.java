@@ -1,8 +1,7 @@
 package edu.java.scrapper.service.jdbc;
 
-import edu.java.exception.DTOException;
-import edu.java.exception.NonExistentChatException;
-import edu.java.exception.WrongParametersException;
+import edu.java.dto.exception.DTOException;
+import edu.java.dto.exception.WrongParametersException;
 import edu.java.scrapper.repository.JdbcChatRepository;
 import edu.java.scrapper.repository.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.service.ChatService;

@@ -45,10 +45,10 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
             chatRepository.add(chatId);
             List<LinkResponse> links = new ArrayList<>();
             for (URI link : LINKS_IDS.get((int) chatId)) {
-                Long linkId = linksRepository.add(link);
-                links.add(new LinkResponse(linkId, link));
-                linksIds.put(link, linkId);
-                this.repository.add(chatId, linkId);
+                LinkResponse response = linksRepository.add(link);
+                links.add(response);
+                linksIds.put(link, response.getId());
+                this.repository.add(chatId, response.getId());
             }
             links.sort(Comparator.comparingLong(LinkResponse::getId));
             LINKS_DTOS.add(links);
@@ -61,10 +61,10 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
     void addTest() {
         fillDB();
         URI uri = URI.create("https://pcms.itmo.ru");
-        Long linkId = linksIds.get(uri);
-        repository.add(2L, linkId);
+        LinkResponse response = linksRepository.findAll(uri).getFirst();
+        repository.add(2L, response.getId());
         List<LinkResponse> result = new ArrayList<>(LINKS_DTOS.get(2));
-        result.add(new LinkResponse(linkId, uri));
+        result.add(response);
         assertThat(repository.findAll(0L)).isEqualTo(LINKS_DTOS.get(0));
         assertThat(repository.findAll(1L)).isEqualTo(LINKS_DTOS.get(1));
         assertThat(repository.findAll(2L)).isEqualTo(result);

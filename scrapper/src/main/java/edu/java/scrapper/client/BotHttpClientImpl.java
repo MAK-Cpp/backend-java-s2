@@ -2,7 +2,7 @@ package edu.java.scrapper.client;
 
 import edu.java.dto.request.LinkUpdateRequest;
 import edu.java.dto.response.ApiErrorResponse;
-import edu.java.exception.WrongParametersException;
+import edu.java.dto.exception.WrongParametersException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;

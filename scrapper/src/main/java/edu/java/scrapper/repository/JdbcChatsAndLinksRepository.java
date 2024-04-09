@@ -1,6 +1,7 @@
 package edu.java.scrapper.repository;
 
 import edu.java.dto.response.LinkResponse;
+import java.time.OffsetDateTime;
 import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class JdbcChatsAndLinksRepository extends JdbcTemplate {
     private static final String FIND_ALL_SQL =
-        "SELECT l.link_id, l.uri FROM chats_and_links cl JOIN links l ON cl.link_id = l.link_id WHERE cl.chat_id = ?";
+        "SELECT l.link_id, l.uri, l.last_update FROM chats_and_links cl JOIN links l ON cl.link_id = l.link_id WHERE cl.chat_id = ?";
 
     @Autowired
     public JdbcChatsAndLinksRepository(DataSource dataSource) {

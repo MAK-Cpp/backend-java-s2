@@ -1,6 +1,6 @@
 package edu.java.scrapper.service;
 
-import edu.java.exception.DTOException;
+import edu.java.dto.exception.DTOException;
 
 public interface ChatService {
     void registerChat(Long chatId) throws DTOException;

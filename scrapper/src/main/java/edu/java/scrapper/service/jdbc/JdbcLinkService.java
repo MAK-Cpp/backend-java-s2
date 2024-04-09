@@ -1,19 +1,19 @@
 package edu.java.scrapper.service.jdbc;
 
+import edu.java.dto.exception.DTOException;
+import edu.java.dto.exception.LinkNotFoundException;
+import edu.java.dto.exception.NonExistentChatException;
+import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
-import edu.java.exception.DTOException;
-import edu.java.exception.LinkNotFoundException;
-import edu.java.exception.NonExistentChatException;
-import edu.java.exception.WrongParametersException;
 import edu.java.scrapper.repository.JdbcChatRepository;
 import edu.java.scrapper.repository.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.repository.JdbcLinkRepository;
 import edu.java.scrapper.service.LinkService;
+import edu.java.scrapper.validator.LinkValidator;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,24 +23,23 @@ public class JdbcLinkService implements LinkService {
     private static final String NON_EXISTENT_CHAT_EXCEPTION_FORMAT = "there is no chat with id=%d";
     private static final String NON_EXISTENT_LINK_EXCEPTION_FORMAT = "there is no link %s";
     private static final String INVALID_LINK_EXCEPTION_FORMAT = "string %s is not a valid link";
-    private static final Pattern GITHUB_PATTERN
-        = Pattern.compile("^(https?://)?(www\\.)?github\\.com/([\\w-]+/?)+", Pattern.CASE_INSENSITIVE);
-    private static final Pattern STACKOVERFLOW_PATTERN
-        = Pattern.compile("^(https?://)?(www\\.)?stackoverflow\\.com/([\\w-]+/?)+", Pattern.CASE_INSENSITIVE);
 
     private final JdbcChatRepository chatRepository;
     private final JdbcLinkRepository linkRepository;
     private final JdbcChatsAndLinksRepository chatsAndLinksRepository;
+    private final List<LinkValidator> linkValidators;
 
     @Autowired
     public JdbcLinkService(
         JdbcChatRepository chatRepository,
         JdbcLinkRepository linkRepository,
-        JdbcChatsAndLinksRepository chatsAndLinksRepository
+        JdbcChatsAndLinksRepository chatsAndLinksRepository,
+        List<LinkValidator> linkValidators
     ) {
         this.chatRepository = chatRepository;
         this.linkRepository = linkRepository;
         this.chatsAndLinksRepository = chatsAndLinksRepository;
+        this.linkValidators = linkValidators;
     }
 
     private void validateChatId(Long chatId) throws DTOException {
@@ -52,9 +51,14 @@ public class JdbcLinkService implements LinkService {
     }
 
     private URI validateLink(String link) throws DTOException {
-        final boolean isGithubLink = GITHUB_PATTERN.matcher(link).matches();
-        final boolean isStackoverflowLink = STACKOVERFLOW_PATTERN.matcher(link).matches();
-        if (!isGithubLink && !isStackoverflowLink) {
+        boolean isValidLink = false;
+        for (LinkValidator linkValidator : linkValidators) {
+            if (linkValidator.isValid(link)) {
+                isValidLink = true;
+                break;
+            }
+        }
+        if (!isValidLink) {
             throw new WrongParametersException(String.format(INVALID_LINK_EXCEPTION_FORMAT, link));
         }
         try {
@@ -75,9 +79,9 @@ public class JdbcLinkService implements LinkService {
     public LinkResponse addLink(Long chatId, String link) throws DTOException {
         validateChatId(chatId);
         final URI uri = validateLink(link);
-        final Long linkId = linkRepository.add(uri);
-        chatsAndLinksRepository.add(chatId, linkId);
-        return new LinkResponse(linkId, uri);
+        final LinkResponse response = linkRepository.add(uri);
+        chatsAndLinksRepository.add(chatId, response.getId());
+        return response;
     }
 
     @Override
@@ -88,8 +92,8 @@ public class JdbcLinkService implements LinkService {
         if (linksResponse.isEmpty()) {
             throw new LinkNotFoundException(String.format(NON_EXISTENT_LINK_EXCEPTION_FORMAT, link));
         }
-        final Long linkId = linksResponse.getFirst().getId();
-        chatsAndLinksRepository.remove(chatId, linkId);
-        return new LinkResponse(linkId, uri);
+        final LinkResponse response = linksResponse.getFirst();
+        chatsAndLinksRepository.remove(chatId, response.getId());
+        return response;
     }
 }

@@ -1,6 +1,6 @@
 package edu.java.scrapper.client;
 
-import edu.java.scrapper.response.AnswerResponse;
+import edu.java.scrapper.response.stackoverflow.AnswerResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -23,7 +23,7 @@ public class StackOverflowClientImpl implements StackOverflowClient {
     }
 
     @Override
-    public Mono<AnswerResponse> getQuestionAnswers(int questionId) {
+    public Mono<AnswerResponse> getQuestionAnswers(String questionId) {
         return githubWebClient.get()
             .uri(uriBuilder -> uriBuilder
                 .path("/questions/{id}/answers")

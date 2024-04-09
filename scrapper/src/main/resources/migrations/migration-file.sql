@@ -4,7 +4,8 @@
 CREATE TABLE links
 (
     link_id BIGSERIAL PRIMARY KEY,
-    uri     TEXT NOT NULL
+    uri     TEXT NOT NULL,
+    last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 --changeset scrapper:2

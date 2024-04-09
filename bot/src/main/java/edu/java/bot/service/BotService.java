@@ -1,7 +1,7 @@
 package edu.java.bot.service;
 
 import edu.java.dto.request.LinkUpdateRequest;
-import edu.java.exception.WrongParametersException;
+import edu.java.dto.exception.WrongParametersException;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

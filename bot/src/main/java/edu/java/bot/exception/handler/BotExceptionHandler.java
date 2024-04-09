@@ -1,7 +1,7 @@
 package edu.java.bot.exception.handler;
 
 import edu.java.dto.response.ApiErrorResponse;
-import edu.java.exception.WrongParametersException;
+import edu.java.dto.exception.WrongParametersException;
 import java.util.Arrays;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
