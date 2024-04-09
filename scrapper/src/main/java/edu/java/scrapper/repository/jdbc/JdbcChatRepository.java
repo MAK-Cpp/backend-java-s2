@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @Transactional
 public class JdbcChatRepository extends JdbcTemplate {
-    private static final RowMapper<ChatResponse> CHAT_DTO_ROW_MAPPER =
+    public static final RowMapper<ChatResponse> CHAT_DTO_ROW_MAPPER =
         (rs, rowNum) -> new ChatResponse(rs.getLong("chat_id"));
 
     @Autowired

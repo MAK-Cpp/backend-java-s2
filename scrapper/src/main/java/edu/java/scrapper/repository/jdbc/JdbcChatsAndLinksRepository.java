@@ -1,7 +1,7 @@
 package edu.java.scrapper.repository;
 
+import edu.java.dto.response.ChatResponse;
 import edu.java.dto.response.LinkResponse;
-import java.time.OffsetDateTime;
 import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @Transactional
 public class JdbcChatsAndLinksRepository extends JdbcTemplate {
-    private static final String FIND_ALL_SQL =
+    @SuppressWarnings("checkstyle:LineLength")
+    private static final String FIND_ALL_LINKS_BY_CHAT_ID_SQL =
         "SELECT l.link_id, l.uri, l.last_update FROM chats_and_links cl JOIN links l ON cl.link_id = l.link_id WHERE cl.chat_id = ?";
+    private static final String FIND_ALL_CHATS_BY_LINK_ID_SQL =
+        "SELECT chat_id FROM chats_and_links WHERE link_id = ?";
 
     @Autowired
     public JdbcChatsAndLinksRepository(DataSource dataSource) {
@@ -32,7 +35,11 @@ public class JdbcChatsAndLinksRepository extends JdbcTemplate {
         update("DELETE FROM chats_and_links WHERE chat_id = ?", chatId);
     }
 
-    public List<LinkResponse> findAll(Long chatId) {
-        return query(FIND_ALL_SQL, JdbcLinkRepository.LINK_DTO_ROW_MAPPER, chatId);
+    public List<LinkResponse> findAllLinks(Long chatId) {
+        return query(FIND_ALL_LINKS_BY_CHAT_ID_SQL, JdbcLinkRepository.LINK_DTO_ROW_MAPPER, chatId);
+    }
+
+    public List<ChatResponse> findAllChats(Long linkId) {
+        return query(FIND_ALL_CHATS_BY_LINK_ID_SQL, JdbcChatRepository.CHAT_DTO_ROW_MAPPER, linkId);
     }
 }
