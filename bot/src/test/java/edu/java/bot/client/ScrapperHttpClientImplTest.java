@@ -7,6 +7,7 @@ import edu.java.dto.response.ListLinkResponse;
 import edu.java.dto.exception.LinkNotFoundException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.stream.Stream;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -98,22 +100,32 @@ class ScrapperHttpClientImplTest {
                 1L,
                 HttpStatus.OK,
                 "{\n" +
-                    "  \"links\": [\n" +
-                    "    {\n" +
-                    "      \"id\": 1,\n" +
-                    "      \"url\": \"https://github.com/MAK-Cpp/backend-java-s2\"\n" +
-                    "    },\n" +
-                    "    {\n" +
-                    "      \"id\": 2,\n" +
-                    "      \"url\": \"https://stackoverflow.com/questions/11828270/how-do-i-exit-vim\"\n" +
-                    "    }\n" +
-                    "  ],\n" +
-                    "  \"size\": 2\n" +
+                    "    \"links\": [\n" +
+                    "        {\n" +
+                    "            \"id\": 1,\n" +
+                    "            \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
+                    "            \"lastUpdate\": \"2024-04-09T22:48:20.730316Z\"\n" +
+                    "        },\n" +
+                    "        {\n" +
+                    "            \"id\": 2,\n" +
+                    "            \"uri\": \"https://stackoverflow.com/questions/11828270/how-do-i-exit-vim\",\n" +
+                    "            \"lastUpdate\": \"2024-04-09T22:48:57.04223Z\"\n" +
+                    "        }\n" +
+                    "    ],\n" +
+                    "    \"size\": 2\n" +
                     "}",
                 new ListLinkResponse(
                     new LinkResponse[] {
-                        new LinkResponse(1L, new URI("https://github.com/MAK-Cpp/backend-java-s2")),
-                        new LinkResponse(2L, new URI("https://stackoverflow.com/questions/11828270/how-do-i-exit-vim"))
+                        new LinkResponse(
+                            1L,
+                            new URI("https://github.com/MAK-Cpp/backend-java-s2/pulls"),
+                            OffsetDateTime.parse("2024-04-09T22:48:20.730316Z")
+                        ),
+                        new LinkResponse(
+                            2L,
+                            new URI("https://stackoverflow.com/questions/11828270/how-do-i-exit-vim"),
+                            OffsetDateTime.parse("2024-04-09T22:48:57.04223Z")
+                        )
                     },
                     2
                 )
@@ -151,13 +163,18 @@ class ScrapperHttpClientImplTest {
         return Stream.of(
             Arguments.of(
                 1L,
-                "t.me/MAK_Cpp",
+                "https://github.com/MAK-Cpp/backend-java-s2/pulls",
                 HttpStatus.OK,
                 "{\n" +
                     "  \"id\": 1,\n" +
-                    "  \"url\": \"t.me/MAK_Cpp\"\n" +
+                    "  \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
+                    "  \"lastUpdate\": \"2024-04-09T22:48:20.730316Z\"\n" +
                     "}",
-                new LinkResponse(1L, new URI("t.me/MAK_Cpp"))
+                new LinkResponse(
+                    1L,
+                    new URI("https://github.com/MAK-Cpp/backend-java-s2/pulls"),
+                    OffsetDateTime.parse("2024-04-09T22:48:20.730316Z")
+                )
             ),
             Arguments.of(
                 -1L,
@@ -194,13 +211,18 @@ class ScrapperHttpClientImplTest {
         return Stream.of(
             Arguments.of(
                 1L,
-                "YouTube.com",
+                "https://github.com/MAK-Cpp/backend-java-s2/pulls",
                 HttpStatus.OK,
                 "{\n" +
                     "  \"id\": 1,\n" +
-                    "  \"url\": \"YouTube.com\"\n" +
+                    "  \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
+                    "  \"lastUpdate\": \"2024-04-09T22:48:20.730316Z\"\n" +
                     "}",
-                new LinkResponse(1L, new URI("YouTube.com"))
+                new LinkResponse(
+                    1L,
+                    new URI("https://github.com/MAK-Cpp/backend-java-s2/pulls"),
+                    OffsetDateTime.parse("2024-04-09T22:48:20.730316Z")
+                )
             ),
             Arguments.of(
                 1L,

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommitResponse implements Response {
+    private static final String AUTHOR_FORMAT = "%s <%s>";
     private Commit commit;
 
     @Data
@@ -28,6 +29,11 @@ public class CommitResponse implements Response {
         private String name;
         private String email;
         private OffsetDateTime date;
+
+        @Override
+        public String toString() {
+            return String.format(AUTHOR_FORMAT, name, email);
+        }
     }
 
     @Data
@@ -37,5 +43,10 @@ public class CommitResponse implements Response {
         private String name;
         private String email;
         private OffsetDateTime date;
+
+        @Override
+        public String toString() {
+            return String.format(AUTHOR_FORMAT, name, email);
+        }
     }
 }

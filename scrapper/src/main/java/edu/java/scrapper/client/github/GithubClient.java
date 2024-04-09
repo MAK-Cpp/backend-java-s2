@@ -1,18 +1,18 @@
-package edu.java.scrapper.client;
+package edu.java.scrapper.client.github;
 
+import edu.java.scrapper.client.ExternalServiceClient;
 import edu.java.scrapper.response.github.CommitResponse;
 import edu.java.scrapper.response.github.IssueCommentResponse;
 import edu.java.scrapper.response.github.IssueResponse;
 import edu.java.scrapper.response.github.PullRequestResponse;
 import java.util.List;
-import reactor.core.publisher.Mono;
 
-public interface GithubClient {
-    Mono<List<PullRequestResponse>> getPullRequests(String owner, String repo);
+public interface GithubClient extends ExternalServiceClient {
+    List<PullRequestResponse> getPullRequests(String owner, String repo);
 
-    Mono<List<IssueResponse>> getIssues(String owner, String repo);
+    List<IssueResponse> getIssues(String owner, String repo);
 
-    Mono<List<CommitResponse>> getListCommitsOnPullRequest(String owner, String repo, String pullNumber);
+    List<CommitResponse> getListCommitsOnPullRequest(String owner, String repo, String pullNumber);
 
-    Mono<List<IssueCommentResponse>> getListIssueComments(String owner, String repo, String issueNumber);
+    List<IssueCommentResponse> getListIssueComments(String owner, String repo, String issueNumber);
 }

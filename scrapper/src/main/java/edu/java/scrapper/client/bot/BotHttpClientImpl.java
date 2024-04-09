@@ -1,8 +1,8 @@
-package edu.java.scrapper.client;
+package edu.java.scrapper.client.bot;
 
+import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.LinkUpdateRequest;
 import edu.java.dto.response.ApiErrorResponse;
-import edu.java.dto.exception.WrongParametersException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,7 +26,7 @@ public class BotHttpClientImpl implements BotHttpClient {
     }
 
     @Override
-    public void sendUpdates(long id, String url, String description, long... tgChatIds) {
+    public void sendUpdates(Long id, String url, String description, Long... tgChatIds) {
         botWebClient.post()
             .uri("/updates")
             .body(Mono.just(new LinkUpdateRequest(id, url, description, tgChatIds)), LinkUpdateRequest.class)

@@ -2,6 +2,8 @@ package edu.java.scrapper.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import edu.java.scrapper.client.stackoverflow.StackOverflowClient;
+import edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl;
 import edu.java.scrapper.response.stackoverflow.AnswerResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,10 +18,10 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Stream;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static edu.java.scrapper.client.StackOverflowClientImpl.FILTER;
-import static edu.java.scrapper.client.StackOverflowClientImpl.ORDER;
-import static edu.java.scrapper.client.StackOverflowClientImpl.SITE;
-import static edu.java.scrapper.client.StackOverflowClientImpl.SORT;
+import static edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl.FILTER;
+import static edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl.ORDER;
+import static edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl.SITE;
+import static edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl.SORT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -180,7 +182,7 @@ class StackOverflowClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-        AnswerResponse output = stackOverflowClient.getQuestionAnswers(questionId).block();
+        AnswerResponse output = stackOverflowClient.getQuestionAnswers(questionId);
         assertThat(output).isEqualTo(result);
     }
 

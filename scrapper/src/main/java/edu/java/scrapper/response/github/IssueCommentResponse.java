@@ -1,8 +1,8 @@
 package edu.java.scrapper.response.github;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.OffsetDateTime;
 import edu.java.scrapper.response.Response;
+import java.time.OffsetDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,5 +24,10 @@ public class IssueCommentResponse implements Response {
     public static class User {
         private String login;
         private String type;
+
+        @Override
+        public String toString() {
+            return login + "(type: " + type + ")";
+        }
     }
 }

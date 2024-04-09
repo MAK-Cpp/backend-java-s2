@@ -1,8 +1,8 @@
-package edu.java.scrapper.client;
+package edu.java.scrapper.client.stackoverflow;
 
+import edu.java.scrapper.client.ExternalServiceClient;
 import edu.java.scrapper.response.stackoverflow.AnswerResponse;
-import reactor.core.publisher.Mono;
 
-public interface StackOverflowClient {
-    Mono<AnswerResponse> getQuestionAnswers(String questionId);
+public interface StackOverflowClient extends ExternalServiceClient {
+    AnswerResponse getQuestionAnswers(String id);
 }

@@ -1,9 +1,9 @@
 package edu.java.scrapper;
 
 import edu.java.dto.response.LinkResponse;
-import edu.java.scrapper.repository.JdbcChatRepository;
-import edu.java.scrapper.repository.JdbcChatsAndLinksRepository;
-import edu.java.scrapper.repository.JdbcLinkRepository;
+import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
+import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
+import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,10 +65,10 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
         repository.add(2L, response.getId());
         List<LinkResponse> result = new ArrayList<>(LINKS_DTOS.get(2));
         result.add(response);
-        assertThat(repository.findAll(0L)).isEqualTo(LINKS_DTOS.get(0));
-        assertThat(repository.findAll(1L)).isEqualTo(LINKS_DTOS.get(1));
-        assertThat(repository.findAll(2L)).isEqualTo(result);
-        assertThat(repository.findAll(3L)).isEqualTo(LINKS_DTOS.get(3));
+        assertThat(repository.findAllLinks(0L)).isEqualTo(LINKS_DTOS.get(0));
+        assertThat(repository.findAllLinks(1L)).isEqualTo(LINKS_DTOS.get(1));
+        assertThat(repository.findAllLinks(2L)).isEqualTo(result);
+        assertThat(repository.findAllLinks(3L)).isEqualTo(LINKS_DTOS.get(3));
     }
 
     @Test
@@ -85,9 +85,9 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
                 result.add(link);
             }
         });
-        assertThat(repository.findAll(0L)).isEqualTo(result);
-        assertThat(repository.findAll(1L)).isEqualTo(LINKS_DTOS.get(1));
-        assertThat(repository.findAll(2L)).isEqualTo(LINKS_DTOS.get(2));
-        assertThat(repository.findAll(3L)).isEqualTo(LINKS_DTOS.get(3));
+        assertThat(repository.findAllLinks(0L)).isEqualTo(result);
+        assertThat(repository.findAllLinks(1L)).isEqualTo(LINKS_DTOS.get(1));
+        assertThat(repository.findAllLinks(2L)).isEqualTo(LINKS_DTOS.get(2));
+        assertThat(repository.findAllLinks(3L)).isEqualTo(LINKS_DTOS.get(3));
     }
 }

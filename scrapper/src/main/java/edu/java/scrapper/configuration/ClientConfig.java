@@ -1,11 +1,11 @@
 package edu.java.scrapper.configuration;
 
-import edu.java.scrapper.client.BotHttpClient;
-import edu.java.scrapper.client.BotHttpClientImpl;
-import edu.java.scrapper.client.GithubClient;
-import edu.java.scrapper.client.GithubClientImpl;
-import edu.java.scrapper.client.StackOverflowClient;
-import edu.java.scrapper.client.StackOverflowClientImpl;
+import edu.java.scrapper.client.bot.BotHttpClient;
+import edu.java.scrapper.client.bot.BotHttpClientImpl;
+import edu.java.scrapper.client.github.GithubClient;
+import edu.java.scrapper.client.github.GithubClientImpl;
+import edu.java.scrapper.client.stackoverflow.StackOverflowClient;
+import edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.Objects;
 import org.springframework.boot.context.properties.ConfigurationProperties;

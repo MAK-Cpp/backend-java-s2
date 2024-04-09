@@ -11,6 +11,7 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.BaseResponse;
 import com.pengrad.telegrambot.response.SendResponse;
+import edu.java.bot.client.ScrapperHttpClient;
 import edu.java.bot.command.Command;
 import edu.java.bot.command.CommandFunction;
 import edu.java.bot.configuration.ApplicationConfig;
@@ -22,28 +23,33 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public final class TelegramBotComponent extends TelegramBot {
     private final ConcurrentMap<String, CommandFunction> commandFunctions = new ConcurrentHashMap<>();
     private final ConcurrentMap<Long, User> users = new ConcurrentHashMap<>();
     @Getter private final String usage;
-    private static final Logger LOGGER = LoggerFactory.getLogger(TelegramBotComponent.class);
+    private final ScrapperHttpClient scrapperHttpClient;
 
     public static <T> Optional<T> maybe(final T value) {
         return Optional.ofNullable(value);
     }
 
     @Autowired
-    public TelegramBotComponent(ApplicationConfig config, List<Command> commands) {
+    public TelegramBotComponent(
+        ApplicationConfig config,
+        List<Command> commands,
+        ScrapperHttpClient scrapperHttpClient
+    ) {
         super(config.telegramToken());
+        this.scrapperHttpClient = scrapperHttpClient;
         setUpdatesListener(this::updateListener, this::exceptionHandler);
         usage = setCommands(commands);
-        LOGGER.debug("Created bot with token " + this.getToken());
+        log.debug("Created bot with token {}", getToken());
     }
 
     public Optional<User> addUser(long id, User user) {
@@ -151,7 +157,7 @@ public final class TelegramBotComponent extends TelegramBot {
             result.append('/').append(command.getName()).append(" - ").append(command.getDescription()).append('\n');
             commandFunctions.put("/" + command.getName(), command.getFunction());
             botCommands[i] = new BotCommand(command.getName(), command.getDescription());
-            LOGGER.debug("added command " + command.getName() + " to bot");
+            log.debug("added command {} to bot", command.getName());
         }
         execute(new SetMyCommands(botCommands));
         return result.toString();

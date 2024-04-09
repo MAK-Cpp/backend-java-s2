@@ -40,5 +40,10 @@ public class AnswerResponse implements Response {
         private int reputation;
         @JsonProperty("user_id")
         private int userId;
+
+        @Override
+        public String toString() {
+           return "[" + name + "](" + link + "), reputation: " + reputation;
+        }
     }
 }

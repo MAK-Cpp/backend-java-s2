@@ -1,7 +1,7 @@
 package edu.java.scrapper;
 
 import edu.java.dto.response.LinkResponse;
-import edu.java.scrapper.repository.JdbcLinkRepository;
+import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

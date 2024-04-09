@@ -2,6 +2,8 @@ package edu.java.scrapper.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import edu.java.scrapper.client.github.GithubClient;
+import edu.java.scrapper.client.github.GithubClientImpl;
 import edu.java.scrapper.response.Response;
 import edu.java.scrapper.response.github.CommitResponse;
 import edu.java.scrapper.response.github.IssueCommentResponse;
@@ -56,7 +58,7 @@ public class GithubClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-                yield githubClient.getPullRequests(owner, repo).block();
+                yield githubClient.getPullRequests(owner, repo);
             }
             case ISSUES -> {
                 MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/issues");
@@ -64,7 +66,7 @@ public class GithubClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-                yield githubClient.getIssues(owner, repo).block();
+                yield githubClient.getIssues(owner, repo);
             }
         };
         assertThat(output).isEqualTo(result);
@@ -85,7 +87,7 @@ public class GithubClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-                yield githubClient.getListCommitsOnPullRequest(owner, repo, number).block();
+                yield githubClient.getListCommitsOnPullRequest(owner, repo, number);
             }
             case ISSUES -> {
                 MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/issues/" + number + "/comments");
@@ -93,7 +95,7 @@ public class GithubClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-                yield githubClient.getListIssueComments(owner, repo, number).block();
+                yield githubClient.getListIssueComments(owner, repo, number);
             }
         };
         assertThat(output).isEqualTo(result);
@@ -483,6 +485,7 @@ public class GithubClientImplTest {
                         "https://github.com/octocat/Hello-World/pull/2988",
                         "open",
                         "Create codeql.yml",
+                        new PullRequestResponse.User("didar72ahmadi", "User"),
                         "com.google.android.permission \r\n",
                         2988,
                         OffsetDateTime.parse("2024-02-23T12:43:58Z"),
@@ -578,6 +581,7 @@ public class GithubClientImplTest {
                     new IssueResponse(
                         2988,
                         "Create codeql.yml",
+                        new IssueResponse.User("didar72ahmadi", "User"),
                         "https://github.com/octocat/Hello-World/pull/2988",
                         "open",
                         OffsetDateTime.parse("2024-02-23T12:43:58Z"),

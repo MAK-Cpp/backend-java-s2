@@ -3,6 +3,8 @@ package edu.java.scrapper.client;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import edu.java.dto.exception.WrongParametersException;
+import edu.java.scrapper.client.bot.BotHttpClient;
+import edu.java.scrapper.client.bot.BotHttpClientImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,7 +34,7 @@ class BotHttpClientImplTest {
                 3L,
                 "GitHub.com",
                 "remote repositories",
-                new long[] {1, 2, 3, 4, 5},
+                new Long[] {1L, 2L, 3L, 4L, 5L},
                 HttpStatus.OK,
                 null
             ),
@@ -40,7 +42,7 @@ class BotHttpClientImplTest {
                 -1L,
                 "GitHub.com",
                 "remote repositories",
-                new long[] {1, 2, 3, 4, 5},
+                new Long[] {1L, 2L, 3L, 4L, 5L},
                 HttpStatus.BAD_REQUEST,
                 "{\n" +
                     "  \"description\": \"Некорректные параметры запроса\",\n" +
@@ -55,7 +57,7 @@ class BotHttpClientImplTest {
                 1L,
                 "",
                 "",
-                new long[] {},
+                new Long[] {},
                 HttpStatus.BAD_REQUEST,
                 "{\n" +
                     "  \"description\": \"Некорректные параметры запроса\",\n" +
@@ -79,10 +81,10 @@ class BotHttpClientImplTest {
     @ParameterizedTest
     @MethodSource
     public void testSendUpdates(
-        long id,
+        Long id,
         String url,
         String description,
-        long[] tgChatIds,
+        Long[] tgChatIds,
         HttpStatus status,
         String body
     ) {

@@ -6,9 +6,9 @@ import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
-import edu.java.scrapper.repository.JdbcChatRepository;
-import edu.java.scrapper.repository.JdbcChatsAndLinksRepository;
-import edu.java.scrapper.repository.JdbcLinkRepository;
+import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
+import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
+import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
 import edu.java.scrapper.service.LinkService;
 import edu.java.scrapper.validator.LinkValidator;
 import java.net.URI;
@@ -69,9 +69,15 @@ public class JdbcLinkService implements LinkService {
     }
 
     @Override
+    public ListLinkResponse getAllLinks() throws DTOException {
+        final LinkResponse[] links = linkRepository.findAll().toArray(LinkResponse[]::new);
+        return new ListLinkResponse(links, links.length);
+    }
+
+    @Override
     public ListLinkResponse getAllLinks(Long chatId) throws DTOException {
         validateChatId(chatId);
-        final LinkResponse[] links = chatsAndLinksRepository.findAll(chatId).toArray(LinkResponse[]::new);
+        final LinkResponse[] links = chatsAndLinksRepository.findAllLinks(chatId).toArray(LinkResponse[]::new);
         return new ListLinkResponse(links, links.length);
     }
 

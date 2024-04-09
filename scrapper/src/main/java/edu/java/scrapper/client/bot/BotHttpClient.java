@@ -1,5 +1,5 @@
-package edu.java.scrapper.client;
+package edu.java.scrapper.client.bot;
 
 public interface BotHttpClient {
-    void sendUpdates(long id, String url, String description, long... tgChatIds);
+    void sendUpdates(Long id, String url, String description, Long... tgChatIds);
 }

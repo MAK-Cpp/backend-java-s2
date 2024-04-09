@@ -2,8 +2,10 @@ package edu.java.scrapper.service.jdbc;
 
 import edu.java.dto.exception.DTOException;
 import edu.java.dto.exception.WrongParametersException;
-import edu.java.scrapper.repository.JdbcChatRepository;
-import edu.java.scrapper.repository.JdbcChatsAndLinksRepository;
+import edu.java.dto.response.ChatResponse;
+import edu.java.dto.response.ListChatResponse;
+import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
+import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.service.ChatService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,5 +44,17 @@ public class JdbcChatService implements ChatService {
         chatsAndLinksRepository.remove(chatId);
         chatRepository.remove(chatId);
         log.info(String.format(SUCCESS_CHAT_DELETED_FORMAT, chatId));
+    }
+
+    @Override
+    public ListChatResponse getAllChats() throws DTOException {
+        final ChatResponse[] response = chatRepository.findAll().toArray(ChatResponse[]::new);
+        return new ListChatResponse(response, response.length);
+    }
+
+    @Override
+    public ListChatResponse getAllChats(Long linkId) throws DTOException {
+        final ChatResponse[] response = chatsAndLinksRepository.findAllChats(linkId).toArray(ChatResponse[]::new);
+        return new ListChatResponse(response, response.length);
     }
 }

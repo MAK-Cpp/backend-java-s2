@@ -1,4 +1,4 @@
-package edu.java.scrapper.repository;
+package edu.java.scrapper.repository.jdbc;
 
 import edu.java.dto.response.LinkResponse;
 import edu.java.scrapper.exception.UnexpectedValuesCountException;
@@ -43,6 +43,10 @@ public class JdbcLinkRepository extends JdbcTemplate {
 
     public void remove(Long linkId) {
         update("DELETE FROM links WHERE link_id = ?", linkId);
+    }
+
+    public void update(Long linkId) {
+        update("UPDATE links SET last_update = ? WHERE link_id = ?", OffsetDateTime.now(), linkId);
     }
 
     public List<LinkResponse> findAll() {
