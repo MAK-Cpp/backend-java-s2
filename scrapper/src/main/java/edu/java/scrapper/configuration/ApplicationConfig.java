@@ -17,6 +17,7 @@ public record ApplicationConfig(
     @NotNull
     Scheduler scheduler
 ) {
+    @SuppressWarnings("checkstyle:MultipleStringLiterals")
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource ds = new DriverManagerDataSource();

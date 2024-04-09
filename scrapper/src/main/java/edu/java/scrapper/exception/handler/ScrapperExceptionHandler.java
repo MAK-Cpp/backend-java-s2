@@ -1,9 +1,9 @@
 package edu.java.scrapper.exception.handler;
 
-import edu.java.dto.response.ApiErrorResponse;
 import edu.java.dto.exception.LinkNotFoundException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
+import edu.java.dto.response.ApiErrorResponse;
 import java.util.Arrays;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;

@@ -1,13 +1,13 @@
 package edu.java.scrapper.controller;
 
+import edu.java.dto.exception.LinkNotFoundException;
+import edu.java.dto.exception.NonExistentChatException;
+import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.AddLinkRequest;
 import edu.java.dto.request.RemoveLinkRequest;
 import edu.java.dto.response.ApiErrorResponse;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
-import edu.java.dto.exception.LinkNotFoundException;
-import edu.java.dto.exception.NonExistentChatException;
-import edu.java.dto.exception.WrongParametersException;
 import edu.java.scrapper.service.ChatService;
 import edu.java.scrapper.service.LinkService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;

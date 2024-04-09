@@ -2,7 +2,6 @@ package edu.java.scrapper.client.stackoverflow;
 
 import edu.java.scrapper.response.stackoverflow.AnswerResponse;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 public class StackOverflowClientImpl implements StackOverflowClient {
     public static final String BASE_STACK_OVERFLOW_API_URL = "https://api.stackexchange.com/2.3";

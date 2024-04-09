@@ -1,13 +1,13 @@
 package edu.java.bot.client;
 
+import edu.java.dto.exception.LinkNotFoundException;
+import edu.java.dto.exception.NonExistentChatException;
+import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.AddLinkRequest;
 import edu.java.dto.request.RemoveLinkRequest;
 import edu.java.dto.response.ApiErrorResponse;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
-import edu.java.dto.exception.LinkNotFoundException;
-import edu.java.dto.exception.NonExistentChatException;
-import edu.java.dto.exception.WrongParametersException;
 import java.util.Objects;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
