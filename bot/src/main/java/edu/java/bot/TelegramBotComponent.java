@@ -53,10 +53,12 @@ public final class TelegramBotComponent extends TelegramBot {
     }
 
     public Optional<User> addUser(long id, User user) {
+        log.debug("Adding user {}", id);
         return maybe(users.put(id, user));
     }
 
     public Optional<User> deleteUser(long id) {
+        log.debug("Deleting user {}", id);
         return maybe(users.remove(id));
     }
 

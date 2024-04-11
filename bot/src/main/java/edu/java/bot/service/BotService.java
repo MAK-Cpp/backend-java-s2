@@ -1,16 +1,24 @@
 package edu.java.bot.service;
 
+import edu.java.bot.TelegramBotComponent;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.LinkUpdateRequest;
 import java.util.Objects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import static edu.java.bot.request.chains.SendMessageChains.SM_DISABLE_PREVIEW;
+import static edu.java.bot.request.chains.SendMessageChains.SM_MARKDOWN;
 
 @Service
+@Slf4j
 public class BotService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BotService.class);
+    private final TelegramBotComponent telegramBot;
+
+    @Autowired
+    public BotService(TelegramBotComponent telegramBot) {
+        this.telegramBot = telegramBot;
+    }
 
     public void updateLink(LinkUpdateRequest request) {
         if (Objects.equals(request.getUrl(), "")) {
@@ -18,6 +26,14 @@ public class BotService {
         } else if (request.getId() < 0) {
             throw new WrongParametersException("id cannot be negate");
         }
-        LOGGER.debug("request processed: " + request);
+        log.debug("request processed: {}", request);
+        for (LinkUpdateRequest.ChatAndAlias chatAndAlias : request.getChatsAndAliases()) {
+            final String chatDescription = String.format("New update for link [%s](%s):\n%s",
+                request.getUrl(),
+                chatAndAlias.getAlias(),
+                request.getDescription()
+            );
+            telegramBot.sendMessage(chatAndAlias.getId(), chatDescription, SM_MARKDOWN, SM_DISABLE_PREVIEW);
+        }
     }
 }

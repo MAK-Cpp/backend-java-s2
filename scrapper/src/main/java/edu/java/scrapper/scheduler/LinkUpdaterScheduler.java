@@ -1,6 +1,5 @@
 package edu.java.scrapper.scheduler;
 
-import edu.java.dto.response.ChatResponse;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
 import edu.java.scrapper.client.bot.BotHttpClient;
@@ -10,6 +9,7 @@ import edu.java.scrapper.service.LinkUpdater;
 import edu.java.scrapper.validator.LinkValidator;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,12 +52,17 @@ public class LinkUpdaterScheduler {
                     linkValidator.getUpdateDescription(link.getUri().toString(), link.getLastUpdate());
                 if (update.isPresent()) {
                     log.debug("updating link {}", link.getUri().toString());
-                    final ChatResponse[] chats = chatService.getAllChats(link.getId()).getChats();
-                    final Long[] chatIds = Arrays.stream(chats)
-                        .map(ChatResponse::getId)
-                        .toArray(Long[]::new);
-                    botHttpClient.sendUpdates(link.getId(), link.getUri().toString(), update.get(), chatIds);
-                    linkUpdater.updateLink(link.getId());
+                    final Long linkId = link.getId();
+                    final List<Map.Entry<Long, String>> chatIds =
+                        Arrays.stream(chatService.getAllChats(linkId).getChats())
+                            .map(chat -> {
+                                final Long chatId = chat.getId();
+                                final String alias = chatService.getLinkAlias(chatId, linkId).getAlias();
+                                return Map.entry(chatId, alias);
+                            })
+                            .toList();
+                    botHttpClient.sendUpdates(linkId, link.getUri().toString(), update.get(), chatIds);
+                    linkUpdater.updateLink(linkId);
                 }
             }
         }

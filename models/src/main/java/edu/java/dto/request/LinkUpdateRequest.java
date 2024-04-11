@@ -11,5 +11,13 @@ public class LinkUpdateRequest {
     private Long id;
     private String url;
     private String description;
-    private Long[] tgChatIds;
+    private ChatAndAlias[] chatsAndAliases;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChatAndAlias {
+        Long id;
+        String alias;
+    }
 }

@@ -13,6 +13,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
@@ -34,7 +36,13 @@ class BotHttpClientImplTest {
                 3L,
                 "GitHub.com",
                 "remote repositories",
-                new Long[] {1L, 2L, 3L, 4L, 5L},
+                List.of(
+                    Map.entry(1L, "link1"),
+                    Map.entry(2L, "link2"),
+                    Map.entry(3L, "link3"),
+                    Map.entry(4L, "link4"),
+                    Map.entry(5L, "link5")
+                ),
                 HttpStatus.OK,
                 null
             ),
@@ -42,7 +50,13 @@ class BotHttpClientImplTest {
                 -1L,
                 "GitHub.com",
                 "remote repositories",
-                new Long[] {1L, 2L, 3L, 4L, 5L},
+                List.of(
+                    Map.entry(1L, "link1"),
+                    Map.entry(2L, "link2"),
+                    Map.entry(3L, "link3"),
+                    Map.entry(4L, "link4"),
+                    Map.entry(5L, "link5")
+                ),
                 HttpStatus.BAD_REQUEST,
                 "{\n" +
                     "  \"description\": \"Некорректные параметры запроса\",\n" +
@@ -57,7 +71,7 @@ class BotHttpClientImplTest {
                 1L,
                 "",
                 "",
-                new Long[] {},
+                List.of(),
                 HttpStatus.BAD_REQUEST,
                 "{\n" +
                     "  \"description\": \"Некорректные параметры запроса\",\n" +
@@ -84,21 +98,21 @@ class BotHttpClientImplTest {
         Long id,
         String url,
         String description,
-        Long[] tgChatIds,
+        List<Map.Entry<Long, String>> chatsAndAliases,
         HttpStatus status,
         String body
     ) {
         MappingBuilder builder = post("/updates");
         if (status == HttpStatus.OK) {
             stubFor(builder.willReturn(aResponse().withStatus(200)));
-            assertDoesNotThrow(() -> botHttpClient.sendUpdates(id, url, description, tgChatIds));
+            assertDoesNotThrow(() -> botHttpClient.sendUpdates(id, url, description, chatsAndAliases));
         } else {
             stubFor(builder.willReturn(aResponse().withStatus(status.value())
                 .withHeader("Content-Type", "application/json")
                 .withBody(body)));
             assertThrows(
                 WrongParametersException.class,
-                () -> botHttpClient.sendUpdates(id, url, description, tgChatIds)
+                () -> botHttpClient.sendUpdates(id, url, description, chatsAndAliases)
             );
         }
     }

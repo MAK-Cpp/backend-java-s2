@@ -1,7 +1,7 @@
 app:
   scheduler:
     enable: true
-    interval: PT10S
+    interval: PT60S
     force-check-delay: PT10S
 
 

@@ -48,6 +48,15 @@ public class JdbcChatsAndLinksRepository extends JdbcTemplate {
         update("DELETE FROM chats_and_links WHERE chat_id = ?", chatId);
     }
 
+    public List<String> getAlias(Long chatId, Long linkId) {
+        return query(
+            "SELECT alias FROM chats_and_links WHERE (chat_id, link_id) = (?, ?)",
+            (rs, rowNum) -> rs.getString("alias"),
+            chatId,
+            linkId
+        );
+    }
+
     public List<UserLinkResponse> findAllLinks(Long chatId) {
         return query(FIND_ALL_LINKS_BY_CHAT_ID_SQL, USER_LINK_DTO_ROW_MAPPER, chatId);
     }
