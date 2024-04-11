@@ -3,11 +3,12 @@ package edu.java.bot.command;
 import com.pengrad.telegrambot.model.Update;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
-import edu.java.bot.User;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import edu.java.bot.client.ScrapperHttpClient;
+import edu.java.dto.exception.DTOException;
 import org.springframework.stereotype.Component;
 import static edu.java.bot.request.chains.SendMessageChains.SM_DISABLE_PREVIEW;
 import static edu.java.bot.request.chains.SendMessageChains.SM_MARKDOWN;
@@ -37,32 +38,31 @@ public class Track extends Command {
 
     /*package-private*/
     static CommandFunction parseLinks(TelegramBotComponent bot, Update update) {
+        final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
         final long chatId = update.message().chat().id();
-        Optional<User> optUser = bot.getUser(chatId);
-        if (optUser.isPresent()) {
-            User user = optUser.get();
-            List<Map.Entry<String, Boolean>> results = new ArrayList<>();
-            update.message().text().lines().forEach(line -> {
-                Optional<Link> optionalLink = Link.parse(line);
-                if (optionalLink.isEmpty()) {
-                    results.add(Map.entry(line, false));
-                } else {
-                    Link link = optionalLink.get();
-                    user.addLink(link);
+        final String messageText = update.message().text();
+        List<Map.Entry<String, Boolean>> results = new ArrayList<>();
+        messageText.lines().forEach(line -> {
+            Optional<Link> optionalLink = Link.parse(line);
+            if (optionalLink.isEmpty()) {
+                results.add(Map.entry(line, false));
+            } else {
+                Link link = optionalLink.get();
+                try {
+                    scrapperHttpClient.addLinkToTracking(chatId, link.getUri().toString(), link.getAlias());
                     results.add(Map.entry(link.toString(), true));
+                } catch (DTOException e) {
+                    results.add(Map.entry(line, false));
                 }
-            });
-            bot.sendMessage(chatId, createResult(results), SM_MARKDOWN, SM_DISABLE_PREVIEW);
-        }
+            }
+        });
+        bot.sendMessage(chatId, createResult(results), SM_MARKDOWN, SM_DISABLE_PREVIEW);
         return CommandFunction.END;
     }
 
     /*package-private*/
     static CommandFunction track(TelegramBotComponent bot, Update update) {
         long chatId = update.message().chat().id();
-        if (!isRegistered(bot, chatId)) {
-            return CommandFunction.END;
-        }
         bot.sendMessage(chatId, DESCRIPTION_MESSAGE);
         return Track::parseLinks;
     }

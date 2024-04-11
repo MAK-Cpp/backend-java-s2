@@ -22,13 +22,19 @@ public class JdbcChatTest extends IntegrationTest {
     private JdbcChatRepository chatRepository;
 
     private void fillDB() {
-        CHATS.forEach(chatDTO -> chatRepository.add(chatDTO.getId()));
+        CHATS.forEach(chatDTO -> {
+            try {
+                chatRepository.add(chatDTO.getId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Test
     @Transactional
     @Rollback
-    void addTest() {
+    void addTest() throws Exception {
         fillDB();
         chatRepository.add(384L);
         final List<ChatResponse> result = new ArrayList<>(CHATS);

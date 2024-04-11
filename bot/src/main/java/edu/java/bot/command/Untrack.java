@@ -7,11 +7,17 @@ import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
 import edu.java.bot.User;
+import edu.java.bot.client.ScrapperHttpClient;
 import edu.java.bot.request.chains.Chains;
 import edu.java.bot.request.chains.SendMessageChains;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 import org.springframework.stereotype.Component;
 import static edu.java.bot.request.chains.EditMessageTextChains.EMT_DISABLE_PREVIEW;
 import static edu.java.bot.request.chains.EditMessageTextChains.EMT_MARKDOWN;
@@ -48,24 +54,38 @@ public class Untrack extends Command {
         return result.addRow(new InlineKeyboardButton(CANCEL_BUTTON_TEXT).callbackData(CANCEL_BUTTON_TEXT));
     }
 
-    /*package-private*/ static CommandFunction confirmDelete(int messageId, final String linkAlias) {
+    /*package-private*/ static CommandFunction confirmDelete(int messageId, final String alias) {
         return (bot, update) -> {
+            final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
             final String chose = update.callbackQuery().data();
-            final long chatId = update.callbackQuery().from().id();
-            final Optional<User> optUser = bot.getUser(chatId);
+            final Long chatId = update.callbackQuery().from().id();
+            /*final Optional<User> optUser = bot.getUser(chatId);
             if (optUser.isEmpty()) {
                 return CommandFunction.END;
             }
-            final User user = optUser.get();
+            final User user = optUser.get();*/
             if (Objects.equals(chose, YES_BUTTON_TEXT)) {
-                user.removeLink(linkAlias).ifPresent(link -> bot.editMessageText(
+                final UserLinkResponse userLinkResponse = scrapperHttpClient.getLinkByChatIdAndAlias(chatId, alias);
+                final Link link = new Link(userLinkResponse.getAlias(), userLinkResponse.getLink().getUri().toString());
+                scrapperHttpClient.removeLinkFromTracking(chatId, alias);
+                bot.editMessageText(
+                    chatId, messageId,
+                    String.format(SUCCESS_MESSAGE_FORMAT, link),
+                    EMT_MARKDOWN, EMT_DISABLE_PREVIEW
+                );
+               /* user.removeLink(linkAlias).ifPresent(link -> bot.editMessageText(
                         chatId, messageId,
                         String.format(SUCCESS_MESSAGE_FORMAT, link),
                         EMT_MARKDOWN, EMT_DISABLE_PREVIEW
-                ));
+                ));*/
                 return CommandFunction.END;
             }
-            final InlineKeyboardMarkup buttons = getLinksButtons(user.aliasSet());
+            final UserLinkResponse[] userLinks = scrapperHttpClient.getAllLinks(chatId).getLinks();
+            final InlineKeyboardMarkup buttons = getLinksButtons(
+                Arrays.stream(userLinks)
+                    .map(UserLinkResponse::getAlias)
+                    .collect(Collectors.toSet())
+            );
             bot.editMessageText(
                 chatId, messageId,
                 DESCRIPTION_MESSAGE,
@@ -77,13 +97,14 @@ public class Untrack extends Command {
 
     /*package-private*/ static CommandFunction chooseLink(int messageId) {
         return (bot, update) -> {
+            final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
             final String alias = update.callbackQuery().data();
             final long chatId = update.callbackQuery().from().id();
             if (Objects.equals(alias, CANCEL_BUTTON_TEXT)) {
                 bot.editMessageText(chatId, messageId, ABORTED_MESSAGE);
                 return CommandFunction.END;
             }
-            final Optional<User> optUser = bot.getUser(chatId);
+            /*final Optional<User> optUser = bot.getUser(chatId);
             if (optUser.isEmpty()) {
                 return CommandFunction.END;
             }
@@ -91,7 +112,9 @@ public class Untrack extends Command {
             if (optLink.isEmpty()) {
                 return CommandFunction.END;
             }
-            final Link link = optLink.get();
+            final Link link = optLink.get();*/
+            final UserLinkResponse userLinkResponse = scrapperHttpClient.getLinkByChatIdAndAlias(chatId, alias);
+            final Link link = new Link(userLinkResponse.getAlias(), userLinkResponse.getLink().getUri().toString());
             final InlineKeyboardMarkup yesNo =
                 new InlineKeyboardMarkup(
                     new InlineKeyboardButton(YES_BUTTON_TEXT).callbackData(YES_BUTTON_TEXT),
@@ -107,18 +130,24 @@ public class Untrack extends Command {
     }
 
     /*package-private*/ static CommandFunction untrack(TelegramBotComponent bot, Update update) {
+        final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
         final long chatId = update.message().chat().id();
-        if (!(isRegistered(bot, chatId) && containsLinks(bot, chatId))) {
+        /*if (!(isRegistered(bot, chatId) && containsLinks(bot, chatId))) {
             return CommandFunction.END;
         }
         final Optional<User> optUser = bot.getUser(chatId);
         if (optUser.isEmpty()) {
             return CommandFunction.END;
-        }
-        final InlineKeyboardMarkup buttons = getLinksButtons(optUser.get().aliasSet());
+        }*/
+        final UserLinkResponse[] userLinks = scrapperHttpClient.getAllLinks(chatId).getLinks();
+        final InlineKeyboardMarkup buttons = getLinksButtons(
+            Arrays.stream(userLinks)
+                .map(UserLinkResponse::getAlias)
+                .collect(Collectors.toSet())
+        );
         final SendMessageChains chains = Chains.allOf(SM_REPLY_MARKUP(buttons), SM_DISABLE_PREVIEW);
-        final SendResponse response = bot.sendMessage(chatId, DESCRIPTION_MESSAGE, chains);
-        return chooseLink(response.message().messageId());
+        final SendResponse sendResponse = bot.sendMessage(chatId, DESCRIPTION_MESSAGE, chains);
+        return chooseLink(sendResponse.message().messageId());
     }
 
     public Untrack() {

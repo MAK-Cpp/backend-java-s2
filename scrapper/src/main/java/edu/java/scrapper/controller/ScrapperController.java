@@ -144,4 +144,28 @@ public class ScrapperController {
             .contentType(MediaType.APPLICATION_JSON)
             .body(linkService.removeLink(tgChatId, request.getAlias()));
     }
+
+    @GetMapping("/link")
+    @Operation(summary = "Получить ссылку по id чата и ее синониму", responses = {
+        @ApiResponse(responseCode = "200",
+                     description = "Ссылка успешно получена",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = UserLinkResponse.class))),
+        @ApiResponse(responseCode = "400",
+                     description = "Некорректные параметры запроса",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "404",
+                     description = "Ссылка или чат не существуют",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public ResponseEntity<UserLinkResponse> getLinkByChatIdAndAlias(
+        @RequestHeader long tgChatId, @RequestHeader String alias
+    ) {
+        return ResponseEntity
+            .ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(linkService.getLink(tgChatId, alias));
+    }
 }

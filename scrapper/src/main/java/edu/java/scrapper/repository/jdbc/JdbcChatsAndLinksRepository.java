@@ -18,6 +18,9 @@ public class JdbcChatsAndLinksRepository extends JdbcTemplate {
         "SELECT l.link_id, l.uri, l.last_update, cl.alias FROM chats_and_links cl JOIN links l ON cl.link_id = l.link_id WHERE cl.chat_id = ?";
     private static final String DELETE_LINK_IN_CHAT_BY_ALIAS_SQL =
         "DELETE FROM chats_and_links WHERE (chat_id, alias) = (?, ?) RETURNING link_id";
+    @SuppressWarnings("checkstyle:LineLength")
+    private static final String GET_LINK_BY_CHAT_ID_AND_ALIAS_SQL =
+        "SELECT l.link_id, l.uri, l.last_update, cl.alias FROM chats_and_links cl JOIN links l ON cl.link_id = l.link_id WHERE (cl.chat_id, cl.alias) = (?, ?)";
     private static final String FIND_ALL_CHATS_BY_LINK_ID_SQL =
         "SELECT chat_id FROM chats_and_links WHERE link_id = ?";
     private static final RowMapper<UserLinkResponse> USER_LINK_DTO_ROW_MAPPER =
@@ -55,6 +58,10 @@ public class JdbcChatsAndLinksRepository extends JdbcTemplate {
             chatId,
             linkId
         );
+    }
+
+    public List<UserLinkResponse> getLink(Long chatId, String alias) {
+        return query(GET_LINK_BY_CHAT_ID_AND_ALIAS_SQL, USER_LINK_DTO_ROW_MAPPER, chatId, alias);
     }
 
     public List<UserLinkResponse> findAllLinks(Long chatId) {

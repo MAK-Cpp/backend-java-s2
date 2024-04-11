@@ -1,5 +1,6 @@
 package edu.java.bot.client;
 
+import edu.java.dto.exception.DTOException;
 import edu.java.dto.exception.LinkNotFoundException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
@@ -17,10 +18,12 @@ import reactor.core.publisher.Mono;
 
 
 public class ScrapperHttpClientImpl implements ScrapperHttpClient {
-    private static final String BASE_SCRAPPER_URI = "https://localhost:8080";
+    private static final String BASE_SCRAPPER_URI = "http://localhost:8080";
     private static final String TG_CHAT_ID_URI = "/tg-chat/{id}";
     private static final String LINKS_URI = "/links";
+    private static final String LINK_URI = "/link";
     private static final String CHAT_ID_HEADER = "tgChatId";
+    private static final String ALIAS_HEADER = "alias";
     private final WebClient scrapperWebClient;
 
     public ScrapperHttpClientImpl(WebClient.Builder webClientBuilder, String baseUrl) {
@@ -72,6 +75,19 @@ public class ScrapperHttpClientImpl implements ScrapperHttpClient {
             .onStatus(HttpStatus.BAD_REQUEST::equals, ScrapperHttpClientImpl::badRequestFunction)
             .onStatus(HttpStatus.NOT_FOUND::equals, ScrapperHttpClientImpl::notFoundFunction)
             .bodyToMono(ListUserLinkResponse.class)
+            .block();
+    }
+
+    @Override
+    public UserLinkResponse getLinkByChatIdAndAlias(long chatId, String alias) throws DTOException {
+        return scrapperWebClient.get()
+            .uri(LINK_URI)
+            .header(CHAT_ID_HEADER, String.valueOf(chatId))
+            .header(ALIAS_HEADER, alias)
+            .retrieve()
+            .onStatus(HttpStatus.BAD_REQUEST::equals, ScrapperHttpClientImpl::badRequestFunction)
+            .onStatus(HttpStatus.NOT_FOUND::equals, ScrapperHttpClientImpl::notFoundFunction)
+            .bodyToMono(UserLinkResponse.class)
             .block();
     }
 

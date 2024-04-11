@@ -10,6 +10,8 @@ public interface LinkService {
 
     ListUserLinkResponse getAllLinks(Long chatId) throws DTOException;
 
+    UserLinkResponse getLink(Long chatId, String alias) throws DTOException;
+
     UserLinkResponse addLink(Long chatId, String link, String alias) throws DTOException;
 
     UserLinkResponse removeLink(Long chatId, String alias) throws DTOException;

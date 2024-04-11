@@ -11,6 +11,7 @@ import edu.java.scrapper.service.ChatService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -35,8 +36,13 @@ public class JdbcChatService implements ChatService {
         if (chatId < 0) {
             throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
         }
-        chatRepository.add(chatId);
-        log.info(String.format(SUCCESS_CHAT_REGISTER_FORMAT, chatId));
+        try {
+            chatRepository.add(chatId);
+            log.info(String.format(SUCCESS_CHAT_REGISTER_FORMAT, chatId));
+        } catch (Exception e) {
+            throw new WrongParametersException("chat already exists", e);
+        }
+
     }
 
     @Override

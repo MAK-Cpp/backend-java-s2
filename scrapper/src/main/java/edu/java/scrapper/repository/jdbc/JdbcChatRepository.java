@@ -1,6 +1,7 @@
 package edu.java.scrapper.repository.jdbc;
 
 import edu.java.dto.response.ChatResponse;
+import java.sql.SQLException;
 import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,8 @@ public class JdbcChatRepository extends JdbcTemplate {
         super(dataSource);
     }
 
-    public Long add(Long chatId) {
-        update("INSERT INTO chats (chat_id) VALUES (?) ON CONFLICT DO NOTHING", chatId);
+    public Long add(Long chatId) throws Exception {
+        update("INSERT INTO chats (chat_id) VALUES (?)", chatId);
         return chatId;
     }
 

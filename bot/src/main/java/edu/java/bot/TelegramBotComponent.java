@@ -31,9 +31,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public final class TelegramBotComponent extends TelegramBot {
     private final ConcurrentMap<String, CommandFunction> commandFunctions = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Long, User> users = new ConcurrentHashMap<>();
+    // private final ConcurrentMap<Long, User> users = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Long, CommandFunction> waitingFunctions = new ConcurrentHashMap<>();
     @Getter private final String usage;
-    private final ScrapperHttpClient scrapperHttpClient;
+    @Getter private final ScrapperHttpClient scrapperHttpClient;
 
     public static <T> Optional<T> maybe(final T value) {
         return Optional.ofNullable(value);
@@ -52,27 +53,27 @@ public final class TelegramBotComponent extends TelegramBot {
         log.debug("Created bot with token {}", getToken());
     }
 
-    public Optional<User> addUser(long id, User user) {
+/*    public void addUser(long id) {
         log.debug("Adding user {}", id);
-        return maybe(users.put(id, user));
+        scrapperHttpClient.registerChat(id);
     }
 
     public Optional<User> deleteUser(long id) {
         log.debug("Deleting user {}", id);
         return maybe(users.remove(id));
-    }
+    }*/
 
-    public void deleteAllUsers() {
-        users.clear();
-    }
+    // public void deleteAllUsers() {
+    //     users.clear();
+    // }
 
-    public boolean containUser(long id) {
-        return users.containsKey(id);
-    }
+    // public boolean containUser(long id) {
+    //     return users.containsKey(id);
+    // }
 
-    public Optional<User> getUser(long id) {
-        return maybe(users.get(id));
-    }
+    // public Optional<User> getUser(long id) {
+    //     return maybe(users.get(id));
+    // }
 
     public SendResponse sendMessage(long chatId, final String text, final SendMessageChains... operations) {
         SendMessage toExecute = new SendMessage(chatId, text);
@@ -96,24 +97,29 @@ public final class TelegramBotComponent extends TelegramBot {
     }
 
     private void callbackParse(Update update) {
-        final long chatId = update.callbackQuery().from().id();
-        final User user = users.get(chatId);
-        user.setWaitingFunction(user.getWaitingFunction().apply(this, update));
+        final Long chatId = update.callbackQuery().from().id();
+        final CommandFunction commandFunction = waitingFunctions.get(chatId);
+        final CommandFunction nextFunction = commandFunction.apply(this, update);
+        waitingFunctions.put(chatId, nextFunction);
     }
 
     private void messageParse(Update update) {
         final Message message = update.message();
         final String command = message.text();
         final long chatId = message.chat().id();
-        final Optional<User> optionalUser = maybe(users.get(chatId));
         final Optional<CommandFunction> optionalFunction = maybe(commandFunctions.get(command));
         if (optionalFunction.isPresent()) {
-            final CommandFunction waitingFunction = optionalFunction.get().apply(this, update);
-            optionalUser.ifPresent(user -> user.setWaitingFunction(waitingFunction));
-        } else if (optionalUser.isPresent() && optionalUser.get().getWaitingFunction() != CommandFunction.END) {
-            final User user = optionalUser.get();
-            final CommandFunction waitingFunction = user.getWaitingFunction();
-            user.setWaitingFunction(waitingFunction.apply(this, update));
+            final CommandFunction commandFunction = optionalFunction.get();
+            final CommandFunction nextFunction = commandFunction.apply(this, update);
+            waitingFunctions.put(chatId, nextFunction);
+        } else if (waitingFunctions.containsKey(chatId) && waitingFunctions.get(chatId) != CommandFunction.END) {
+            final CommandFunction commandFunction = waitingFunctions.get(chatId);
+            if (commandFunction != CommandFunction.END) {
+                final CommandFunction nextFunction = commandFunction.apply(this, update);
+                waitingFunctions.put(chatId, nextFunction);
+            } else {
+                unknownCommand(update);
+            }
         } else {
             unknownCommand(update);
         }

@@ -1,9 +1,7 @@
 package edu.java.bot.command;
 
-import edu.java.bot.TelegramBotComponent;
-import edu.java.bot.User;
+import edu.java.bot.client.ScrapperHttpClient;
 import jakarta.validation.constraints.NotEmpty;
-import java.util.Optional;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +13,7 @@ public abstract class Command {
     @NotEmpty private final String description;
     @NotNull private final CommandFunction function;
 
-    protected static boolean isRegistered(final TelegramBotComponent bot, long chatId) {
+    /*protected static boolean isRegistered(final TelegramBotComponent bot, long chatId) {
         if (!bot.containUser(chatId)) {
             bot.sendMessage(chatId, UNREGISTERED_USER_ERROR);
             return false;
@@ -34,9 +32,13 @@ public abstract class Command {
             return false;
         }
         return true;
-    }
+    }*/
 
-    public Command(String name, String description, @NotNull CommandFunction function) {
+    public Command(
+        String name,
+        String description,
+        @NotNull CommandFunction function
+    ) {
         this.name = name;
         this.description = description;
         this.function = function;

@@ -60,7 +60,7 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
     @Autowired
     private JdbcLinkRepository linksRepository;
 
-    private void fillDB() {
+    private void fillDB() throws Exception {
         linksIds = new HashMap<>();
         LINKS_DTOS = new ArrayList<>();
         for (long chatId = 0L; chatId < LINKS_IDS.size(); ++chatId) {
@@ -81,7 +81,7 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
     @Test
     @Transactional
     @Rollback
-    void addTest() {
+    void addTest() throws Exception {
         fillDB();
         Map.Entry<URI, String> uri = link("https://pcms.itmo.ru", "pcms itmo");
         LinkResponse response = linksRepository.findAll(uri.getKey()).getFirst();
@@ -97,7 +97,7 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
     @Test
     @Transactional
     @Rollback
-    void removeTest() {
+    void removeTest() throws Exception {
         fillDB();
         Map.Entry<URI, String> uri = link("https://google.com", "google");
         Long linkId = linksIds.get(uri.getKey());

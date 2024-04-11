@@ -24,7 +24,7 @@ public class JdbcLinkService implements LinkService {
     private static final String NEGATE_ID_EXCEPTION_MESSAGE = "id cannot be negate";
     private static final String NON_EXISTENT_CHAT_EXCEPTION_FORMAT = "there is no chat with id=%d";
     private static final String NON_EXISTENT_LINK_EXCEPTION_FORMAT = "there is no link %s";
-    private static final String NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT = "there is no link with alias %s";
+    private static final String NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT = "there is no link with alias %s in chat %d";
     private static final String INVALID_LINK_EXCEPTION_FORMAT = "string %s is not a valid link";
 
     private final JdbcChatRepository chatRepository;
@@ -85,6 +85,16 @@ public class JdbcLinkService implements LinkService {
     }
 
     @Override
+    public UserLinkResponse getLink(Long chatId, String alias) throws DTOException {
+        validateChatId(chatId);
+        final List<UserLinkResponse> response = chatsAndLinksRepository.getLink(chatId, alias);
+        if (response.isEmpty()) {
+            throw new WrongParametersException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias, chatId));
+        }
+        return response.getFirst();
+    }
+
+    @Override
     public UserLinkResponse addLink(Long chatId, String link, String alias) throws DTOException {
         validateChatId(chatId);
         final URI uri = validateLink(link);
@@ -98,7 +108,7 @@ public class JdbcLinkService implements LinkService {
         validateChatId(chatId);
         final List<Long> linkIds = chatsAndLinksRepository.remove(chatId, alias);
         if (linkIds.isEmpty()) {
-            throw new LinkNotFoundException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias));
+            throw new LinkNotFoundException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias, chatId));
         }
         final List<LinkResponse> linkResponse = linkRepository.findAll(linkIds.getFirst());
         return new UserLinkResponse(linkResponse.getFirst(), alias);
