@@ -1,6 +1,7 @@
 package edu.java.scrapper;
 
 import edu.java.dto.response.LinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
 import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
@@ -22,13 +23,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 public class JdbcChatsAndLinksTest extends IntegrationTest {
-    private static final List<List<URI>> LINKS_IDS = List.of(
-        List.of(URI.create("https://google.com"), URI.create("https://vk.com"), URI.create("https://example.com"), URI.create("https://github.com")),
-        List.of(URI.create("https://chat.openai.com"), URI.create("https://example.com"), URI.create("https://google.com")),
-        List.of(URI.create("https://github.com"), URI.create("https://store.steampowered.com")),
-        List.of(URI.create("https://pcms.itmo.ru"), URI.create("https://google.com"), URI.create("https://www.kgeorgiy.info"))
+    private static Map.Entry<URI, String> link(String uri, String alias) {
+        return Map.entry(URI.create(uri), alias);
+    }
+
+    private static final Comparator<UserLinkResponse> COMPARATOR = Comparator.comparingLong(a -> a.getLink().getId());
+    private static final List<List<Map.Entry<URI, String>>> LINKS_IDS = List.of(
+        List.of(
+            link("https://google.com", "google"),
+            link("https://vk.com", "vk"),
+            link("https://example.com", "example"),
+            link("https://github.com", "github")
+        ),
+        List.of(
+            link("https://chat.openai.com", "chat gpt"),
+            link("https://example.com", "example"),
+            link("https://google.com", "google")
+        ),
+        List.of(
+            link("https://github.com", "github"),
+            link("https://store.steampowered.com", "steam")
+        ),
+        List.of(
+            link("https://pcms.itmo.ru", "pcms itmo"),
+            link("https://google.com", "google"),
+            link("https://www.kgeorgiy.info", "kgeorgiy")
+        )
     );
-    private List<List<LinkResponse>> LINKS_DTOS;
+    private List<List<UserLinkResponse>> LINKS_DTOS;
     private Map<URI, Long> linksIds;
     private static final Logger log = LoggerFactory.getLogger(JdbcChatsAndLinksTest.class);
     @Autowired
@@ -43,14 +65,15 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
         LINKS_DTOS = new ArrayList<>();
         for (long chatId = 0L; chatId < LINKS_IDS.size(); ++chatId) {
             chatRepository.add(chatId);
-            List<LinkResponse> links = new ArrayList<>();
-            for (URI link : LINKS_IDS.get((int) chatId)) {
-                LinkResponse response = linksRepository.add(link);
-                links.add(response);
-                linksIds.put(link, response.getId());
-                this.repository.add(chatId, response.getId());
+            List<UserLinkResponse> links = new ArrayList<>();
+            for (Map.Entry<URI, String> linkAndAlias : LINKS_IDS.get((int) chatId)) {
+                LinkResponse response = linksRepository.add(linkAndAlias.getKey());
+                UserLinkResponse userResponse = new UserLinkResponse(response, linkAndAlias.getValue());
+                links.add(userResponse);
+                linksIds.put(linkAndAlias.getKey(), response.getId());
+                repository.add(chatId, response.getId(), linkAndAlias.getValue());
             }
-            links.sort(Comparator.comparingLong(LinkResponse::getId));
+            links.sort(COMPARATOR);
             LINKS_DTOS.add(links);
         }
     }
@@ -60,15 +83,15 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
     @Rollback
     void addTest() {
         fillDB();
-        URI uri = URI.create("https://pcms.itmo.ru");
-        LinkResponse response = linksRepository.findAll(uri).getFirst();
-        repository.add(2L, response.getId());
-        List<LinkResponse> result = new ArrayList<>(LINKS_DTOS.get(2));
-        result.add(response);
-        assertThat(repository.findAllLinks(0L)).isEqualTo(LINKS_DTOS.get(0));
-        assertThat(repository.findAllLinks(1L)).isEqualTo(LINKS_DTOS.get(1));
-        assertThat(repository.findAllLinks(2L)).isEqualTo(result);
-        assertThat(repository.findAllLinks(3L)).isEqualTo(LINKS_DTOS.get(3));
+        Map.Entry<URI, String> uri = link("https://pcms.itmo.ru", "pcms itmo");
+        LinkResponse response = linksRepository.findAll(uri.getKey()).getFirst();
+        repository.add(2L, response.getId(), uri.getValue());
+        List<UserLinkResponse> result = new ArrayList<>(LINKS_DTOS.get(2));
+        result.add(new UserLinkResponse(response, uri.getValue()));
+        assertThat(repository.findAllLinks(0L).stream().sorted(COMPARATOR).toList()).isEqualTo(LINKS_DTOS.get(0));
+        assertThat(repository.findAllLinks(1L).stream().sorted(COMPARATOR).toList()).isEqualTo(LINKS_DTOS.get(1));
+        assertThat(repository.findAllLinks(2L).stream().sorted(COMPARATOR).toList()).isEqualTo(result);
+        assertThat(repository.findAllLinks(3L).stream().sorted(COMPARATOR).toList()).isEqualTo(LINKS_DTOS.get(3));
     }
 
     @Test
@@ -76,18 +99,18 @@ public class JdbcChatsAndLinksTest extends IntegrationTest {
     @Rollback
     void removeTest() {
         fillDB();
-        URI uri = URI.create("https://google.com");
-        Long linkId = linksIds.get(uri);
-        repository.remove(0L, linkId);
-        List<LinkResponse> result = new ArrayList<>();
+        Map.Entry<URI, String> uri = link("https://google.com", "google");
+        Long linkId = linksIds.get(uri.getKey());
+        repository.remove(0L, uri.getValue());
+        List<UserLinkResponse> result = new ArrayList<>();
         LINKS_DTOS.getFirst().forEach(link -> {
-            if (!Objects.equals(link.getId(), linkId)) {
+            if (!Objects.equals(link.getLink().getId(), linkId)) {
                 result.add(link);
             }
         });
-        assertThat(repository.findAllLinks(0L)).isEqualTo(result);
-        assertThat(repository.findAllLinks(1L)).isEqualTo(LINKS_DTOS.get(1));
-        assertThat(repository.findAllLinks(2L)).isEqualTo(LINKS_DTOS.get(2));
-        assertThat(repository.findAllLinks(3L)).isEqualTo(LINKS_DTOS.get(3));
+        assertThat(repository.findAllLinks(0L).stream().sorted(COMPARATOR).toList()).isEqualTo(result);
+        assertThat(repository.findAllLinks(1L).stream().sorted(COMPARATOR).toList()).isEqualTo(LINKS_DTOS.get(1));
+        assertThat(repository.findAllLinks(2L).stream().sorted(COMPARATOR).toList()).isEqualTo(LINKS_DTOS.get(2));
+        assertThat(repository.findAllLinks(3L).stream().sorted(COMPARATOR).toList()).isEqualTo(LINKS_DTOS.get(3));
     }
 }

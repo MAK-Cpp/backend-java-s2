@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AddLinkRequest {
     private String link;
+    private String alias;
 }

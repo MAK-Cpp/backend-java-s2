@@ -6,6 +6,8 @@ import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
 import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
@@ -22,6 +24,7 @@ public class JdbcLinkService implements LinkService {
     private static final String NEGATE_ID_EXCEPTION_MESSAGE = "id cannot be negate";
     private static final String NON_EXISTENT_CHAT_EXCEPTION_FORMAT = "there is no chat with id=%d";
     private static final String NON_EXISTENT_LINK_EXCEPTION_FORMAT = "there is no link %s";
+    private static final String NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT = "there is no link with alias %s";
     private static final String INVALID_LINK_EXCEPTION_FORMAT = "string %s is not a valid link";
 
     private final JdbcChatRepository chatRepository;
@@ -75,31 +78,29 @@ public class JdbcLinkService implements LinkService {
     }
 
     @Override
-    public ListLinkResponse getAllLinks(Long chatId) throws DTOException {
+    public ListUserLinkResponse getAllLinks(Long chatId) throws DTOException {
         validateChatId(chatId);
-        final LinkResponse[] links = chatsAndLinksRepository.findAllLinks(chatId).toArray(LinkResponse[]::new);
-        return new ListLinkResponse(links, links.length);
+        final UserLinkResponse[] links = chatsAndLinksRepository.findAllLinks(chatId).toArray(UserLinkResponse[]::new);
+        return new ListUserLinkResponse(links, links.length);
     }
 
     @Override
-    public LinkResponse addLink(Long chatId, String link) throws DTOException {
+    public UserLinkResponse addLink(Long chatId, String link, String alias) throws DTOException {
         validateChatId(chatId);
         final URI uri = validateLink(link);
         final LinkResponse response = linkRepository.add(uri);
-        chatsAndLinksRepository.add(chatId, response.getId());
-        return response;
+        chatsAndLinksRepository.add(chatId, response.getId(), alias);
+        return new UserLinkResponse(response, alias);
     }
 
     @Override
-    public LinkResponse removeLink(Long chatId, String link) throws DTOException {
+    public UserLinkResponse removeLink(Long chatId, String alias) throws DTOException {
         validateChatId(chatId);
-        final URI uri = validateLink(link);
-        final List<LinkResponse> linksResponse = linkRepository.findAll(uri);
-        if (linksResponse.isEmpty()) {
-            throw new LinkNotFoundException(String.format(NON_EXISTENT_LINK_EXCEPTION_FORMAT, link));
+        final List<Long> linkIds = chatsAndLinksRepository.remove(chatId, alias);
+        if (linkIds.isEmpty()) {
+            throw new LinkNotFoundException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias));
         }
-        final LinkResponse response = linksResponse.getFirst();
-        chatsAndLinksRepository.remove(chatId, response.getId());
-        return response;
+        final List<LinkResponse> linkResponse = linkRepository.findAll(linkIds.getFirst());
+        return new UserLinkResponse(linkResponse.getFirst(), alias);
     }
 }

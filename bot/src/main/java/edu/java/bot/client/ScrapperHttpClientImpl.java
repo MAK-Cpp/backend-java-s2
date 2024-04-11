@@ -6,8 +6,8 @@ import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.AddLinkRequest;
 import edu.java.dto.request.RemoveLinkRequest;
 import edu.java.dto.response.ApiErrorResponse;
-import edu.java.dto.response.LinkResponse;
-import edu.java.dto.response.ListLinkResponse;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 import java.util.Objects;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -64,27 +64,27 @@ public class ScrapperHttpClientImpl implements ScrapperHttpClient {
     }
 
     @Override
-    public ListLinkResponse getAllLinks(long id) {
+    public ListUserLinkResponse getAllLinks(long id) {
         return scrapperWebClient.get()
             .uri(LINKS_URI)
             .header(CHAT_ID_HEADER, String.valueOf(id))
             .retrieve()
             .onStatus(HttpStatus.BAD_REQUEST::equals, ScrapperHttpClientImpl::badRequestFunction)
             .onStatus(HttpStatus.NOT_FOUND::equals, ScrapperHttpClientImpl::notFoundFunction)
-            .bodyToMono(ListLinkResponse.class)
+            .bodyToMono(ListUserLinkResponse.class)
             .block();
     }
 
     @Override
-    public LinkResponse addLinkToTracking(long id, String uri) {
+    public UserLinkResponse addLinkToTracking(long id, String uri, String alias) {
         return scrapperWebClient.post()
             .uri(LINKS_URI)
             .header(CHAT_ID_HEADER, String.valueOf(id))
-            .body(Mono.just(new AddLinkRequest(uri)), AddLinkRequest.class)
+            .body(Mono.just(new AddLinkRequest(uri, alias)), AddLinkRequest.class)
             .retrieve()
             .onStatus(HttpStatus.BAD_REQUEST::equals, ScrapperHttpClientImpl::badRequestFunction)
             .onStatus(HttpStatus.NOT_FOUND::equals, ScrapperHttpClientImpl::notFoundFunction)
-            .bodyToMono(LinkResponse.class)
+            .bodyToMono(UserLinkResponse.class)
             .block();
     }
 
@@ -99,15 +99,15 @@ public class ScrapperHttpClientImpl implements ScrapperHttpClient {
     }
 
     @Override
-    public LinkResponse removeLinkFromTracking(long id, String uri) {
+    public UserLinkResponse removeLinkFromTracking(long id, String alias) {
         return scrapperWebClient.method(HttpMethod.DELETE)
             .uri(LINKS_URI)
             .header(CHAT_ID_HEADER, String.valueOf(id))
-            .body(Mono.just(new RemoveLinkRequest(uri)), RemoveLinkRequest.class)
+            .body(Mono.just(new RemoveLinkRequest(alias)), RemoveLinkRequest.class)
             .retrieve()
             .onStatus(HttpStatus.BAD_REQUEST::equals, ScrapperHttpClientImpl::badRequestFunction)
             .onStatus(HttpStatus.NOT_FOUND::equals, ScrapperHttpClientImpl::specialNotFoundFunction)
-            .bodyToMono(LinkResponse.class)
+            .bodyToMono(UserLinkResponse.class)
             .block();
     }
 }

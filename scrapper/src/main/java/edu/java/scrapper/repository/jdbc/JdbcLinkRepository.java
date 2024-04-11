@@ -63,4 +63,12 @@ public class JdbcLinkRepository extends JdbcTemplate {
             uri.toString()
         );
     }
+
+    public List<LinkResponse> findAll(Long linkId) {
+        return query(
+            "SELECT link_id, uri, last_update FROM links WHERE link_id = ?",
+            LINK_DTO_ROW_MAPPER,
+            linkId
+        );
+    }
 }

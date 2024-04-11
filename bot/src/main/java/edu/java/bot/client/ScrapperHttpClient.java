@@ -1,16 +1,16 @@
 package edu.java.bot.client;
 
-import edu.java.dto.response.LinkResponse;
-import edu.java.dto.response.ListLinkResponse;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 
 public interface ScrapperHttpClient {
     void registerChat(long id);
 
     void deleteChat(long id);
 
-    ListLinkResponse getAllLinks(long id);
+    ListUserLinkResponse getAllLinks(long id);
 
-    LinkResponse addLinkToTracking(long id, String uri);
+    UserLinkResponse addLinkToTracking(long id, String uri, String alias);
 
-    LinkResponse removeLinkFromTracking(long id, String uri);
+    UserLinkResponse removeLinkFromTracking(long id, String alias);
 }

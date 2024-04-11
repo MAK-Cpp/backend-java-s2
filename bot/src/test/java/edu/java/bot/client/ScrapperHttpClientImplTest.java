@@ -7,6 +7,8 @@ import edu.java.dto.response.ListLinkResponse;
 import edu.java.dto.exception.LinkNotFoundException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,32 +102,38 @@ class ScrapperHttpClientImplTest {
                 1L,
                 HttpStatus.OK,
                 "{\n" +
-                    "    \"links\": [\n" +
-                    "        {\n" +
-                    "            \"id\": 1,\n" +
-                    "            \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
-                    "            \"lastUpdate\": \"2024-04-09T22:48:20.730316Z\"\n" +
-                    "        },\n" +
-                    "        {\n" +
-                    "            \"id\": 2,\n" +
-                    "            \"uri\": \"https://stackoverflow.com/questions/11828270/how-do-i-exit-vim\",\n" +
-                    "            \"lastUpdate\": \"2024-04-09T22:48:57.04223Z\"\n" +
-                    "        }\n" +
-                    "    ],\n" +
-                    "    \"size\": 2\n" +
+                    "  \"links\": [\n" +
+                    "    {\n" +
+                    "      \"link\": {\n" +
+                    "        \"id\": 1,\n" +
+                    "        \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
+                    "        \"lastUpdate\": \"2024-04-11T11:36:01.737284Z\"\n" +
+                    "      },\n" +
+                    "      \"alias\": \"Tinkoff backend java season 2 pull requests\"\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"link\": {\n" +
+                    "        \"id\": 2,\n" +
+                    "        \"uri\": \"https://stackoverflow.com/questions/11828270/how-do-i-exit-vim\",\n" +
+                    "        \"lastUpdate\": \"2024-04-11T11:36:36.794418Z\"\n" +
+                    "      },\n" +
+                    "      \"alias\": \"Answers on question 'how to exit vim'\"\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"size\": 2\n" +
                     "}",
-                new ListLinkResponse(
-                    new LinkResponse[] {
-                        new LinkResponse(
+                new ListUserLinkResponse(
+                    new UserLinkResponse[] {
+                        new UserLinkResponse(new LinkResponse(
                             1L,
                             new URI("https://github.com/MAK-Cpp/backend-java-s2/pulls"),
-                            OffsetDateTime.parse("2024-04-09T22:48:20.730316Z")
-                        ),
-                        new LinkResponse(
+                            OffsetDateTime.parse("2024-04-11T11:36:01.737284Z")
+                        ), "Tinkoff backend java season 2 pull requests"),
+                        new UserLinkResponse(new LinkResponse(
                             2L,
                             new URI("https://stackoverflow.com/questions/11828270/how-do-i-exit-vim"),
-                            OffsetDateTime.parse("2024-04-09T22:48:57.04223Z")
-                        )
+                            OffsetDateTime.parse("2024-04-11T11:36:36.794418Z")
+                        ), "Answers on question 'how to exit vim'")
                     },
                     2
                 )
@@ -164,21 +172,26 @@ class ScrapperHttpClientImplTest {
             Arguments.of(
                 1L,
                 "https://github.com/MAK-Cpp/backend-java-s2/pulls",
+                "Tinkoff backend java season 2 pull requests",
                 HttpStatus.OK,
                 "{\n" +
-                    "  \"id\": 1,\n" +
-                    "  \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
-                    "  \"lastUpdate\": \"2024-04-09T22:48:20.730316Z\"\n" +
+                    "  \"link\": {\n" +
+                    "    \"id\": 1,\n" +
+                    "    \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
+                    "    \"lastUpdate\": \"2024-04-11T11:36:01.737284Z\"\n" +
+                    "  },\n" +
+                    "  \"alias\": \"Tinkoff backend java season 2 pull requests\"\n" +
                     "}",
-                new LinkResponse(
+                new UserLinkResponse(new LinkResponse(
                     1L,
                     new URI("https://github.com/MAK-Cpp/backend-java-s2/pulls"),
-                    OffsetDateTime.parse("2024-04-09T22:48:20.730316Z")
-                )
+                    OffsetDateTime.parse("2024-04-11T11:36:01.737284Z")
+                ), "Tinkoff backend java season 2 pull requests")
             ),
             Arguments.of(
                 -1L,
                 "asd",
+                "alias",
                 HttpStatus.BAD_REQUEST,
                 "{\n" +
                     "  \"description\": \"Некорректные параметры запроса\",\n" +
@@ -193,6 +206,7 @@ class ScrapperHttpClientImplTest {
             Arguments.of(
                 11L,
                 "asd",
+                "alias",
                 HttpStatus.NOT_FOUND,
                 "{\n" +
                     "  \"description\": \"Чат не существует\",\n" +
@@ -211,18 +225,21 @@ class ScrapperHttpClientImplTest {
         return Stream.of(
             Arguments.of(
                 1L,
-                "https://github.com/MAK-Cpp/backend-java-s2/pulls",
+                "Tinkoff backend java season 2 pull requests",
                 HttpStatus.OK,
                 "{\n" +
-                    "  \"id\": 1,\n" +
-                    "  \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
-                    "  \"lastUpdate\": \"2024-04-09T22:48:20.730316Z\"\n" +
+                    "  \"link\": {\n" +
+                    "    \"id\": 1,\n" +
+                    "    \"uri\": \"https://github.com/MAK-Cpp/backend-java-s2/pulls\",\n" +
+                    "    \"lastUpdate\": \"2024-04-11T11:36:01.737284Z\"\n" +
+                    "  },\n" +
+                    "  \"alias\": \"Tinkoff backend java season 2 pull requests\"\n" +
                     "}",
-                new LinkResponse(
+                new UserLinkResponse(new LinkResponse(
                     1L,
                     new URI("https://github.com/MAK-Cpp/backend-java-s2/pulls"),
-                    OffsetDateTime.parse("2024-04-09T22:48:20.730316Z")
-                )
+                    OffsetDateTime.parse("2024-04-11T11:36:01.737284Z")
+                ), "Tinkoff backend java season 2 pull requests")
             ),
             Arguments.of(
                 1L,
@@ -316,13 +333,13 @@ class ScrapperHttpClientImplTest {
 
     @ParameterizedTest
     @MethodSource
-    public void testGetAllLinks(long id, HttpStatus status, String body, ListLinkResponse response) {
+    public void testGetAllLinks(long id, HttpStatus status, String body, ListUserLinkResponse response) {
         MappingBuilder builder = get("/links");
         stubFor(builder.willReturn(aResponse().withStatus(status.value())
             .withHeader("Content-Type", "application/json")
             .withBody(body)));
         if (status == HttpStatus.OK) {
-            ListLinkResponse out = scrapperHttpClient.getAllLinks(id);
+            ListUserLinkResponse out = scrapperHttpClient.getAllLinks(id);
             assertThat(out).isEqualTo(response);
         } else if (status == HttpStatus.BAD_REQUEST) {
             assertThrows(WrongParametersException.class, () -> scrapperHttpClient.getAllLinks(id));
@@ -336,21 +353,22 @@ class ScrapperHttpClientImplTest {
     public void testAddLinkToTracking(
         long id,
         String link,
+        String alias,
         HttpStatus status,
         String body,
-        LinkResponse response
+        UserLinkResponse response
     ) {
         MappingBuilder builder = post("/links");
         stubFor(builder.willReturn(aResponse().withStatus(status.value())
             .withHeader("Content-Type", "application/json")
             .withBody(body)));
         if (status == HttpStatus.OK) {
-            LinkResponse out = scrapperHttpClient.addLinkToTracking(id, link);
+            UserLinkResponse out = scrapperHttpClient.addLinkToTracking(id, link, alias);
             assertThat(out).isEqualTo(response);
         } else if (status == HttpStatus.BAD_REQUEST) {
-            assertThrows(WrongParametersException.class, () -> scrapperHttpClient.addLinkToTracking(id, link));
+            assertThrows(WrongParametersException.class, () -> scrapperHttpClient.addLinkToTracking(id, link, alias));
         } else {
-            assertThrows(NonExistentChatException.class, () -> scrapperHttpClient.addLinkToTracking(id, link));
+            assertThrows(NonExistentChatException.class, () -> scrapperHttpClient.addLinkToTracking(id, link, alias));
         }
     }
 
@@ -358,25 +376,28 @@ class ScrapperHttpClientImplTest {
     @MethodSource
     public void testRemoveLinkFromTracking(
         long id,
-        String link,
+        String alias,
         HttpStatus status,
         String body,
-        LinkResponse response
+        UserLinkResponse response
     ) {
         MappingBuilder builder = delete("/links");
         stubFor(builder.willReturn(aResponse().withStatus(status.value())
             .withHeader("Content-Type", "application/json")
             .withBody(body)));
         if (status == HttpStatus.OK) {
-            LinkResponse out = scrapperHttpClient.removeLinkFromTracking(id, link);
+            UserLinkResponse out = scrapperHttpClient.removeLinkFromTracking(id, alias);
             assertThat(out).isEqualTo(response);
         } else if (status == HttpStatus.BAD_REQUEST) {
-            assertThrows(WrongParametersException.class, () -> scrapperHttpClient.removeLinkFromTracking(id, link));
+            assertThrows(WrongParametersException.class, () -> scrapperHttpClient.removeLinkFromTracking(id, alias));
         } else {
-            if (Objects.equals(link, "not exists")) {
-                assertThrows(LinkNotFoundException.class, () -> scrapperHttpClient.removeLinkFromTracking(id, link));
+            if (Objects.equals(alias, "not exists")) {
+                assertThrows(LinkNotFoundException.class, () -> scrapperHttpClient.removeLinkFromTracking(id, alias));
             } else {
-                assertThrows(NonExistentChatException.class, () -> scrapperHttpClient.removeLinkFromTracking(id, link));
+                assertThrows(
+                    NonExistentChatException.class,
+                    () -> scrapperHttpClient.removeLinkFromTracking(id, alias)
+                );
             }
         }
     }

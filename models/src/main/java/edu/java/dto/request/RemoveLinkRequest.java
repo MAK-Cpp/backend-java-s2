@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RemoveLinkRequest {
-    private String link;
+    private String alias;
 }

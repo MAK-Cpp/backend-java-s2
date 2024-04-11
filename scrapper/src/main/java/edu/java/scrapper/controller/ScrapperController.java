@@ -6,8 +6,8 @@ import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.AddLinkRequest;
 import edu.java.dto.request.RemoveLinkRequest;
 import edu.java.dto.response.ApiErrorResponse;
-import edu.java.dto.response.LinkResponse;
-import edu.java.dto.response.ListLinkResponse;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 import edu.java.scrapper.service.ChatService;
 import edu.java.scrapper.service.LinkService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -82,7 +82,7 @@ public class ScrapperController {
         @ApiResponse(responseCode = "200",
                      description = "Ссылки успешно получены",
                      content = @Content(mediaType = "application/json",
-                                        schema = @Schema(implementation = ListLinkResponse.class))),
+                                        schema = @Schema(implementation = ListUserLinkResponse.class))),
         @ApiResponse(responseCode = "400",
                      description = "Некорректные параметры запроса",
                      content = @Content(mediaType = "application/json",
@@ -92,7 +92,7 @@ public class ScrapperController {
                      content = @Content(mediaType = "application/json",
                                         schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public ResponseEntity<ListLinkResponse> getAllTrackingLinks(@RequestHeader long tgChatId)
+    public ResponseEntity<ListUserLinkResponse> getAllTrackingLinks(@RequestHeader long tgChatId)
         throws WrongParametersException, NonExistentChatException {
         return ResponseEntity.ok(linkService.getAllLinks(tgChatId));
     }
@@ -102,7 +102,7 @@ public class ScrapperController {
         @ApiResponse(responseCode = "200",
                      description = "Ссылка успешно добавлена",
                      content = @Content(mediaType = "application/json",
-                                        schema = @Schema(implementation = LinkResponse.class))),
+                                        schema = @Schema(implementation = UserLinkResponse.class))),
         @ApiResponse(responseCode = "400",
                      description = "Некорректные параметры запроса",
                      content = @Content(mediaType = "application/json",
@@ -112,13 +112,13 @@ public class ScrapperController {
                      content = @Content(mediaType = "application/json",
                                         schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public ResponseEntity<LinkResponse> addLinkToTracking(
+    public ResponseEntity<UserLinkResponse> addLinkToTracking(
         @RequestBody AddLinkRequest request, @RequestHeader long tgChatId
     ) throws WrongParametersException, NonExistentChatException {
         return ResponseEntity
             .ok()
             .contentType(MediaType.APPLICATION_JSON)
-            .body(linkService.addLink(tgChatId, request.getLink()));
+            .body(linkService.addLink(tgChatId, request.getLink(), request.getAlias()));
     }
 
     @DeleteMapping("/links")
@@ -126,7 +126,7 @@ public class ScrapperController {
         @ApiResponse(responseCode = "200",
                      description = "Ссылка успешно убрана",
                      content = @Content(mediaType = "application/json",
-                                        schema = @Schema(implementation = LinkResponse.class))),
+                                        schema = @Schema(implementation = UserLinkResponse.class))),
         @ApiResponse(responseCode = "400",
                      description = "Некорректные параметры запроса",
                      content = @Content(mediaType = "application/json",
@@ -136,12 +136,12 @@ public class ScrapperController {
                      content = @Content(mediaType = "application/json",
                                         schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public ResponseEntity<LinkResponse> removeLinkFromTracking(
+    public ResponseEntity<UserLinkResponse> removeLinkFromTracking(
         @RequestBody RemoveLinkRequest request, @RequestHeader long tgChatId
     ) throws WrongParametersException, NonExistentChatException, LinkNotFoundException {
         return ResponseEntity
             .ok()
             .contentType(MediaType.APPLICATION_JSON)
-            .body(linkService.removeLink(tgChatId, request.getLink()));
+            .body(linkService.removeLink(tgChatId, request.getAlias()));
     }
 }
