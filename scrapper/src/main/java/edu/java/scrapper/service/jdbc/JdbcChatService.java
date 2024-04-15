@@ -9,10 +9,10 @@ import edu.java.dto.response.ListChatResponse;
 import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
 import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.service.ChatService;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
 @Slf4j

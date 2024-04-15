@@ -1,7 +1,6 @@
 package edu.java.scrapper.repository.jdbc;
 
 import edu.java.dto.response.ChatResponse;
-import java.sql.SQLException;
 import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
