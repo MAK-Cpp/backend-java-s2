@@ -13,9 +13,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.reactive.function.client.WebClient;
 
-
 @Validated
-@ConfigurationProperties(prefix = "client", ignoreUnknownFields = false)
+@ConfigurationProperties(
+    prefix = "client",
+    ignoreUnknownFields = false
+)
 public record ClientConfig(
     @NotEmpty
     String githubUrl,
