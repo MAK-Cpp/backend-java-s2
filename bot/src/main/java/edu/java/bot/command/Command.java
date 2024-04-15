@@ -11,9 +11,12 @@ import org.jetbrains.annotations.NotNull;
 public abstract class Command {
     public static final String UNREGISTERED_USER_ERROR = "You must register before use bot!";
     public static final String NO_TRACKING_LINKS_ERROR = "There is no tracking links!";
-    @NotEmpty private final String name;
-    @NotEmpty private final String description;
-    @NotNull private final CommandFunction function;
+    @NotEmpty
+    private final String name;
+    @NotEmpty
+    private final String description;
+    @NotNull
+    private final CommandFunction function;
 
     protected static boolean isRegistered(final TelegramBotComponent bot, long chatId) {
         try {
