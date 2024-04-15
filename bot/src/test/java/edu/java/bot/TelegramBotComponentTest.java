@@ -7,10 +7,19 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.SendResponse;
+import edu.java.bot.client.ScrapperHttpClient;
 import edu.java.bot.command.Command;
 import edu.java.bot.command.Start;
 import edu.java.bot.command.Track;
 import edu.java.bot.command.Untrack;
+import edu.java.dto.exception.NonExistentChatException;
+import edu.java.dto.exception.WrongParametersException;
+import edu.java.dto.response.ChatResponse;
+import edu.java.dto.response.LinkResponse;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -20,9 +29,12 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import java.net.URI;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -30,12 +42,15 @@ import static edu.java.bot.command.List.createLinksList;
 import static edu.java.bot.command.Track.createResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
+@Slf4j
 public class TelegramBotComponentTest {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final UserRecord TEST_USER_1 = new UserRecord(123456789L, "TEST_USER_1");
@@ -44,6 +59,11 @@ public class TelegramBotComponentTest {
     public static final Link GOOGLE = new Link("Google", "google.com");
     public static final Link THIS_REPO =
         new Link("Backend Java season 2 repository", "https://github.com/MAK-Cpp/backend-java-s2");
+
+    @MockBean
+    private ScrapperHttpClient scrapperHttpClient;
+
+    private Map<Long, List<Link>> links = new HashMap<>();;
 
     @Autowired
     @SpyBean
@@ -58,10 +78,92 @@ public class TelegramBotComponentTest {
 
     @BeforeEach
     public void init() {
-        bot.deleteAllUsers();
         if (HELP == null) {
             HELP = bot.getUsage();
         }
+        Mockito.doAnswer(ans -> {
+            final Long chatId = ans.getArgument(0);
+            log.debug("Register chat with id {}", chatId);
+            if (links.containsKey(chatId)) {
+                throw new WrongParametersException("Chat with id " + chatId + " already exists");
+            }
+            links.put(chatId, new ArrayList<>());
+            return new ChatResponse(chatId);
+        }).when(scrapperHttpClient).registerChat(anyLong());
+        when(scrapperHttpClient.getChat(anyLong())).then(ans -> {
+            final Long chatId = ans.getArgument(0);
+            log.debug("Get chat with id {}", chatId);
+            if (!links.containsKey(chatId)) {
+                throw new NonExistentChatException(Command.UNREGISTERED_USER_ERROR);
+            }
+            return new ChatResponse(chatId);
+        });
+        when(scrapperHttpClient.getAllLinks(anyLong())).then(ans -> {
+            final Long chatId = ans.getArgument(0);
+            log.debug("Getting links for {}", chatId);
+            UserLinkResponse[] result = links.get(chatId)
+                .stream()
+                .map(link -> new UserLinkResponse(new LinkResponse(0L, link.getUri(), null), link.getAlias()))
+                .toArray(UserLinkResponse[]::new);
+            if (result.length == 0) {
+                throw new WrongParametersException(Command.UNREGISTERED_USER_ERROR);
+            }
+            return new ListUserLinkResponse(result, result.length);
+        });
+        when(scrapperHttpClient.addLinkToTracking(anyLong(), anyString(), anyString())).then(ans -> {
+            final Long id = ans.getArgument(0);
+            final String uri = ans.getArgument(1);
+            final String alias = ans.getArgument(2);
+            log.debug("Adding link {} with alias {} to {}", uri, alias, id);
+            if (links.containsKey(id)) {
+                links.get(id).add(new Link(alias, uri));
+            } else {
+                links.put(id, new ArrayList<>(List.of(new Link(alias, uri))));
+            }
+            return new UserLinkResponse(new LinkResponse(0L, URI.create(uri), null), alias);
+        });
+        when(scrapperHttpClient.getLinkByChatIdAndAlias(anyLong(), anyString())).then(ans -> {
+            final Long chatId = ans.getArgument(0);
+            final String alias = ans.getArgument(1);
+            log.debug("Getting link {} with alias {} from {}", chatId, alias, chatId);
+            if (links.containsKey(chatId)) {
+                final Link result = links.get(chatId)
+                    .stream()
+                    .filter(link -> link.getAlias().equals(alias))
+                    .findFirst()
+                    .orElseThrow(() -> new WrongParametersException(Command.NO_TRACKING_LINKS_ERROR));
+                return new UserLinkResponse(new LinkResponse(0L, result.getUri(), null), result.getAlias());
+            } else {
+                throw new NonExistentChatException(Command.UNREGISTERED_USER_ERROR);
+            }
+        });
+        when(scrapperHttpClient.removeLinkFromTracking(anyLong(), anyString())).then(ans -> {
+            final Long chatId = ans.getArgument(0);
+            final String alias = ans.getArgument(1);
+            log.debug("Removing link {} with alias {} from {}", chatId, alias, chatId);
+            if (links.containsKey(chatId)) {
+                List<Link> linksList = links.get(chatId);
+                final Link removedLink = links.get(chatId)
+                    .stream()
+                    .filter(link -> link.getAlias().equals(alias))
+                    .findFirst()
+                    .orElseThrow(() -> new WrongParametersException(Command.NO_TRACKING_LINKS_ERROR));
+                final boolean isRemoved = linksList.removeIf(link -> link.getAlias().equals(alias));
+                if (isRemoved) {
+                    return new UserLinkResponse(new LinkResponse(0L, removedLink.getUri(), null), removedLink.getAlias());
+                } else {
+                    throw new WrongParametersException(Command.NO_TRACKING_LINKS_ERROR);
+                }
+            } else {
+                throw new NonExistentChatException(Command.UNREGISTERED_USER_ERROR);
+            }
+        });
+    }
+
+    @AfterEach
+    public void tearDown() {
+        links.clear();
+        Mockito.reset(scrapperHttpClient);
     }
 
     private Update newUpdateMock(
@@ -177,7 +279,7 @@ public class TelegramBotComponentTest {
     }
 
     private static Request list(final UserRecord userRecord, final Link... links) {
-        return new Request(userRecord, "/list", createLinksList(links));
+        return new Request(userRecord, "/list", createLinksList(List.of(links)));
     }
 
     private static LinkWithCorrectness correct(final Link link) {

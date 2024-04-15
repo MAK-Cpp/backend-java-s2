@@ -7,6 +7,7 @@ import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.AddLinkRequest;
 import edu.java.dto.request.RemoveLinkRequest;
 import edu.java.dto.response.ApiErrorResponse;
+import edu.java.dto.response.ChatResponse;
 import edu.java.dto.response.ListUserLinkResponse;
 import edu.java.dto.response.UserLinkResponse;
 import java.util.Objects;
@@ -63,6 +64,17 @@ public class ScrapperHttpClientImpl implements ScrapperHttpClient {
             .onStatus(HttpStatus.BAD_REQUEST::equals, ScrapperHttpClientImpl::badRequestFunction)
             .onStatus(HttpStatus.NOT_FOUND::equals, ScrapperHttpClientImpl::notFoundFunction)
             .bodyToMono(Void.class)
+            .block();
+    }
+
+    @Override
+    public ChatResponse getChat(long id) throws DTOException {
+        return scrapperWebClient.get()
+            .uri(TG_CHAT_ID_URI, id)
+            .retrieve()
+            .onStatus(HttpStatus.BAD_REQUEST::equals, ScrapperHttpClientImpl::badRequestFunction)
+            .onStatus(HttpStatus.NOT_FOUND::equals, ScrapperHttpClientImpl::notFoundFunction)
+            .bodyToMono(ChatResponse.class)
             .block();
     }
 

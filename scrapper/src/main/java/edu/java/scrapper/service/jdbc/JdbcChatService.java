@@ -1,6 +1,7 @@
 package edu.java.scrapper.service.jdbc;
 
 import edu.java.dto.exception.DTOException;
+import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.ChatResponse;
 import edu.java.dto.response.LinkAliasResponse;
@@ -11,7 +12,6 @@ import edu.java.scrapper.service.ChatService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -65,6 +65,15 @@ public class JdbcChatService implements ChatService {
     public ListChatResponse getAllChats(Long linkId) throws DTOException {
         final ChatResponse[] response = chatsAndLinksRepository.findAllChats(linkId).toArray(ChatResponse[]::new);
         return new ListChatResponse(response, response.length);
+    }
+
+    @Override
+    public ChatResponse getChat(Long chatId) throws DTOException {
+        List<ChatResponse> response = chatRepository.findAll(chatId);
+        if (response.isEmpty()) {
+            throw new NonExistentChatException("chat with id " + chatId + " not found");
+        }
+        return response.getFirst();
     }
 
     @Override

@@ -63,6 +63,11 @@ public class Track extends Command {
     /*package-private*/
     static CommandFunction track(TelegramBotComponent bot, Update update) {
         long chatId = update.message().chat().id();
+        if (!isRegistered(bot, chatId)) {
+            return CommandFunction.END;
+        }
+        ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
+        scrapperHttpClient.getChat(chatId);
         bot.sendMessage(chatId, DESCRIPTION_MESSAGE);
         return Track::parseLinks;
     }

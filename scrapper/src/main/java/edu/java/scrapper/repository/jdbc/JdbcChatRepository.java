@@ -31,13 +31,21 @@ public class JdbcChatRepository extends JdbcTemplate {
     }
 
     public boolean exists(Long chatId) {
-        return !query("SELECT chat_id FROM chats WHERE chat_id = ?", CHAT_DTO_ROW_MAPPER, chatId).isEmpty();
+        return !findAll(chatId).isEmpty();
     }
 
     public List<ChatResponse> findAll() {
         return query(
             "SELECT chat_id FROM chats",
             CHAT_DTO_ROW_MAPPER
+        );
+    }
+
+    public List<ChatResponse> findAll(Long chatId) {
+        return query(
+            "SELECT chat_id FROM chats WHERE chat_id = ?",
+            CHAT_DTO_ROW_MAPPER,
+            chatId
         );
     }
 }

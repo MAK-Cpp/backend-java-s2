@@ -1,23 +1,22 @@
 package edu.java.bot.command;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
-import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
-import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.Link;
-import edu.java.bot.TelegramBotComponent;
-import edu.java.bot.TelegramBotComponentTest;
-import edu.java.bot.User;
 import edu.java.bot.request.chains.EditMessageTextChains;
 import edu.java.bot.request.chains.SendMessageChains;
+import edu.java.dto.exception.WrongParametersException;
+import edu.java.dto.response.ChatResponse;
+import edu.java.dto.response.LinkResponse;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Stream;
 import static edu.java.bot.TelegramBotComponentTest.GOOGLE;
 import static edu.java.bot.TelegramBotComponentTest.MAXIM_TELEGRAM;
@@ -44,26 +43,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class UntrackTest {
-    private static final TelegramBotComponent bot = mock(TelegramBotComponent.class);
-    private static final Update update = mock(Update.class);
-    private static final Message message = mock(Message.class);
-    private static final Chat chat = mock(Chat.class);
-    private static final ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-    private static final SendResponse sendResponse = mock(SendResponse.class);
-    private static final Message botMessage = mock(Message.class);
-    private static final CallbackQuery callbackQuery = mock(CallbackQuery.class);
-    private static final com.pengrad.telegrambot.model.User telegramUser =
-        mock(com.pengrad.telegrambot.model.User.class);
+public class UntrackTest extends CommandTest {
+    private static final SendResponse SEND_RESPONSE = mock(SendResponse.class);
+    private static final Message BOT_MESSAGE = mock(Message.class);
+    private static final CallbackQuery CALLBACK_QUERY = mock(CallbackQuery.class);
+    private static final User TELEGRAM_USER =
+        mock(User.class);
 
     @BeforeAll
     public static void beforeAll() {
-        when(update.message()).thenReturn(message);
-        when(update.callbackQuery()).thenReturn(callbackQuery);
-        when(callbackQuery.from()).thenReturn(telegramUser);
-        when(message.chat()).thenReturn(chat);
-        when(bot.sendMessage(anyLong(), anyString(), any(SendMessageChains[].class))).thenReturn(sendResponse);
-        when(sendResponse.message()).thenReturn(botMessage);
+        when(UPDATE.callbackQuery()).thenReturn(CALLBACK_QUERY);
+        when(CALLBACK_QUERY.from()).thenReturn(TELEGRAM_USER);
+        when(BOT.sendMessage(anyLong(), anyString(), any(SendMessageChains[].class))).thenReturn(SEND_RESPONSE);
+        when(SEND_RESPONSE.message()).thenReturn(BOT_MESSAGE);
     }
 
     private static Arguments testUntrack(long chatId, int messageId, boolean contains, Link... links) {
@@ -71,21 +63,18 @@ public class UntrackTest {
             return Arguments.of(
                 chatId,
                 messageId,
-                new User(links),
                 DESCRIPTION_MESSAGE
             );
         } else if (!contains) {
             return Arguments.of(
                 chatId,
                 messageId,
-                null,
                 UNREGISTERED_USER_ERROR
             );
         } else {
             return Arguments.of(
                 chatId,
                 messageId,
-                new User(),
                 NO_TRACKING_LINKS_ERROR
             );
         }
@@ -99,42 +88,52 @@ public class UntrackTest {
                 3L,
                 3,
                 true,
-                TelegramBotComponentTest.MAXIM_TELEGRAM,
+                MAXIM_TELEGRAM,
                 GOOGLE,
-                TelegramBotComponentTest.THIS_REPO
+                THIS_REPO
             )
         );
     }
 
     @ParameterizedTest
     @MethodSource
-    void testUntrack(long chatId, int messageId, User user, String result) {
-        Optional<User> optionalUser = user == null ? Optional.empty() : Optional.of(user);
-        when(chat.id()).thenReturn(chatId);
-        when(bot.containUser(eq(chatId))).thenReturn(user != null);
-        when(bot.getUser(eq(chatId))).thenReturn(optionalUser);
-        when(botMessage.messageId()).thenReturn(messageId);
-        untrack(bot, update);
-        verify(bot, atLeastOnce()).sendMessage(eq(chatId), messageCaptor.capture(), any(SendMessageChains[].class));
-        assertThat(messageCaptor.getValue()).isEqualTo(result);
+    void testUntrack(long chatId, int messageId, String result) {
+        when(CHAT.id()).thenReturn(chatId);
+        when(BOT_MESSAGE.messageId()).thenReturn(messageId);
+        untrack(BOT, UPDATE);
+        verify(BOT, atLeastOnce()).sendMessage(
+            eq(chatId),
+            STRING_ARGUMENT_CAPTOR.capture(),
+            any(SendMessageChains[].class)
+        );
+        assertThat(STRING_ARGUMENT_CAPTOR.getValue()).isEqualTo(result);
     }
 
-    private static Arguments testChooseLink(long chatId, int messageId, String chose, Link... links) {
-        if (!Objects.equals(chose, CANCEL_BUTTON_TEXT)) {
-            User user = new User(links);
-            return Arguments.of(
-                chatId,
-                messageId,
-                user,
-                chose,
-                String.format(CONFIRM_MESSAGE_FORMAT, user.getLink(chose).get())
-            );
+    private static Arguments testChooseLink(long chatId, int messageId, Link chose, boolean containsLink) {
+        if (!Objects.equals(chose.getAlias(), CANCEL_BUTTON_TEXT)) {
+            if (containsLink) {
+                return Arguments.of(
+                    chatId,
+                    messageId,
+                    chose,
+                    true,
+                    String.format(CONFIRM_MESSAGE_FORMAT, chose)
+                );
+            } else {
+                return Arguments.of(
+                    chatId,
+                    messageId,
+                    chose,
+                    false,
+                    String.format(Untrack.NO_LINK_ERROR_FORMAT, chose.getAlias())
+                );
+            }
         } else {
             return Arguments.of(
                 chatId,
                 messageId,
-                new User(),
                 chose,
+                containsLink,
                 ABORTED_MESSAGE
             );
         }
@@ -142,72 +141,82 @@ public class UntrackTest {
 
     public static Stream<Arguments> testChooseLink() {
         return Stream.of(
-            testChooseLink(1L, 1, CANCEL_BUTTON_TEXT),
-            testChooseLink(2L, 2, GOOGLE.getAlias(), GOOGLE, MAXIM_TELEGRAM, THIS_REPO),
-            testChooseLink(3L, 3, MAXIM_TELEGRAM.getAlias(), MAXIM_TELEGRAM, GOOGLE)
+            testChooseLink(1L, 1, new Link(CANCEL_BUTTON_TEXT, "https://example.com"), true),
+            testChooseLink(2L, 2, GOOGLE, true),
+            testChooseLink(3L, 3, MAXIM_TELEGRAM, false)
         );
     }
 
     @ParameterizedTest
     @MethodSource
-    void testChooseLink(long chatId, int messageId, User user, String chose, String result) {
+    void testChooseLink(long chatId, int messageId, Link chose, boolean containsLink, String result) {
         CommandFunction function = chooseLink(messageId);
-        when(callbackQuery.data()).thenReturn(chose);
-        when(telegramUser.id()).thenReturn(chatId);
-        when(bot.getUser(chatId)).thenReturn(Optional.of(user));
-        function.apply(bot, update);
-        verify(bot, atLeastOnce()).editMessageText(
+        when(CALLBACK_QUERY.data()).thenReturn(chose.getAlias());
+        when(TELEGRAM_USER.id()).thenReturn(chatId);
+        if (containsLink) {
+            when(SCRAPPER_HTTP_CLIENT.getLinkByChatIdAndAlias(eq(chatId), eq(chose.getAlias())))
+                .thenReturn(new UserLinkResponse(new LinkResponse(0L, chose.getUri(), null), chose.getAlias()));
+        } else {
+            when(SCRAPPER_HTTP_CLIENT.getLinkByChatIdAndAlias(eq(chatId), eq(chose.getAlias())))
+                .thenThrow(new WrongParametersException("There is no link"));
+        }
+        function.apply(BOT, UPDATE);
+        verify(BOT, atLeastOnce()).editMessageText(
             eq(chatId),
             eq(messageId),
-            messageCaptor.capture(),
+            STRING_ARGUMENT_CAPTOR.capture(),
             any(EditMessageTextChains[].class)
         );
-        assertThat(messageCaptor.getValue()).isEqualTo(result);
+        assertThat(STRING_ARGUMENT_CAPTOR.getValue()).isEqualTo(result);
     }
 
-    private static Arguments testConfirmDelete(long chatId, int messageId, boolean isYes, Link toRemove, Link... links) {
-        if (isYes) {
-            return Arguments.of(
+    private static Arguments testConfirmDelete(long chatId, int messageId, Choose choose, Link toRemove) {
+        return switch (choose) {
+            case YES -> Arguments.of(
                 chatId,
                 messageId,
                 toRemove,
-                new User(links),
                 YES_BUTTON_TEXT,
                 String.format(SUCCESS_MESSAGE_FORMAT, toRemove)
             );
-        } else {
-            return Arguments.of(
+            case NO -> Arguments.of(
                 chatId,
                 messageId,
                 toRemove,
-                new User(links),
                 NO_BUTTON_TEXT,
                 DESCRIPTION_MESSAGE
             );
-        }
+        };
     }
 
     private static Stream<Arguments> testConfirmDelete() {
         return Stream.of(
-            testConfirmDelete(1L, 1, true, GOOGLE, THIS_REPO, GOOGLE, MAXIM_TELEGRAM),
-            testConfirmDelete(2L, 2, false, MAXIM_TELEGRAM, GOOGLE)
+            testConfirmDelete(1L, 1, Choose.YES, GOOGLE),
+            testConfirmDelete(2L, 2, Choose.NO, MAXIM_TELEGRAM)
         );
     }
 
     @ParameterizedTest
     @MethodSource
-    void testConfirmDelete(long chatId, int messageId, Link link, User user, String chose, String result) {
+    void testConfirmDelete(long chatId, int messageId, Link link, String chose, String result) {
         CommandFunction function = confirmDelete(messageId, link.getAlias());
-        when(callbackQuery.data()).thenReturn(chose);
-        when(telegramUser.id()).thenReturn(chatId);
-        when(bot.getUser(eq(chatId))).thenReturn(Optional.of(user));
-        function.apply(bot, update);
-        verify(bot, atLeastOnce()).editMessageText(
+        when(CALLBACK_QUERY.data()).thenReturn(chose);
+        when(SCRAPPER_HTTP_CLIENT.getChat(eq(chatId))).thenReturn(new ChatResponse(chatId));
+        when(SCRAPPER_HTTP_CLIENT.getAllLinks(eq(chatId))).thenReturn(new ListUserLinkResponse(new UserLinkResponse[0], 0));
+        when(TELEGRAM_USER.id()).thenReturn(chatId);
+        when(SCRAPPER_HTTP_CLIENT.getLinkByChatIdAndAlias(eq(chatId), eq(link.getAlias())))
+            .thenReturn(new UserLinkResponse(new LinkResponse(0L, link.getUri(), null), link.getAlias()));
+        function.apply(BOT, UPDATE);
+        verify(BOT, atLeastOnce()).editMessageText(
             eq(chatId),
             eq(messageId),
-            messageCaptor.capture(),
+            STRING_ARGUMENT_CAPTOR.capture(),
             any(EditMessageTextChains[].class)
         );
-        assertThat(messageCaptor.getValue()).isEqualTo(result);
+        assertThat(STRING_ARGUMENT_CAPTOR.getValue()).isEqualTo(result);
+    }
+
+    private enum Choose {
+        YES, NO
     }
 }

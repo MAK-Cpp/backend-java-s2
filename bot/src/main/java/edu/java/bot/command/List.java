@@ -3,9 +3,9 @@ package edu.java.bot.command;
 import com.pengrad.telegrambot.model.Update;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
-import java.util.Arrays;
 import edu.java.bot.client.ScrapperHttpClient;
 import edu.java.dto.response.UserLinkResponse;
+import java.util.Arrays;
 import org.springframework.stereotype.Component;
 import static edu.java.bot.request.chains.SendMessageChains.SM_DISABLE_PREVIEW;
 import static edu.java.bot.request.chains.SendMessageChains.SM_MARKDOWN;
@@ -22,13 +22,15 @@ public class List extends Command {
     }
 
     private static CommandFunction list(TelegramBotComponent bot, Update update) {
-        final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
         final long chatId = update.message().chat().id();
-        final UserLinkResponse[] userLinkResponses = scrapperHttpClient.getAllLinks(chatId).getLinks();
-        final java.util.List<Link> links = Arrays.stream(userLinkResponses)
-            .map(linkResponse -> new Link(linkResponse.getAlias(), linkResponse.getLink().getUri().toString()))
-            .toList();
-        bot.sendMessage(chatId, createLinksList(links), SM_MARKDOWN, SM_DISABLE_PREVIEW);
+        if (isRegistered(bot, chatId) && containsLinks(bot, chatId)) {
+            final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
+            final UserLinkResponse[] userLinkResponses = scrapperHttpClient.getAllLinks(chatId).getLinks();
+            final java.util.List<Link> links = Arrays.stream(userLinkResponses)
+                .map(linkResponse -> new Link(linkResponse.getAlias(), linkResponse.getLink().getUri().toString()))
+                .toList();
+            bot.sendMessage(chatId, createLinksList(links), SM_MARKDOWN, SM_DISABLE_PREVIEW);
+        }
         return CommandFunction.END;
     }
 

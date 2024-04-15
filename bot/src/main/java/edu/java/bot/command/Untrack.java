@@ -6,17 +6,14 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
-import edu.java.bot.User;
 import edu.java.bot.client.ScrapperHttpClient;
 import edu.java.bot.request.chains.Chains;
 import edu.java.bot.request.chains.SendMessageChains;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.UserLinkResponse;
 import org.springframework.stereotype.Component;
 import static edu.java.bot.request.chains.EditMessageTextChains.EMT_DISABLE_PREVIEW;
@@ -32,6 +29,7 @@ public class Untrack extends Command {
     public static final String CONFIRM_MESSAGE_FORMAT =
         "Are you sure you want to untrack link %s?";
     public static final String SUCCESS_MESSAGE_FORMAT = "Link %s now untracked";
+    public static final String NO_LINK_ERROR_FORMAT = "There is no link %s in tracking!";
     public static final String YES_BUTTON_TEXT = "Yes";
     public static final String NO_BUTTON_TEXT = "No";
     public static final String CANCEL_BUTTON_TEXT = "Cancel";
@@ -56,14 +54,12 @@ public class Untrack extends Command {
 
     /*package-private*/ static CommandFunction confirmDelete(int messageId, final String alias) {
         return (bot, update) -> {
-            final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
-            final String chose = update.callbackQuery().data();
             final Long chatId = update.callbackQuery().from().id();
-            /*final Optional<User> optUser = bot.getUser(chatId);
-            if (optUser.isEmpty()) {
+            if (!isRegistered(bot, chatId)) {
                 return CommandFunction.END;
             }
-            final User user = optUser.get();*/
+            final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
+            final String chose = update.callbackQuery().data();
             if (Objects.equals(chose, YES_BUTTON_TEXT)) {
                 final UserLinkResponse userLinkResponse = scrapperHttpClient.getLinkByChatIdAndAlias(chatId, alias);
                 final Link link = new Link(userLinkResponse.getAlias(), userLinkResponse.getLink().getUri().toString());
@@ -73,11 +69,6 @@ public class Untrack extends Command {
                     String.format(SUCCESS_MESSAGE_FORMAT, link),
                     EMT_MARKDOWN, EMT_DISABLE_PREVIEW
                 );
-               /* user.removeLink(linkAlias).ifPresent(link -> bot.editMessageText(
-                        chatId, messageId,
-                        String.format(SUCCESS_MESSAGE_FORMAT, link),
-                        EMT_MARKDOWN, EMT_DISABLE_PREVIEW
-                ));*/
                 return CommandFunction.END;
             }
             final UserLinkResponse[] userLinks = scrapperHttpClient.getAllLinks(chatId).getLinks();
@@ -104,41 +95,36 @@ public class Untrack extends Command {
                 bot.editMessageText(chatId, messageId, ABORTED_MESSAGE);
                 return CommandFunction.END;
             }
-            /*final Optional<User> optUser = bot.getUser(chatId);
-            if (optUser.isEmpty()) {
-                return CommandFunction.END;
-            }
-            final Optional<Link> optLink = optUser.get().getLink(alias);
-            if (optLink.isEmpty()) {
-                return CommandFunction.END;
-            }
-            final Link link = optLink.get();*/
-            final UserLinkResponse userLinkResponse = scrapperHttpClient.getLinkByChatIdAndAlias(chatId, alias);
-            final Link link = new Link(userLinkResponse.getAlias(), userLinkResponse.getLink().getUri().toString());
-            final InlineKeyboardMarkup yesNo =
-                new InlineKeyboardMarkup(
-                    new InlineKeyboardButton(YES_BUTTON_TEXT).callbackData(YES_BUTTON_TEXT),
-                    new InlineKeyboardButton(NO_BUTTON_TEXT).callbackData(NO_BUTTON_TEXT)
+            try {
+                final UserLinkResponse userLinkResponse = scrapperHttpClient.getLinkByChatIdAndAlias(chatId, alias);
+                final Link link = new Link(userLinkResponse.getAlias(), userLinkResponse.getLink().getUri().toString());
+                final InlineKeyboardMarkup yesNo =
+                    new InlineKeyboardMarkup(
+                        new InlineKeyboardButton(YES_BUTTON_TEXT).callbackData(YES_BUTTON_TEXT),
+                        new InlineKeyboardButton(NO_BUTTON_TEXT).callbackData(NO_BUTTON_TEXT)
+                    );
+                bot.editMessageText(
+                    chatId, messageId,
+                    String.format(CONFIRM_MESSAGE_FORMAT, link),
+                    EMT_MARKDOWN, EMT_DISABLE_PREVIEW, EMT_REPLY_MARKUP(yesNo)
                 );
-            bot.editMessageText(
-                chatId, messageId,
-                String.format(CONFIRM_MESSAGE_FORMAT, link),
-                EMT_MARKDOWN, EMT_DISABLE_PREVIEW, EMT_REPLY_MARKUP(yesNo)
-            );
-            return confirmDelete(messageId, alias);
+                return confirmDelete(messageId, alias);
+            } catch (WrongParametersException e) {
+                bot.editMessageText(
+                    chatId, messageId,
+                    String.format(NO_LINK_ERROR_FORMAT, alias)
+                );
+                return CommandFunction.END;
+            }
         };
     }
 
     /*package-private*/ static CommandFunction untrack(TelegramBotComponent bot, Update update) {
-        final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
         final long chatId = update.message().chat().id();
-        /*if (!(isRegistered(bot, chatId) && containsLinks(bot, chatId))) {
+        if (!(isRegistered(bot, chatId) && containsLinks(bot, chatId))) {
             return CommandFunction.END;
         }
-        final Optional<User> optUser = bot.getUser(chatId);
-        if (optUser.isEmpty()) {
-            return CommandFunction.END;
-        }*/
+        final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
         final UserLinkResponse[] userLinks = scrapperHttpClient.getAllLinks(chatId).getLinks();
         final InlineKeyboardMarkup buttons = getLinksButtons(
             Arrays.stream(userLinks)

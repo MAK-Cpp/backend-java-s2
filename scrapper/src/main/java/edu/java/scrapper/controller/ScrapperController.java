@@ -6,6 +6,7 @@ import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.AddLinkRequest;
 import edu.java.dto.request.RemoveLinkRequest;
 import edu.java.dto.response.ApiErrorResponse;
+import edu.java.dto.response.ChatResponse;
 import edu.java.dto.response.ListUserLinkResponse;
 import edu.java.dto.response.UserLinkResponse;
 import edu.java.scrapper.service.ChatService;
@@ -75,6 +76,24 @@ public class ScrapperController {
         throws WrongParametersException, NonExistentChatException {
         chatService.deleteChat(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/tg-chat/{id}")
+    @Operation(summary = "Получить данные о чате", responses = {
+        @ApiResponse(responseCode = "200",
+                     description = "Чат успешно удалён"),
+        @ApiResponse(responseCode = "400",
+                     description = "Некорректные параметры запроса",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "404",
+                     description = "Чат не существует",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public ResponseEntity<ChatResponse> getChat(@PathVariable long id)
+        throws WrongParametersException, NonExistentChatException {
+        return ResponseEntity.ok(chatService.getChat(id));
     }
 
     @GetMapping("/links")
