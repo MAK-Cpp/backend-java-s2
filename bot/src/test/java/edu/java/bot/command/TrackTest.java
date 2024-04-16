@@ -10,6 +10,7 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import static edu.java.bot.TelegramBotComponentTest.GOOGLE;
 import static edu.java.bot.TelegramBotComponentTest.MAXIM_TELEGRAM;
@@ -67,16 +68,17 @@ public class TrackTest extends CommandTest {
     @SafeVarargs
     private static Arguments testParseLink(long chatId, Map.Entry<Link, Boolean>... links) {
         final StringBuilder inputBuilder = new StringBuilder();
-        List<Map.Entry<String, Boolean>> result = Arrays.stream(links).map(entry -> {
+        final Optional<String> empty = Optional.empty();
+        List<Map.Entry<String, Optional<String>>> result = Arrays.stream(links).map(entry -> {
             final Link link = entry.getKey();
             final Boolean isCorrect = entry.getValue();
             if (isCorrect) {
                 inputBuilder.append(link.getAlias()).append(" - ").append(link.getUri()).append('\n');
-                return Map.entry(link.toString(), true);
+                return Map.entry(link.toString(), empty);
             } else {
                 final String line = link.getAlias() + " @ " + link.getUri();
                 inputBuilder.append(line).append('\n');
-                return Map.entry(line, false);
+                return Map.entry(line, Optional.of("cannot be parsed, read instruction again"));
             }
         }).toList();
         return Arguments.of(chatId, inputBuilder.toString(), createResult(result));

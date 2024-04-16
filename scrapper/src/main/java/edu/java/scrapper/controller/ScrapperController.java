@@ -81,7 +81,9 @@ public class ScrapperController {
     @GetMapping("/tg-chat/{id}")
     @Operation(summary = "Получить данные о чате", responses = {
         @ApiResponse(responseCode = "200",
-                     description = "Чат успешно удалён"),
+                     description = "Чат успешно получен",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ChatResponse.class))),
         @ApiResponse(responseCode = "400",
                      description = "Некорректные параметры запроса",
                      content = @Content(mediaType = "application/json",

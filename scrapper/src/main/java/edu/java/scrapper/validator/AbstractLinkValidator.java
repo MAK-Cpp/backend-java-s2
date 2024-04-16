@@ -28,7 +28,7 @@ public abstract class AbstractLinkValidator implements LinkValidator {
         int rowNumber,
         Map.Entry<String, Object>... parameters
     ) {
-        final String number = "[" + rowNumber + "] ";
+        final String number = "(" + rowNumber + ") ";
         final String space = " ".repeat(number.length());
         for (int i = 0; i < parameters.length; i++) {
             if (i == 0) {

@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
@@ -23,12 +22,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpringBootTest
-class BotHttpClientImplTest {
+class BotHttpClientImplTest extends ClientTest {
     private WireMockServer wireMockServer;
-    private static final int HTTP_ENDPOINT_PORT = 8123;
+    private static final int HTTP_ENDPOINT_PORT = getPort();
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final BotHttpClient botHttpClient = new BotHttpClientImpl(WebClient.builder(), URL);
+    private static final BotHttpClient BOT_HTTP_CLIENT = new BotHttpClientImpl(WebClient.builder(), URL);
 
     public static Stream<Arguments> testSendUpdates() {
         return Stream.of(
@@ -105,14 +103,14 @@ class BotHttpClientImplTest {
         MappingBuilder builder = post("/updates");
         if (status == HttpStatus.OK) {
             stubFor(builder.willReturn(aResponse().withStatus(200)));
-            assertDoesNotThrow(() -> botHttpClient.sendUpdates(id, url, description, chatsAndAliases));
+            assertDoesNotThrow(() -> BOT_HTTP_CLIENT.sendUpdates(id, url, description, chatsAndAliases));
         } else {
             stubFor(builder.willReturn(aResponse().withStatus(status.value())
                 .withHeader("Content-Type", "application/json")
                 .withBody(body)));
             assertThrows(
                 WrongParametersException.class,
-                () -> botHttpClient.sendUpdates(id, url, description, chatsAndAliases)
+                () -> BOT_HTTP_CLIENT.sendUpdates(id, url, description, chatsAndAliases)
             );
         }
     }

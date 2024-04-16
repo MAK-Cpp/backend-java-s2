@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import static edu.java.bot.command.List.createLinksList;
 import static edu.java.bot.command.Track.createResult;
@@ -292,15 +293,15 @@ public class TelegramBotComponentTest {
 
     public static Request links(final UserRecord userRecord, final LinkWithCorrectness... links) {
         final StringBuilder text = new StringBuilder();
-        List<Map.Entry<String, Boolean>> results = new ArrayList<>();
+        List<Map.Entry<String, Optional<String>>> results = new ArrayList<>();
         for (LinkWithCorrectness link : links) {
             final String line;
             if (link.isCorrect) {
                 line = link.link.getAlias() + " - " + link.link.getUri();
-                results.add(Map.entry(link.link.toString(), true));
+                results.add(Map.entry(link.link.toString(), Optional.empty()));
             } else {
                 line = link.link.getAlias() + link.link.getUri();
-                results.add(Map.entry(line, false));
+                results.add(Map.entry(line, Optional.of("cannot be parsed, read instruction again")));
             }
             text.append(line).append('\n');
         }

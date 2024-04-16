@@ -18,17 +18,17 @@ public class Track extends Command {
     public static final String DESCRIPTION_MESSAGE =
         "Send link(s) for tracking\nFormat:\nlink_alias1 - link1\nlink_alias2 - link2\n...";
 
-    public static String createResult(final List<Map.Entry<String, Boolean>> results) {
+    public static String createResult(final List<Map.Entry<String, Optional<String>>> results) {
         final StringBuilder message = new StringBuilder("Result:\n");
         int succeed = 0;
-        for (Map.Entry<String, Boolean> result : results) {
+        for (Map.Entry<String, Optional<String>> result : results) {
             final String line = result.getKey();
-            final Boolean isSucceed = result.getValue();
-            if (isSucceed) {
+            final Optional<String> exceptionMessage = result.getValue();
+            if (exceptionMessage.isEmpty()) {
                 succeed++;
                 message.append(line).append(" now tracking");
             } else {
-                message.append("Cannot parse `").append(line).append("`");
+                message.append(line).append(" ERROR: ").append(exceptionMessage.get());
             }
             message.append('\n');
         }
@@ -41,18 +41,18 @@ public class Track extends Command {
         final ScrapperHttpClient scrapperHttpClient = bot.getScrapperHttpClient();
         final long chatId = update.message().chat().id();
         final String messageText = update.message().text();
-        List<Map.Entry<String, Boolean>> results = new ArrayList<>();
+        List<Map.Entry<String, Optional<String>>> results = new ArrayList<>();
         messageText.lines().forEach(line -> {
             Optional<Link> optionalLink = Link.parse(line);
             if (optionalLink.isEmpty()) {
-                results.add(Map.entry(line, false));
+                results.add(Map.entry(line, Optional.of("cannot be parsed, read instruction again")));
             } else {
                 Link link = optionalLink.get();
                 try {
                     scrapperHttpClient.addLinkToTracking(chatId, link.getUri().toString(), link.getAlias());
-                    results.add(Map.entry(link.toString(), true));
+                    results.add(Map.entry(link.toString(), Optional.empty()));
                 } catch (DTOException e) {
-                    results.add(Map.entry(line, false));
+                    results.add(Map.entry(link.toString(), Optional.of(e.getMessage())));
                 }
             }
         });

@@ -1,6 +1,8 @@
 package edu.java.bot.client;
 
+import edu.java.dto.exception.AliasAlreadyTakenException;
 import edu.java.dto.exception.DTOException;
+import edu.java.dto.exception.LinkAlreadyTrackedException;
 import edu.java.dto.exception.LinkNotFoundException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
@@ -16,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-
 
 public class ScrapperHttpClientImpl implements ScrapperHttpClient {
     private static final String BASE_SCRAPPER_URI = "http://localhost:8080";
@@ -110,7 +111,15 @@ public class ScrapperHttpClientImpl implements ScrapperHttpClient {
             .header(CHAT_ID_HEADER, String.valueOf(id))
             .body(Mono.just(new AddLinkRequest(uri, alias)), AddLinkRequest.class)
             .retrieve()
-            .onStatus(HttpStatus.BAD_REQUEST::equals, ScrapperHttpClientImpl::badRequestFunction)
+            .onStatus(HttpStatus.BAD_REQUEST::equals, clientResponse ->
+                clientResponse.bodyToMono(ApiErrorResponse.class).map(apiErrorResponse -> {
+                    if (Objects.equals(apiErrorResponse.getExceptionName(), "LinkAlreadyTrackedException")) {
+                        return new LinkAlreadyTrackedException("Link already tracked");
+                    } else if (Objects.equals(apiErrorResponse.getExceptionName(), "AliasAlreadyTakenException")) {
+                        return new AliasAlreadyTakenException("Alias already taken, please choose another alias");
+                    }
+                    return new WrongParametersException(apiErrorResponse.getExceptionMessage());
+                }))
             .onStatus(HttpStatus.NOT_FOUND::equals, ScrapperHttpClientImpl::notFoundFunction)
             .bodyToMono(UserLinkResponse.class)
             .block();

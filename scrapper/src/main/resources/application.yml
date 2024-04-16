@@ -6,10 +6,15 @@ app:
 
 
 spring:
+  liquibase:
+    enabled: false
   application:
     name: scrapper
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SCRAPPER_URL}
+    username: ${SCRAPPER_USERNAME}
+    password: ${SCRAPPER_PASSWORD}
 
 
 server:

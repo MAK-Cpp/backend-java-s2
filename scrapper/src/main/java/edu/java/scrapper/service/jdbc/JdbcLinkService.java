@@ -1,8 +1,13 @@
 package edu.java.scrapper.service.jdbc;
 
+import edu.java.dto.exception.AliasAlreadyTakenException;
 import edu.java.dto.exception.DTOException;
+import edu.java.dto.exception.InvalidLinkException;
+import edu.java.dto.exception.LinkAlreadyTrackedException;
 import edu.java.dto.exception.LinkNotFoundException;
 import edu.java.dto.exception.NonExistentChatException;
+import edu.java.dto.exception.NonExistentLinkAliasException;
+import edu.java.dto.exception.UnsupportedLinkException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
@@ -16,16 +21,19 @@ import edu.java.scrapper.validator.LinkValidator;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class JdbcLinkService implements LinkService {
     private static final String NEGATE_ID_EXCEPTION_MESSAGE = "id cannot be negate";
     private static final String NON_EXISTENT_CHAT_EXCEPTION_FORMAT = "there is no chat with id=%d";
-    private static final String NON_EXISTENT_LINK_EXCEPTION_FORMAT = "there is no link %s";
     private static final String NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT = "there is no link with alias %s in chat %d";
     private static final String INVALID_LINK_EXCEPTION_FORMAT = "string %s is not a valid link";
+    private static final String UNSUPPORTED_LINK_EXCEPTION_FORMAT = "Link %s is not supported for tracking";
 
     private final JdbcChatRepository chatRepository;
     private final JdbcLinkRepository linkRepository;
@@ -54,21 +62,18 @@ public class JdbcLinkService implements LinkService {
     }
 
     private URI validateLink(String link) throws DTOException {
-        boolean isValidLink = false;
+        final URI result;
+        try {
+            result = new URI(link);
+        } catch (URISyntaxException e) {
+            throw new InvalidLinkException(String.format(INVALID_LINK_EXCEPTION_FORMAT, link), e);
+        }
         for (LinkValidator linkValidator : linkValidators) {
             if (linkValidator.isValid(link)) {
-                isValidLink = true;
-                break;
+                return result;
             }
         }
-        if (!isValidLink) {
-            throw new WrongParametersException(String.format(INVALID_LINK_EXCEPTION_FORMAT, link));
-        }
-        try {
-            return new URI(link);
-        } catch (URISyntaxException e) {
-            throw new WrongParametersException(String.format(INVALID_LINK_EXCEPTION_FORMAT, link), e);
-        }
+        throw new UnsupportedLinkException(String.format(UNSUPPORTED_LINK_EXCEPTION_FORMAT, link));
     }
 
     @Override
@@ -89,7 +94,8 @@ public class JdbcLinkService implements LinkService {
         validateChatId(chatId);
         final List<UserLinkResponse> response = chatsAndLinksRepository.getLink(chatId, alias);
         if (response.isEmpty()) {
-            throw new WrongParametersException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias, chatId));
+            throw new
+                NonExistentLinkAliasException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias, chatId));
         }
         return response.getFirst();
     }
@@ -99,7 +105,21 @@ public class JdbcLinkService implements LinkService {
         validateChatId(chatId);
         final URI uri = validateLink(link);
         final LinkResponse response = linkRepository.add(uri);
-        chatsAndLinksRepository.add(chatId, response.getId(), alias);
+        try {
+            chatsAndLinksRepository.add(chatId, response.getId(), alias);
+        } catch (DuplicateKeyException e) {
+            if (e.getMessage().contains("chats_and_links_pkey")) {
+                throw new LinkAlreadyTrackedException(
+                    "There is already a link with id " + response.getId() + " in chat " + chatId
+                );
+            } else if (e.getMessage().contains("chat_id_alias_unique")) {
+                throw new AliasAlreadyTakenException(
+                    "Alias " + alias + " was already taken in chat " + chatId
+                );
+            } else {
+                throw e;
+            }
+        }
         return new UserLinkResponse(response, alias);
     }
 

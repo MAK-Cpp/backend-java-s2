@@ -9,17 +9,12 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.DirectoryResourceAccessor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -32,12 +27,7 @@ public abstract class IntegrationTest {
     public static PostgreSQLContainer<?> POSTGRES;
 
     static {
-        POSTGRES = new
-            PostgreSQLContainer<>("postgres:15")
-            .withDatabaseName("scrapper")
-            .withUsername("postgres")
-            .withPassword("postgres");
-        POSTGRES.setPortBindings(List.of("5432:5432"));
+        POSTGRES = new PostgreSQLContainer<>("postgres:15");
         POSTGRES.start();
         log.info("jdbc url = {}", POSTGRES.getJdbcUrl());
         try (Connection connection =

@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -24,12 +23,12 @@ import static edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl.SIT
 import static edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl.SORT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-class StackOverflowClientImplTest {
+class StackOverflowClientImplTest extends ClientTest {
     private WireMockServer wireMockServer;
-    private static final int HTTP_ENDPOINT_PORT = 8123;
+    private static final int HTTP_ENDPOINT_PORT = getPort();
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final StackOverflowClient stackOverflowClient = new StackOverflowClientImpl(WebClient.builder(), URL);
+    private static final StackOverflowClient STACK_OVERFLOW_CLIENT
+        = new StackOverflowClientImpl(WebClient.builder(), URL);
 
     public static Stream<Arguments> testGetQuestionAnswers() {
         return Stream.of(
@@ -182,7 +181,7 @@ class StackOverflowClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-        AnswerResponse output = stackOverflowClient.getQuestionAnswers(questionId);
+        AnswerResponse output = STACK_OVERFLOW_CLIENT.getQuestionAnswers(questionId);
         assertThat(output).isEqualTo(result);
     }
 

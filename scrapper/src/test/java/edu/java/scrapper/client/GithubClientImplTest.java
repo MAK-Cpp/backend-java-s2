@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -25,12 +24,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-public class GithubClientImplTest {
+public class GithubClientImplTest extends ClientTest {
     private WireMockServer wireMockServer;
-    private static final int HTTP_ENDPOINT_PORT = 8123;
+    private static final int HTTP_ENDPOINT_PORT = getPort();
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final GithubClient githubClient = new GithubClientImpl(WebClient.builder(), URL);
+    private static final GithubClient GITHUB_CLIENT = new GithubClientImpl(WebClient.builder(), URL);
 
     @BeforeEach
     public void beforeEach() {
@@ -58,7 +56,7 @@ public class GithubClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-                yield githubClient.getPullRequests(owner, repo);
+                yield GITHUB_CLIENT.getPullRequests(owner, repo);
             }
             case ISSUES -> {
                 MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/issues");
@@ -66,7 +64,7 @@ public class GithubClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-                yield githubClient.getIssues(owner, repo);
+                yield GITHUB_CLIENT.getIssues(owner, repo);
             }
         };
         assertThat(output).isEqualTo(result);
@@ -87,7 +85,7 @@ public class GithubClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-                yield githubClient.getListCommitsOnPullRequest(owner, repo, number);
+                yield GITHUB_CLIENT.getListCommitsOnPullRequest(owner, repo, number);
             }
             case ISSUES -> {
                 MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/issues/" + number + "/comments");
@@ -95,7 +93,7 @@ public class GithubClientImplTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(body)));
-                yield githubClient.getListIssueComments(owner, repo, number);
+                yield GITHUB_CLIENT.getListIssueComments(owner, repo, number);
             }
         };
         assertThat(output).isEqualTo(result);

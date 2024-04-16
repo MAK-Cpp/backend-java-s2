@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-@Transactional
 public class JdbcChatRepository extends JdbcTemplate {
     public static final RowMapper<ChatResponse> CHAT_DTO_ROW_MAPPER =
         (rs, rowNum) -> new ChatResponse(rs.getLong("chat_id"));
@@ -20,11 +19,13 @@ public class JdbcChatRepository extends JdbcTemplate {
         super(dataSource);
     }
 
+    @Transactional
     public Long add(Long chatId) throws Exception {
         update("INSERT INTO chats (chat_id) VALUES (?)", chatId);
         return chatId;
     }
 
+    @Transactional
     public void remove(Long chatId) {
         update("DELETE FROM chats WHERE chat_id = ?", chatId);
     }

@@ -4,7 +4,7 @@
 CREATE TABLE links
 (
     link_id     BIGSERIAL PRIMARY KEY,
-    uri         TEXT        NOT NULL,
+    uri         TEXT UNIQUE NOT NULL,
     last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -17,10 +17,16 @@ CREATE TABLE chats
 --changeset scrapper:3
 CREATE TABLE chats_and_links
 (
-    chain_id BIGSERIAL PRIMARY KEY,
-    chat_id  BIGINT,
-    link_id  BIGINT,
-    alias    TEXT NOT NULL,
+    chat_id BIGINT,
+    link_id BIGINT,
+    PRIMARY KEY (chat_id, link_id),
+    alias   TEXT NOT NULL,
     FOREIGN KEY (chat_id) REFERENCES chats (chat_id),
     FOREIGN KEY (link_id) REFERENCES links (link_id)
 );
+
+--changeset scrapper:4
+ALTER TABLE chats_and_links
+    ADD CONSTRAINT chat_id_alias_unique UNIQUE (chat_id, alias);
+
+

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-@Transactional
 public class JdbcChatsAndLinksRepository extends JdbcTemplate {
     @SuppressWarnings("checkstyle:LineLength")
     private static final String FIND_ALL_LINKS_BY_CHAT_ID_SQL =
@@ -35,6 +34,7 @@ public class JdbcChatsAndLinksRepository extends JdbcTemplate {
         super(dataSource);
     }
 
+    @Transactional
     public void add(Long chatId, Long linkId, String alias) {
         update(
             "INSERT INTO chats_and_links (chat_id, link_id, alias) VALUES (?, ?, ?)",
@@ -44,10 +44,12 @@ public class JdbcChatsAndLinksRepository extends JdbcTemplate {
         );
     }
 
+    @Transactional
     public List<Long> remove(Long chatId, String alias) {
         return query(DELETE_LINK_IN_CHAT_BY_ALIAS_SQL, (rs, rowNum) -> rs.getLong("link_id"), chatId, alias);
     }
 
+    @Transactional
     public void remove(Long chatId) {
         update("DELETE FROM chats_and_links WHERE chat_id = ?", chatId);
     }
