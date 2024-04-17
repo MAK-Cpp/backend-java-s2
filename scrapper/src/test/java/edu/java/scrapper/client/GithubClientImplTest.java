@@ -2,20 +2,18 @@ package edu.java.scrapper.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
-import edu.java.scrapper.client.GithubClient;
-import edu.java.scrapper.client.GithubClientImpl;
-import edu.java.scrapper.response.Author;
-import edu.java.scrapper.response.Commit;
-import edu.java.scrapper.response.CommitResponse;
-import edu.java.scrapper.response.Committer;
-import edu.java.scrapper.response.IssueResponse;
-import edu.java.scrapper.response.PullRequestResponse;
+import edu.java.scrapper.client.github.GithubClient;
+import edu.java.scrapper.client.github.GithubClientImpl;
+import edu.java.scrapper.response.Response;
+import edu.java.scrapper.response.github.CommitResponse;
+import edu.java.scrapper.response.github.IssueCommentResponse;
+import edu.java.scrapper.response.github.IssueResponse;
+import edu.java.scrapper.response.github.PullRequestResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -26,12 +24,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-public class GithubClientImplTest {
+public class GithubClientImplTest extends ClientTest {
     private WireMockServer wireMockServer;
-    private static final int HTTP_ENDPOINT_PORT = 8123;
+    private static final int HTTP_ENDPOINT_PORT = getPort();
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final GithubClient githubClient = new GithubClientImpl(WebClient.builder(), URL);
+    private static final GithubClient GITHUB_CLIENT = new GithubClientImpl(WebClient.builder(), URL);
 
     @BeforeEach
     public void beforeEach() {
@@ -40,116 +37,96 @@ public class GithubClientImplTest {
         configureFor("localhost", HTTP_ENDPOINT_PORT);
     }
 
-    public static Stream<Arguments> testGetCommits() {
-        return Stream.of(
-            Arguments.of(
-                "octocat",
-                "Hello-World",
-                "[\n" +
-                    "    {\n" +
-                    "        \"sha\": \"7fd1a60b01f91b314f59955a4e4d4e80d8edf11d\",\n" +
-                    "        \"node_id\": \"MDY6Q29tbWl0MTI5NjI2OTo3ZmQxYTYwYjAxZjkxYjMxNGY1OTk1NWE0ZTRkNGU4MGQ4ZWRmMTFk\",\n" +
-                    "        \"commit\": {\n" +
-                    "            \"author\": {\n" +
-                    "                \"name\": \"The Octocat\",\n" +
-                    "                \"email\": \"octocat@nowhere.com\",\n" +
-                    "                \"date\": \"2012-03-06T23:06:50Z\"\n" +
-                    "            },\n" +
-                    "            \"committer\": {\n" +
-                    "                \"name\": \"The Octocat\",\n" +
-                    "                \"email\": \"octocat@nowhere.com\",\n" +
-                    "                \"date\": \"2012-03-06T23:06:50Z\"\n" +
-                    "            },\n" +
-                    "            \"message\": \"Merge pull request #6 from Spaceghost/patch-1\\n\\nNew line at end of file.\",\n" +
-                    "            \"tree\": {\n" +
-                    "                \"sha\": \"b4eecafa9be2f2006ce1b709d6857b07069b4608\",\n" +
-                    "                \"url\": \"https://api.github.com/repos/octocat/Hello-World/git/trees/b4eecafa9be2f2006ce1b709d6857b07069b4608\"\n" +
-                    "            },\n" +
-                    "            \"url\": \"https://api.github.com/repos/octocat/Hello-World/git/commits/7fd1a60b01f91b314f59955a4e4d4e80d8edf11d\",\n" +
-                    "            \"comment_count\": 88,\n" +
-                    "            \"verification\": {\n" +
-                    "                \"verified\": false,\n" +
-                    "                \"reason\": \"unsigned\",\n" +
-                    "                \"signature\": null,\n" +
-                    "                \"payload\": null\n" +
-                    "            }\n" +
-                    "        },\n" +
-                    "        \"url\": \"https://api.github.com/repos/octocat/Hello-World/commits/7fd1a60b01f91b314f59955a4e4d4e80d8edf11d\",\n" +
-                    "        \"html_url\": \"https://github.com/octocat/Hello-World/commit/7fd1a60b01f91b314f59955a4e4d4e80d8edf11d\",\n" +
-                    "        \"comments_url\": \"https://api.github.com/repos/octocat/Hello-World/commits/7fd1a60b01f91b314f59955a4e4d4e80d8edf11d/comments\",\n" +
-                    "        \"author\": {\n" +
-                    "            \"login\": \"octocat\",\n" +
-                    "            \"id\": 583231,\n" +
-                    "            \"node_id\": \"MDQ6VXNlcjU4MzIzMQ==\",\n" +
-                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/583231?v=4\",\n" +
-                    "            \"gravatar_id\": \"\",\n" +
-                    "            \"url\": \"https://api.github.com/users/octocat\",\n" +
-                    "            \"html_url\": \"https://github.com/octocat\",\n" +
-                    "            \"followers_url\": \"https://api.github.com/users/octocat/followers\",\n" +
-                    "            \"following_url\": \"https://api.github.com/users/octocat/following{/other_user}\",\n" +
-                    "            \"gists_url\": \"https://api.github.com/users/octocat/gists{/gist_id}\",\n" +
-                    "            \"starred_url\": \"https://api.github.com/users/octocat/starred{/owner}{/repo}\",\n" +
-                    "            \"subscriptions_url\": \"https://api.github.com/users/octocat/subscriptions\",\n" +
-                    "            \"organizations_url\": \"https://api.github.com/users/octocat/orgs\",\n" +
-                    "            \"repos_url\": \"https://api.github.com/users/octocat/repos\",\n" +
-                    "            \"events_url\": \"https://api.github.com/users/octocat/events{/privacy}\",\n" +
-                    "            \"received_events_url\": \"https://api.github.com/users/octocat/received_events\",\n" +
-                    "            \"type\": \"User\",\n" +
-                    "            \"site_admin\": false\n" +
-                    "        },\n" +
-                    "        \"committer\": {\n" +
-                    "            \"login\": \"octocat\",\n" +
-                    "            \"id\": 583231,\n" +
-                    "            \"node_id\": \"MDQ6VXNlcjU4MzIzMQ==\",\n" +
-                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/583231?v=4\",\n" +
-                    "            \"gravatar_id\": \"\",\n" +
-                    "            \"url\": \"https://api.github.com/users/octocat\",\n" +
-                    "            \"html_url\": \"https://github.com/octocat\",\n" +
-                    "            \"followers_url\": \"https://api.github.com/users/octocat/followers\",\n" +
-                    "            \"following_url\": \"https://api.github.com/users/octocat/following{/other_user}\",\n" +
-                    "            \"gists_url\": \"https://api.github.com/users/octocat/gists{/gist_id}\",\n" +
-                    "            \"starred_url\": \"https://api.github.com/users/octocat/starred{/owner}{/repo}\",\n" +
-                    "            \"subscriptions_url\": \"https://api.github.com/users/octocat/subscriptions\",\n" +
-                    "            \"organizations_url\": \"https://api.github.com/users/octocat/orgs\",\n" +
-                    "            \"repos_url\": \"https://api.github.com/users/octocat/repos\",\n" +
-                    "            \"events_url\": \"https://api.github.com/users/octocat/events{/privacy}\",\n" +
-                    "            \"received_events_url\": \"https://api.github.com/users/octocat/received_events\",\n" +
-                    "            \"type\": \"User\",\n" +
-                    "            \"site_admin\": false\n" +
-                    "        },\n" +
-                    "        \"parents\": [\n" +
-                    "            {\n" +
-                    "                \"sha\": \"553c2077f0edc3d5dc5d17262f6aa498e69d6f8e\",\n" +
-                    "                \"url\": \"https://api.github.com/repos/octocat/Hello-World/commits/553c2077f0edc3d5dc5d17262f6aa498e69d6f8e\",\n" +
-                    "                \"html_url\": \"https://github.com/octocat/Hello-World/commit/553c2077f0edc3d5dc5d17262f6aa498e69d6f8e\"\n" +
-                    "            },\n" +
-                    "            {\n" +
-                    "                \"sha\": \"762941318ee16e59dabbacb1b4049eec22f0d303\",\n" +
-                    "                \"url\": \"https://api.github.com/repos/octocat/Hello-World/commits/762941318ee16e59dabbacb1b4049eec22f0d303\",\n" +
-                    "                \"html_url\": \"https://github.com/octocat/Hello-World/commit/762941318ee16e59dabbacb1b4049eec22f0d303\"\n" +
-                    "            }\n" +
-                    "        ]\n" +
-                    "    }\n" +
-                    "]",
-                List.of(
-                    new CommitResponse(
-                        new Commit(
-                            new Author(
-                                "The Octocat",
-                                "octocat@nowhere.com",
-                                OffsetDateTime.parse("2012-03-06T23:06:50Z")
-                            ),
-                            new Committer(
-                                "The Octocat",
-                                "octocat@nowhere.com",
-                                OffsetDateTime.parse("2012-03-06T23:06:50Z")
-                            ),
-                            "Merge pull request #6 from Spaceghost/patch-1\n\nNew line at end of file."
-                        )
-                    )
-                )
-            )
-        );
+    @AfterEach
+    public void afterEach() {
+        wireMockServer.stop();
+    }
+
+    private <T extends Response> void testCommand(
+        String owner,
+        String repo,
+        GithubClientCommands command,
+        String body,
+        List<T> result
+    ) {
+        List<? extends Response> output = switch (command) {
+            case PULLS -> {
+                MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/pulls");
+                stubFor(builder.willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(body)));
+                yield GITHUB_CLIENT.getPullRequests(owner, repo);
+            }
+            case ISSUES -> {
+                MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/issues");
+                stubFor(builder.willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(body)));
+                yield GITHUB_CLIENT.getIssues(owner, repo);
+            }
+        };
+        assertThat(output).isEqualTo(result);
+    }
+
+    private <T extends Response> void testCommand(
+        String owner,
+        String repo,
+        String number,
+        GithubClientCommands command,
+        String body,
+        List<T> result
+    ) {
+        List<? extends Response> output = switch (command) {
+            case PULLS -> {
+                MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/pulls/" + number + "/commits");
+                stubFor(builder.willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(body)));
+                yield GITHUB_CLIENT.getListCommitsOnPullRequest(owner, repo, number);
+            }
+            case ISSUES -> {
+                MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/issues/" + number + "/comments");
+                stubFor(builder.willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(body)));
+                yield GITHUB_CLIENT.getListIssueComments(owner, repo, number);
+            }
+        };
+        assertThat(output).isEqualTo(result);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testGetPullRequests(String owner, String repo, String body, List<PullRequestResponse> result) {
+        testCommand(owner, repo, GithubClientCommands.PULLS, body, result);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testGetIssues(String owner, String repo, String body, List<IssueResponse> result) {
+        testCommand(owner, repo, GithubClientCommands.ISSUES, body, result);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testGetListCommitsOnPullRequest(
+        String owner,
+        String repo,
+        String number,
+        String body,
+        List<CommitResponse> result
+    ) {
+        testCommand(owner, repo, number, GithubClientCommands.PULLS, body, result);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testGetListIssueComments(String owner, String repo, String number, String body, List<IssueResponse> result) {
+        testCommand(owner, repo, number, GithubClientCommands.ISSUES, body, result);
     }
 
     public static Stream<Arguments> testGetPullRequests() {
@@ -506,6 +483,7 @@ public class GithubClientImplTest {
                         "https://github.com/octocat/Hello-World/pull/2988",
                         "open",
                         "Create codeql.yml",
+                        new PullRequestResponse.User("didar72ahmadi", "User"),
                         "com.google.android.permission \r\n",
                         2988,
                         OffsetDateTime.parse("2024-02-23T12:43:58Z"),
@@ -601,6 +579,7 @@ public class GithubClientImplTest {
                     new IssueResponse(
                         2988,
                         "Create codeql.yml",
+                        new IssueResponse.User("didar72ahmadi", "User"),
                         "https://github.com/octocat/Hello-World/pull/2988",
                         "open",
                         OffsetDateTime.parse("2024-02-23T12:43:58Z"),
@@ -613,49 +592,467 @@ public class GithubClientImplTest {
         );
     }
 
-    void testCommand(String owner, String repo, GithubClientCommands command, String body, List<?> result) {
-        MappingBuilder builder = get("/repos/" + owner + "/" + repo + "/" + command.command);
-        stubFor(builder.willReturn(aResponse()
-            .withStatus(200)
-            .withHeader("Content-Type", "application/json")
-            .withBody(body)));
-        List<?> output = switch (command) {
-            case COMMITS -> githubClient.getCommits(owner, repo).block();
-            case PULL_REQUESTS -> githubClient.getPullRequests(owner, repo).block();
-            case ISSUES -> githubClient.getIssues(owner, repo).block();
-        };
-        assertThat(output).isEqualTo(result);
+    public static Stream<Arguments> testGetListCommitsOnPullRequest() {
+        return Stream.of(
+            Arguments.of(
+                "MAK-Cpp",
+                "backend-java-s2",
+                "6",
+                "[\n" +
+                    "    {\n" +
+                    "        \"sha\": \"55fc82e1f766bd43a02291e33b208e0dd59847db\",\n" +
+                    "        \"node_id\": \"C_kwDOLO2f3NoAKDU1ZmM4MmUxZjc2NmJkNDNhMDIyOTFlMzNiMjA4ZTBkZDU5ODQ3ZGI\",\n" +
+                    "        \"commit\": {\n" +
+                    "            \"author\": {\n" +
+                    "                \"name\": \"Maxim Primakov\",\n" +
+                    "                \"email\": \"spartmenik@gmail.com\",\n" +
+                    "                \"date\": \"2024-03-08T11:42:02Z\"\n" +
+                    "            },\n" +
+                    "            \"committer\": {\n" +
+                    "                \"name\": \"Maxim Primakov\",\n" +
+                    "                \"email\": \"spartmenik@gmail.com\",\n" +
+                    "                \"date\": \"2024-04-07T16:24:08Z\"\n" +
+                    "            },\n" +
+                    "            \"message\": \"hw4 init commit\",\n" +
+                    "            \"tree\": {\n" +
+                    "                \"sha\": \"a18367b84fef4d8bdc2bd6d615c5ebcc2a090142\",\n" +
+                    "                \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/git/trees/a18367b84fef4d8bdc2bd6d615c5ebcc2a090142\"\n" +
+                    "            },\n" +
+                    "            \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/git/commits/55fc82e1f766bd43a02291e33b208e0dd59847db\",\n" +
+                    "            \"comment_count\": 0,\n" +
+                    "            \"verification\": {\n" +
+                    "                \"verified\": false,\n" +
+                    "                \"reason\": \"unsigned\",\n" +
+                    "                \"signature\": null,\n" +
+                    "                \"payload\": null\n" +
+                    "            }\n" +
+                    "        },\n" +
+                    "        \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/55fc82e1f766bd43a02291e33b208e0dd59847db\",\n" +
+                    "        \"html_url\": \"https://github.com/MAK-Cpp/backend-java-s2/commit/55fc82e1f766bd43a02291e33b208e0dd59847db\",\n" +
+                    "        \"comments_url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/55fc82e1f766bd43a02291e33b208e0dd59847db/comments\",\n" +
+                    "        \"author\": {\n" +
+                    "            \"login\": \"MAK-Cpp\",\n" +
+                    "            \"id\": 75676696,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjc1Njc2Njk2\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/75676696?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/MAK-Cpp\",\n" +
+                    "            \"html_url\": \"https://github.com/MAK-Cpp\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/MAK-Cpp/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/MAK-Cpp/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/MAK-Cpp/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/MAK-Cpp/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/MAK-Cpp/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/MAK-Cpp/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/MAK-Cpp/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/MAK-Cpp/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/MAK-Cpp/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"committer\": {\n" +
+                    "            \"login\": \"MAK-Cpp\",\n" +
+                    "            \"id\": 75676696,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjc1Njc2Njk2\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/75676696?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/MAK-Cpp\",\n" +
+                    "            \"html_url\": \"https://github.com/MAK-Cpp\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/MAK-Cpp/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/MAK-Cpp/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/MAK-Cpp/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/MAK-Cpp/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/MAK-Cpp/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/MAK-Cpp/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/MAK-Cpp/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/MAK-Cpp/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/MAK-Cpp/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"parents\": [\n" +
+                    "            {\n" +
+                    "                \"sha\": \"de43706948325d80beb0a9107af7e5b67f5dc9ec\",\n" +
+                    "                \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/de43706948325d80beb0a9107af7e5b67f5dc9ec\",\n" +
+                    "                \"html_url\": \"https://github.com/MAK-Cpp/backend-java-s2/commit/de43706948325d80beb0a9107af7e5b67f5dc9ec\"\n" +
+                    "            }\n" +
+                    "        ]\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "        \"sha\": \"e954e25349ef58b0e73fed4b03f01dec5939e59f\",\n" +
+                    "        \"node_id\": \"C_kwDOLO2f3NoAKGU5NTRlMjUzNDllZjU4YjBlNzNmZWQ0YjAzZjAxZGVjNTkzOWU1OWY\",\n" +
+                    "        \"commit\": {\n" +
+                    "            \"author\": {\n" +
+                    "                \"name\": \"Maxim Primakov\",\n" +
+                    "                \"email\": \"spartmenik@gmail.com\",\n" +
+                    "                \"date\": \"2024-03-08T14:47:13Z\"\n" +
+                    "            },\n" +
+                    "            \"committer\": {\n" +
+                    "                \"name\": \"Maxim Primakov\",\n" +
+                    "                \"email\": \"spartmenik@gmail.com\",\n" +
+                    "                \"date\": \"2024-04-07T16:24:08Z\"\n" +
+                    "            },\n" +
+                    "            \"message\": \"written tasks No. 1-3\",\n" +
+                    "            \"tree\": {\n" +
+                    "                \"sha\": \"b3595657fa91a6c0b39d0d0a863cacc9ed255eee\",\n" +
+                    "                \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/git/trees/b3595657fa91a6c0b39d0d0a863cacc9ed255eee\"\n" +
+                    "            },\n" +
+                    "            \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/git/commits/e954e25349ef58b0e73fed4b03f01dec5939e59f\",\n" +
+                    "            \"comment_count\": 0,\n" +
+                    "            \"verification\": {\n" +
+                    "                \"verified\": false,\n" +
+                    "                \"reason\": \"unsigned\",\n" +
+                    "                \"signature\": null,\n" +
+                    "                \"payload\": null\n" +
+                    "            }\n" +
+                    "        },\n" +
+                    "        \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/e954e25349ef58b0e73fed4b03f01dec5939e59f\",\n" +
+                    "        \"html_url\": \"https://github.com/MAK-Cpp/backend-java-s2/commit/e954e25349ef58b0e73fed4b03f01dec5939e59f\",\n" +
+                    "        \"comments_url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/e954e25349ef58b0e73fed4b03f01dec5939e59f/comments\",\n" +
+                    "        \"author\": {\n" +
+                    "            \"login\": \"MAK-Cpp\",\n" +
+                    "            \"id\": 75676696,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjc1Njc2Njk2\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/75676696?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/MAK-Cpp\",\n" +
+                    "            \"html_url\": \"https://github.com/MAK-Cpp\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/MAK-Cpp/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/MAK-Cpp/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/MAK-Cpp/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/MAK-Cpp/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/MAK-Cpp/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/MAK-Cpp/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/MAK-Cpp/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/MAK-Cpp/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/MAK-Cpp/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"committer\": {\n" +
+                    "            \"login\": \"MAK-Cpp\",\n" +
+                    "            \"id\": 75676696,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjc1Njc2Njk2\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/75676696?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/MAK-Cpp\",\n" +
+                    "            \"html_url\": \"https://github.com/MAK-Cpp\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/MAK-Cpp/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/MAK-Cpp/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/MAK-Cpp/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/MAK-Cpp/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/MAK-Cpp/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/MAK-Cpp/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/MAK-Cpp/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/MAK-Cpp/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/MAK-Cpp/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"parents\": [\n" +
+                    "            {\n" +
+                    "                \"sha\": \"55fc82e1f766bd43a02291e33b208e0dd59847db\",\n" +
+                    "                \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/55fc82e1f766bd43a02291e33b208e0dd59847db\",\n" +
+                    "                \"html_url\": \"https://github.com/MAK-Cpp/backend-java-s2/commit/55fc82e1f766bd43a02291e33b208e0dd59847db\"\n" +
+                    "            }\n" +
+                    "        ]\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "        \"sha\": \"f3f539338bc981e0a09772f0dd1f3d801eb7596f\",\n" +
+                    "        \"node_id\": \"C_kwDOLO2f3NoAKGYzZjUzOTMzOGJjOTgxZTBhMDk3NzJmMGRkMWYzZDgwMWViNzU5NmY\",\n" +
+                    "        \"commit\": {\n" +
+                    "            \"author\": {\n" +
+                    "                \"name\": \"Maxim Primakov\",\n" +
+                    "                \"email\": \"spartmenik@gmail.com\",\n" +
+                    "                \"date\": \"2024-03-09T12:09:04Z\"\n" +
+                    "            },\n" +
+                    "            \"committer\": {\n" +
+                    "                \"name\": \"Maxim Primakov\",\n" +
+                    "                \"email\": \"spartmenik@gmail.com\",\n" +
+                    "                \"date\": \"2024-04-07T16:24:08Z\"\n" +
+                    "            },\n" +
+                    "            \"message\": \"written task No. 4\",\n" +
+                    "            \"tree\": {\n" +
+                    "                \"sha\": \"fb431809ce61479c5005638d2ed2ced7e9f2ba67\",\n" +
+                    "                \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/git/trees/fb431809ce61479c5005638d2ed2ced7e9f2ba67\"\n" +
+                    "            },\n" +
+                    "            \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/git/commits/f3f539338bc981e0a09772f0dd1f3d801eb7596f\",\n" +
+                    "            \"comment_count\": 0,\n" +
+                    "            \"verification\": {\n" +
+                    "                \"verified\": false,\n" +
+                    "                \"reason\": \"unsigned\",\n" +
+                    "                \"signature\": null,\n" +
+                    "                \"payload\": null\n" +
+                    "            }\n" +
+                    "        },\n" +
+                    "        \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/f3f539338bc981e0a09772f0dd1f3d801eb7596f\",\n" +
+                    "        \"html_url\": \"https://github.com/MAK-Cpp/backend-java-s2/commit/f3f539338bc981e0a09772f0dd1f3d801eb7596f\",\n" +
+                    "        \"comments_url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/f3f539338bc981e0a09772f0dd1f3d801eb7596f/comments\",\n" +
+                    "        \"author\": {\n" +
+                    "            \"login\": \"MAK-Cpp\",\n" +
+                    "            \"id\": 75676696,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjc1Njc2Njk2\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/75676696?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/MAK-Cpp\",\n" +
+                    "            \"html_url\": \"https://github.com/MAK-Cpp\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/MAK-Cpp/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/MAK-Cpp/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/MAK-Cpp/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/MAK-Cpp/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/MAK-Cpp/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/MAK-Cpp/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/MAK-Cpp/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/MAK-Cpp/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/MAK-Cpp/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"committer\": {\n" +
+                    "            \"login\": \"MAK-Cpp\",\n" +
+                    "            \"id\": 75676696,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjc1Njc2Njk2\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/75676696?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/MAK-Cpp\",\n" +
+                    "            \"html_url\": \"https://github.com/MAK-Cpp\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/MAK-Cpp/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/MAK-Cpp/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/MAK-Cpp/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/MAK-Cpp/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/MAK-Cpp/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/MAK-Cpp/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/MAK-Cpp/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/MAK-Cpp/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/MAK-Cpp/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"parents\": [\n" +
+                    "            {\n" +
+                    "                \"sha\": \"e954e25349ef58b0e73fed4b03f01dec5939e59f\",\n" +
+                    "                \"url\": \"https://api.github.com/repos/MAK-Cpp/backend-java-s2/commits/e954e25349ef58b0e73fed4b03f01dec5939e59f\",\n" +
+                    "                \"html_url\": \"https://github.com/MAK-Cpp/backend-java-s2/commit/e954e25349ef58b0e73fed4b03f01dec5939e59f\"\n" +
+                    "            }\n" +
+                    "        ]\n" +
+                    "    }\n" +
+                    "]",
+                List.of(
+                    new CommitResponse(
+                        new CommitResponse.Commit(
+                            new CommitResponse.Author(
+                                "Maxim Primakov",
+                                "spartmenik@gmail.com",
+                                OffsetDateTime.parse("2024-03-08T11:42:02Z")
+                            ),
+                            new CommitResponse.Committer(
+                                "Maxim Primakov",
+                                "spartmenik@gmail.com",
+                                OffsetDateTime.parse("2024-04-07T16:24:08Z")
+                            ),
+                            "hw4 init commit"
+                        )
+                    ),
+                    new CommitResponse(
+                        new CommitResponse.Commit(
+                            new CommitResponse.Author(
+                                "Maxim Primakov",
+                                "spartmenik@gmail.com",
+                                OffsetDateTime.parse("2024-03-08T14:47:13Z")
+                            ),
+                            new CommitResponse.Committer(
+                                "Maxim Primakov",
+                                "spartmenik@gmail.com",
+                                OffsetDateTime.parse("2024-04-07T16:24:08Z")
+                            ),
+                            "written tasks No. 1-3"
+                        )
+                    ),
+                    new CommitResponse(
+                        new CommitResponse.Commit(
+                            new CommitResponse.Author(
+                                "Maxim Primakov",
+                                "spartmenik@gmail.com",
+                                OffsetDateTime.parse("2024-03-09T12:09:04Z")
+                            ),
+                            new CommitResponse.Committer(
+                                "Maxim Primakov",
+                                "spartmenik@gmail.com",
+                                OffsetDateTime.parse("2024-04-07T16:24:08Z")
+                            ),
+                            "written task No. 4"
+                        )
+                    )
+                )
+            )
+        );
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void testGetCommits(String owner, String repo, String body, List<CommitResponse> result) {
-        testCommand(owner, repo, GithubClientCommands.COMMITS, body, result);
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void testGetPullRequests(String owner, String repo, String body, List<PullRequestResponse> result) {
-        testCommand(owner, repo, GithubClientCommands.PULL_REQUESTS, body, result);
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void testGetIssues(String owner, String repo, String body, List<IssueResponse> result) {
-        testCommand(owner, repo, GithubClientCommands.ISSUES, body, result);
-    }
-
-    @AfterEach
-    public void afterEach() {
-        wireMockServer.stop();
+    public static Stream<Arguments> testGetListIssueComments() {
+        return Stream.of(
+            Arguments.of(
+                "testcontainers",
+                "testcontainers-java",
+                "8338",
+                "[\n" +
+                    "    {\n" +
+                    "        \"url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/comments/1959081453\",\n" +
+                    "        \"html_url\": \"https://github.com/testcontainers/testcontainers-java/issues/8338#issuecomment-1959081453\",\n" +
+                    "        \"issue_url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/8338\",\n" +
+                    "        \"id\": 1959081453,\n" +
+                    "        \"node_id\": \"IC_kwDOAgP_mc50xTXt\",\n" +
+                    "        \"user\": {\n" +
+                    "            \"login\": \"marcelstoer\",\n" +
+                    "            \"id\": 624195,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjYyNDE5NQ==\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/624195?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/marcelstoer\",\n" +
+                    "            \"html_url\": \"https://github.com/marcelstoer\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/marcelstoer/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/marcelstoer/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/marcelstoer/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/marcelstoer/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/marcelstoer/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/marcelstoer/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/marcelstoer/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/marcelstoer/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/marcelstoer/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"created_at\": \"2024-02-22T09:53:55Z\",\n" +
+                    "        \"updated_at\": \"2024-02-22T09:53:55Z\",\n" +
+                    "        \"author_association\": \"NONE\",\n" +
+                    "        \"body\": \"Anyone coming across this, please follow the discussion at #8354. The `commons-compress` dependency won't be updated here for now.\",\n" +
+                    "        \"reactions\": {\n" +
+                    "            \"url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/comments/1959081453/reactions\",\n" +
+                    "            \"total_count\": 2,\n" +
+                    "            \"+1\": 0,\n" +
+                    "            \"-1\": 0,\n" +
+                    "            \"laugh\": 0,\n" +
+                    "            \"hooray\": 0,\n" +
+                    "            \"confused\": 2,\n" +
+                    "            \"heart\": 0,\n" +
+                    "            \"rocket\": 0,\n" +
+                    "            \"eyes\": 0\n" +
+                    "        },\n" +
+                    "        \"performed_via_github_app\": null\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "        \"url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/comments/1992649517\",\n" +
+                    "        \"html_url\": \"https://github.com/testcontainers/testcontainers-java/issues/8338#issuecomment-1992649517\",\n" +
+                    "        \"issue_url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/8338\",\n" +
+                    "        \"id\": 1992649517,\n" +
+                    "        \"node_id\": \"IC_kwDOAgP_mc52xWst\",\n" +
+                    "        \"user\": {\n" +
+                    "            \"login\": \"hailuand\",\n" +
+                    "            \"id\": 6646502,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjY2NDY1MDI=\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/6646502?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/hailuand\",\n" +
+                    "            \"html_url\": \"https://github.com/hailuand\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/hailuand/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/hailuand/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/hailuand/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/hailuand/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/hailuand/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/hailuand/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/hailuand/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/hailuand/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/hailuand/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"created_at\": \"2024-03-12T21:53:58Z\",\n" +
+                    "        \"updated_at\": \"2024-03-12T21:53:58Z\",\n" +
+                    "        \"author_association\": \"NONE\",\n" +
+                    "        \"body\": \"Apache have released patch version 1.26.1 of commons-compress last week that may address this?\\r\\n\\r\\n> [COMPRESS-659:  TarArchiveOutputStream should use Commons IO Charsets instead of Commons Codec Charsets.](https://github.com/apache/commons-compress/blob/master/RELEASE-NOTES.txt#L25)\\r\\n\\r\\nI was able to successfully upgrade the commons-compress version in a project of mine to 1.26.1 that was previously failing on 1.26.0 with:\\r\\n```java\\r\\njava.lang.NoClassDefFoundError: org/apache/commons/codec/Charsets\\r\\n\\r\\n\\tat org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.<init>(TarArchiveOutputStream.java:212)\\r\\n\\tat org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.<init>(TarArchiveOutputStream.java:157)\\r\\n\\tat org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.<init>(TarArchiveOutputStream.java:147)\\r\\n\\tat org.testcontainers.containers.ContainerState.copyFileToContainer(ContainerState.java:350)\\r\\n\\tat org.testcontainers.containers.ContainerState.copyFileToContainer(ContainerState.java:331)\\r\\n\\tat java.base/java.util.LinkedHashMap.forEach(LinkedHashMap.java:986)\\r\\n\\tat org.testcontainers.containers.GenericContainer.tryStart(GenericContainer.java:441)\\r\\n```\",\n" +
+                    "        \"reactions\": {\n" +
+                    "            \"url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/comments/1992649517/reactions\",\n" +
+                    "            \"total_count\": 0,\n" +
+                    "            \"+1\": 0,\n" +
+                    "            \"-1\": 0,\n" +
+                    "            \"laugh\": 0,\n" +
+                    "            \"hooray\": 0,\n" +
+                    "            \"confused\": 0,\n" +
+                    "            \"heart\": 0,\n" +
+                    "            \"rocket\": 0,\n" +
+                    "            \"eyes\": 0\n" +
+                    "        },\n" +
+                    "        \"performed_via_github_app\": null\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "        \"url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/comments/2041414862\",\n" +
+                    "        \"html_url\": \"https://github.com/testcontainers/testcontainers-java/issues/8338#issuecomment-2041414862\",\n" +
+                    "        \"issue_url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/8338\",\n" +
+                    "        \"id\": 2041414862,\n" +
+                    "        \"node_id\": \"IC_kwDOAgP_mc55rYTO\",\n" +
+                    "        \"user\": {\n" +
+                    "            \"login\": \"blommish\",\n" +
+                    "            \"id\": 937168,\n" +
+                    "            \"node_id\": \"MDQ6VXNlcjkzNzE2OA==\",\n" +
+                    "            \"avatar_url\": \"https://avatars.githubusercontent.com/u/937168?v=4\",\n" +
+                    "            \"gravatar_id\": \"\",\n" +
+                    "            \"url\": \"https://api.github.com/users/blommish\",\n" +
+                    "            \"html_url\": \"https://github.com/blommish\",\n" +
+                    "            \"followers_url\": \"https://api.github.com/users/blommish/followers\",\n" +
+                    "            \"following_url\": \"https://api.github.com/users/blommish/following{/other_user}\",\n" +
+                    "            \"gists_url\": \"https://api.github.com/users/blommish/gists{/gist_id}\",\n" +
+                    "            \"starred_url\": \"https://api.github.com/users/blommish/starred{/owner}{/repo}\",\n" +
+                    "            \"subscriptions_url\": \"https://api.github.com/users/blommish/subscriptions\",\n" +
+                    "            \"organizations_url\": \"https://api.github.com/users/blommish/orgs\",\n" +
+                    "            \"repos_url\": \"https://api.github.com/users/blommish/repos\",\n" +
+                    "            \"events_url\": \"https://api.github.com/users/blommish/events{/privacy}\",\n" +
+                    "            \"received_events_url\": \"https://api.github.com/users/blommish/received_events\",\n" +
+                    "            \"type\": \"User\",\n" +
+                    "            \"site_admin\": false\n" +
+                    "        },\n" +
+                    "        \"created_at\": \"2024-04-07T10:35:03Z\",\n" +
+                    "        \"updated_at\": \"2024-04-07T10:35:03Z\",\n" +
+                    "        \"author_association\": \"NONE\",\n" +
+                    "        \"body\": \"Do I understand this correctly, it will probably not be updated before spring has updated it to 1.26.1? \",\n" +
+                    "        \"reactions\": {\n" +
+                    "            \"url\": \"https://api.github.com/repos/testcontainers/testcontainers-java/issues/comments/2041414862/reactions\",\n" +
+                    "            \"total_count\": 0,\n" +
+                    "            \"+1\": 0,\n" +
+                    "            \"-1\": 0,\n" +
+                    "            \"laugh\": 0,\n" +
+                    "            \"hooray\": 0,\n" +
+                    "            \"confused\": 0,\n" +
+                    "            \"heart\": 0,\n" +
+                    "            \"rocket\": 0,\n" +
+                    "            \"eyes\": 0\n" +
+                    "        },\n" +
+                    "        \"performed_via_github_app\": null\n" +
+                    "    }\n" +
+                    "]",
+                List.of(
+                    new IssueCommentResponse(
+                        new IssueCommentResponse.User("marcelstoer", "User"),
+                        OffsetDateTime.parse("2024-02-22T09:53:55Z"),
+                        OffsetDateTime.parse("2024-02-22T09:53:55Z"),
+                        "Anyone coming across this, please follow the discussion at #8354. The `commons-compress` dependency won't be updated here for now."
+                    ),
+                    new IssueCommentResponse(
+                        new IssueCommentResponse.User("hailuand", "User"),
+                        OffsetDateTime.parse("2024-03-12T21:53:58Z"),
+                        OffsetDateTime.parse("2024-03-12T21:53:58Z"),
+                        "Apache have released patch version 1.26.1 of commons-compress last week that may address this?\r\n\r\n> [COMPRESS-659:  TarArchiveOutputStream should use Commons IO Charsets instead of Commons Codec Charsets.](https://github.com/apache/commons-compress/blob/master/RELEASE-NOTES.txt#L25)\r\n\r\nI was able to successfully upgrade the commons-compress version in a project of mine to 1.26.1 that was previously failing on 1.26.0 with:\r\n```java\r\njava.lang.NoClassDefFoundError: org/apache/commons/codec/Charsets\r\n\r\n\tat org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.<init>(TarArchiveOutputStream.java:212)\r\n\tat org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.<init>(TarArchiveOutputStream.java:157)\r\n\tat org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.<init>(TarArchiveOutputStream.java:147)\r\n\tat org.testcontainers.containers.ContainerState.copyFileToContainer(ContainerState.java:350)\r\n\tat org.testcontainers.containers.ContainerState.copyFileToContainer(ContainerState.java:331)\r\n\tat java.base/java.util.LinkedHashMap.forEach(LinkedHashMap.java:986)\r\n\tat org.testcontainers.containers.GenericContainer.tryStart(GenericContainer.java:441)\r\n```"
+                    ),
+                    new IssueCommentResponse(
+                        new IssueCommentResponse.User("blommish", "User"),
+                        OffsetDateTime.parse("2024-04-07T10:35:03Z"),
+                        OffsetDateTime.parse("2024-04-07T10:35:03Z"),
+                        "Do I understand this correctly, it will probably not be updated before spring has updated it to 1.26.1? "
+                    )
+                )
+            )
+        );
     }
 
     private enum GithubClientCommands {
-        COMMITS("commits"), PULL_REQUESTS("pulls"), ISSUES("issues");
-        private final String command;
-
-        GithubClientCommands(String command) {
-            this.command = command;
-        }
+        PULLS, ISSUES
     }
 }

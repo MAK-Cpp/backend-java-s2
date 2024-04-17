@@ -1,16 +1,22 @@
 package edu.java.bot.client;
 
-import edu.java.dto.response.LinkResponse;
-import edu.java.dto.response.ListLinkResponse;
+import edu.java.dto.exception.DTOException;
+import edu.java.dto.response.ChatResponse;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
 
 public interface ScrapperHttpClient {
-    void registerChat(long id);
+    void registerChat(long id) throws DTOException;
 
-    void deleteChat(long id);
+    void deleteChat(long id) throws DTOException;
 
-    ListLinkResponse getAllLinks(long id);
+    ChatResponse getChat(long id) throws DTOException;
 
-    LinkResponse addLinkToTracking(long id, String uri);
+    ListUserLinkResponse getAllLinks(long id) throws DTOException;
 
-    LinkResponse removeLinkFromTracking(long id, String uri);
+    UserLinkResponse getLinkByChatIdAndAlias(long chatId, String alias) throws DTOException;
+
+    UserLinkResponse addLinkToTracking(long id, String uri, String alias) throws DTOException;
+
+    UserLinkResponse removeLinkFromTracking(long id, String alias) throws DTOException;
 }

@@ -1,15 +1,20 @@
 app:
   scheduler:
     enable: true
-    interval: PT10S
+    interval: PT60S
     force-check-delay: PT10S
 
 
 spring:
+  liquibase:
+    enabled: false
   application:
     name: scrapper
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SCRAPPER_URL}
+    username: ${SCRAPPER_USERNAME}
+    password: ${SCRAPPER_PASSWORD}
 
 
 server:

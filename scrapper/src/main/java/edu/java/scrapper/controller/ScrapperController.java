@@ -1,14 +1,16 @@
 package edu.java.scrapper.controller;
 
+import edu.java.dto.exception.LinkNotFoundException;
+import edu.java.dto.exception.NonExistentChatException;
+import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.AddLinkRequest;
 import edu.java.dto.request.RemoveLinkRequest;
 import edu.java.dto.response.ApiErrorResponse;
-import edu.java.dto.response.LinkResponse;
-import edu.java.dto.response.ListLinkResponse;
-import edu.java.exception.LinkNotFoundException;
-import edu.java.exception.NonExistentChatException;
-import edu.java.exception.WrongParametersException;
-import edu.java.scrapper.service.ScrapperService;
+import edu.java.dto.response.ChatResponse;
+import edu.java.dto.response.ListUserLinkResponse;
+import edu.java.dto.response.UserLinkResponse;
+import edu.java.scrapper.service.ChatService;
+import edu.java.scrapper.service.LinkService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.info.Contact;
@@ -34,11 +36,13 @@ import org.springframework.web.bind.annotation.RestController;
     contact = @Contact(name = "Maxim Primakov", email = "spartmenik@gmail.com")
 ))
 public class ScrapperController {
-    private final ScrapperService scrapperService;
+    private final LinkService linkService;
+    private final ChatService chatService;
 
     @Autowired
-    public ScrapperController(ScrapperService scrapperService) {
-        this.scrapperService = scrapperService;
+    public ScrapperController(LinkService linkService, ChatService chatService) {
+        this.linkService = linkService;
+        this.chatService = chatService;
     }
 
     @PostMapping("/tg-chat/{id}")
@@ -51,7 +55,7 @@ public class ScrapperController {
                                         schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     public ResponseEntity<Void> registerChat(@PathVariable long id) throws WrongParametersException {
-        scrapperService.registerChat(id);
+        chatService.registerChat(id);
         return ResponseEntity.ok().build();
     }
 
@@ -70,8 +74,28 @@ public class ScrapperController {
     })
     public ResponseEntity<Void> deleteChat(@PathVariable long id)
         throws WrongParametersException, NonExistentChatException {
-        scrapperService.deleteChat(id);
+        chatService.deleteChat(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/tg-chat/{id}")
+    @Operation(summary = "Получить данные о чате", responses = {
+        @ApiResponse(responseCode = "200",
+                     description = "Чат успешно получен",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ChatResponse.class))),
+        @ApiResponse(responseCode = "400",
+                     description = "Некорректные параметры запроса",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "404",
+                     description = "Чат не существует",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public ResponseEntity<ChatResponse> getChat(@PathVariable long id)
+        throws WrongParametersException, NonExistentChatException {
+        return ResponseEntity.ok(chatService.getChat(id));
     }
 
     @GetMapping("/links")
@@ -79,7 +103,7 @@ public class ScrapperController {
         @ApiResponse(responseCode = "200",
                      description = "Ссылки успешно получены",
                      content = @Content(mediaType = "application/json",
-                                        schema = @Schema(implementation = ListLinkResponse.class))),
+                                        schema = @Schema(implementation = ListUserLinkResponse.class))),
         @ApiResponse(responseCode = "400",
                      description = "Некорректные параметры запроса",
                      content = @Content(mediaType = "application/json",
@@ -89,9 +113,9 @@ public class ScrapperController {
                      content = @Content(mediaType = "application/json",
                                         schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public ResponseEntity<ListLinkResponse> getAllTrackingLinks(@RequestHeader long tgChatId)
+    public ResponseEntity<ListUserLinkResponse> getAllTrackingLinks(@RequestHeader long tgChatId)
         throws WrongParametersException, NonExistentChatException {
-        return ResponseEntity.ok(scrapperService.getAllLinks(tgChatId));
+        return ResponseEntity.ok(linkService.getAllLinks(tgChatId));
     }
 
     @PostMapping("/links")
@@ -99,7 +123,7 @@ public class ScrapperController {
         @ApiResponse(responseCode = "200",
                      description = "Ссылка успешно добавлена",
                      content = @Content(mediaType = "application/json",
-                                        schema = @Schema(implementation = LinkResponse.class))),
+                                        schema = @Schema(implementation = UserLinkResponse.class))),
         @ApiResponse(responseCode = "400",
                      description = "Некорректные параметры запроса",
                      content = @Content(mediaType = "application/json",
@@ -109,13 +133,13 @@ public class ScrapperController {
                      content = @Content(mediaType = "application/json",
                                         schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public ResponseEntity<LinkResponse> addLinkToTracking(
+    public ResponseEntity<UserLinkResponse> addLinkToTracking(
         @RequestBody AddLinkRequest request, @RequestHeader long tgChatId
     ) throws WrongParametersException, NonExistentChatException {
         return ResponseEntity
             .ok()
             .contentType(MediaType.APPLICATION_JSON)
-            .body(scrapperService.addLink(tgChatId, request.getLink()));
+            .body(linkService.addLink(tgChatId, request.getLink(), request.getAlias()));
     }
 
     @DeleteMapping("/links")
@@ -123,7 +147,7 @@ public class ScrapperController {
         @ApiResponse(responseCode = "200",
                      description = "Ссылка успешно убрана",
                      content = @Content(mediaType = "application/json",
-                                        schema = @Schema(implementation = LinkResponse.class))),
+                                        schema = @Schema(implementation = UserLinkResponse.class))),
         @ApiResponse(responseCode = "400",
                      description = "Некорректные параметры запроса",
                      content = @Content(mediaType = "application/json",
@@ -133,12 +157,36 @@ public class ScrapperController {
                      content = @Content(mediaType = "application/json",
                                         schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public ResponseEntity<LinkResponse> removeLinkFromTracking(
+    public ResponseEntity<UserLinkResponse> removeLinkFromTracking(
         @RequestBody RemoveLinkRequest request, @RequestHeader long tgChatId
     ) throws WrongParametersException, NonExistentChatException, LinkNotFoundException {
         return ResponseEntity
             .ok()
             .contentType(MediaType.APPLICATION_JSON)
-            .body(scrapperService.removeLink(tgChatId, request.getLink()));
+            .body(linkService.removeLink(tgChatId, request.getAlias()));
+    }
+
+    @GetMapping("/link")
+    @Operation(summary = "Получить ссылку по id чата и ее синониму", responses = {
+        @ApiResponse(responseCode = "200",
+                     description = "Ссылка успешно получена",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = UserLinkResponse.class))),
+        @ApiResponse(responseCode = "400",
+                     description = "Некорректные параметры запроса",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "404",
+                     description = "Ссылка или чат не существуют",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public ResponseEntity<UserLinkResponse> getLinkByChatIdAndAlias(
+        @RequestHeader long tgChatId, @RequestHeader String alias
+    ) {
+        return ResponseEntity
+            .ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(linkService.getLink(tgChatId, alias));
     }
 }

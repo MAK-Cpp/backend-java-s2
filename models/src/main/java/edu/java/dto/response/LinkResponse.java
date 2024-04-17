@@ -1,12 +1,14 @@
 package edu.java.dto.response;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
 public class LinkResponse {
-    private int id;
-    private URI url;
+    private Long id;
+    private URI uri;
+    private OffsetDateTime lastUpdate;
 }

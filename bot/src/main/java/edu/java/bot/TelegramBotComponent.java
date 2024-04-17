@@ -11,6 +11,7 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.BaseResponse;
 import com.pengrad.telegrambot.response.SendResponse;
+import edu.java.bot.client.ScrapperHttpClient;
 import edu.java.bot.command.Command;
 import edu.java.bot.command.CommandFunction;
 import edu.java.bot.configuration.ApplicationConfig;
@@ -22,49 +23,57 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public final class TelegramBotComponent extends TelegramBot {
     private final ConcurrentMap<String, CommandFunction> commandFunctions = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Long, User> users = new ConcurrentHashMap<>();
+    // private final ConcurrentMap<Long, User> users = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Long, CommandFunction> waitingFunctions = new ConcurrentHashMap<>();
     @Getter private final String usage;
-    private static final Logger LOGGER = LoggerFactory.getLogger(TelegramBotComponent.class);
+    @Getter private final ScrapperHttpClient scrapperHttpClient;
 
     public static <T> Optional<T> maybe(final T value) {
         return Optional.ofNullable(value);
     }
 
     @Autowired
-    public TelegramBotComponent(ApplicationConfig config, List<Command> commands) {
+    public TelegramBotComponent(
+        ApplicationConfig config,
+        List<Command> commands,
+        ScrapperHttpClient scrapperHttpClient
+    ) {
         super(config.telegramToken());
+        this.scrapperHttpClient = scrapperHttpClient;
         setUpdatesListener(this::updateListener, this::exceptionHandler);
         usage = setCommands(commands);
-        LOGGER.debug("Created bot with token " + this.getToken());
+        log.debug("Created bot with token {}", getToken());
     }
 
-    public Optional<User> addUser(long id, User user) {
-        return maybe(users.put(id, user));
+/*    public void addUser(long id) {
+        log.debug("Adding user {}", id);
+        scrapperHttpClient.registerChat(id);
     }
 
     public Optional<User> deleteUser(long id) {
+        log.debug("Deleting user {}", id);
         return maybe(users.remove(id));
-    }
+    }*/
 
-    public void deleteAllUsers() {
-        users.clear();
-    }
+    // public void deleteAllUsers() {
+    //     users.clear();
+    // }
 
-    public boolean containUser(long id) {
-        return users.containsKey(id);
-    }
+    // public boolean containUser(long id) {
+    //     return users.containsKey(id);
+    // }
 
-    public Optional<User> getUser(long id) {
-        return maybe(users.get(id));
-    }
+    // public Optional<User> getUser(long id) {
+    //     return maybe(users.get(id));
+    // }
 
     public SendResponse sendMessage(long chatId, final String text, final SendMessageChains... operations) {
         SendMessage toExecute = new SendMessage(chatId, text);
@@ -88,24 +97,29 @@ public final class TelegramBotComponent extends TelegramBot {
     }
 
     private void callbackParse(Update update) {
-        final long chatId = update.callbackQuery().from().id();
-        final User user = users.get(chatId);
-        user.setWaitingFunction(user.getWaitingFunction().apply(this, update));
+        final Long chatId = update.callbackQuery().from().id();
+        final CommandFunction commandFunction = waitingFunctions.get(chatId);
+        final CommandFunction nextFunction = commandFunction.apply(this, update);
+        waitingFunctions.put(chatId, nextFunction);
     }
 
     private void messageParse(Update update) {
         final Message message = update.message();
         final String command = message.text();
         final long chatId = message.chat().id();
-        final Optional<User> optionalUser = maybe(users.get(chatId));
         final Optional<CommandFunction> optionalFunction = maybe(commandFunctions.get(command));
         if (optionalFunction.isPresent()) {
-            final CommandFunction waitingFunction = optionalFunction.get().apply(this, update);
-            optionalUser.ifPresent(user -> user.setWaitingFunction(waitingFunction));
-        } else if (optionalUser.isPresent() && optionalUser.get().getWaitingFunction() != CommandFunction.END) {
-            final User user = optionalUser.get();
-            final CommandFunction waitingFunction = user.getWaitingFunction();
-            user.setWaitingFunction(waitingFunction.apply(this, update));
+            final CommandFunction commandFunction = optionalFunction.get();
+            final CommandFunction nextFunction = commandFunction.apply(this, update);
+            waitingFunctions.put(chatId, nextFunction);
+        } else if (waitingFunctions.containsKey(chatId) && waitingFunctions.get(chatId) != CommandFunction.END) {
+            final CommandFunction commandFunction = waitingFunctions.get(chatId);
+            if (commandFunction != CommandFunction.END) {
+                final CommandFunction nextFunction = commandFunction.apply(this, update);
+                waitingFunctions.put(chatId, nextFunction);
+            } else {
+                unknownCommand(update);
+            }
         } else {
             unknownCommand(update);
         }
@@ -151,7 +165,7 @@ public final class TelegramBotComponent extends TelegramBot {
             result.append('/').append(command.getName()).append(" - ").append(command.getDescription()).append('\n');
             commandFunctions.put("/" + command.getName(), command.getFunction());
             botCommands[i] = new BotCommand(command.getName(), command.getDescription());
-            LOGGER.debug("added command " + command.getName() + " to bot");
+            log.debug("added command {} to bot", command.getName());
         }
         execute(new SetMyCommands(botCommands));
         return result.toString();
