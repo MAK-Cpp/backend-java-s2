@@ -3,6 +3,7 @@ package edu.java.scrapper.repository.jdbc;
 import edu.java.dto.response.LinkResponse;
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +20,12 @@ public class JdbcLinkRepository extends JdbcTemplate {
         (rs, rowNum) -> new LinkResponse(
             rs.getLong("link_id"),
             URI.create(rs.getString("uri")),
-            rs.getObject("last_update", OffsetDateTime.class)
+            rs.getTimestamp("last_update").toInstant().atOffset(ZoneOffset.UTC)
         );
     public static final String GET_LINK_BY_URI = "SELECT link_id, uri, last_update FROM links WHERE uri = ?";
     @SuppressWarnings("checkstyle:LineLength")
     public static final String ADD_AND_GET_UNIQUE_LINK =
-        "INSERT INTO links (uri) VALUES (?) ON CONFLICT (uri) DO UPDATE SET uri = EXCLUDED.uri RETURNING link_id, uri, last_update";
+        "INSERT INTO links (uri) VALUES (?) ON CONFLICT (uri) DO UPDATE SET last_update = EXCLUDED.last_update RETURNING link_id, uri, last_update";
 
     @Autowired
     public JdbcLinkRepository(DataSource dataSource) {

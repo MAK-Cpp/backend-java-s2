@@ -58,7 +58,7 @@ public class GitHubCertainPullRequestLinkValidator extends AbstractGitHubLinkVal
                 Map.entry("Author", author),
                 Map.entry("Commiter", commit.getCommitter()),
                 Map.entry("Date", author.getDate()),
-                Map.entry("Message", '"' + commit.getMessage() + '"')
+                Map.entry("Message", "\n{" + commit.getMessage() + "\n}")
             );
         }
         return Optional.of(builder.toString());

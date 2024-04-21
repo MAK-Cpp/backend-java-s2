@@ -49,7 +49,7 @@ public class StackOverflowQuestionLinkValidator extends AbstractStackOverflowLin
             processResponse(builder, i + 1,
                 Map.entry("Author", answer.getOwner()),
                 Map.entry("Created at", answer.getCreationDate()),
-                Map.entry("Text", '"' + answer.getMessage() + '"')
+                Map.entry("Text", "\n{" + answer.getMessage() + "\n}")
             );
         }
         return Optional.of(builder.toString());
