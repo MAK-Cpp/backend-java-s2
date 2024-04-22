@@ -202,13 +202,13 @@ import org.jooq.meta.jaxb.Property;
 import org.jooq.meta.jaxb.Target;
 
 public class JooqCodegen {
-public static void main(String[] args) throws Exception {
-Database database = new Database()
-.withName("org.jooq.meta.extensions.liquibase.LiquibaseDatabase")
-.withProperties(
-new Property().withKey("rootPath").withValue("migrations"),
-new Property().withKey("scripts").withValue("master.xml")
-);
+    public static void main(String[] args) throws Exception {
+        Database database = new Database()
+            .withName("org.jooq.meta.extensions.liquibase.LiquibaseDatabase")
+            .withProperties(
+                new Property().withKey("rootPath").withValue("migrations"),
+                new Property().withKey("scripts").withValue("master.xml")
+            );
 
         Generate options = new Generate()
             .withGeneratedAnnotation(true)

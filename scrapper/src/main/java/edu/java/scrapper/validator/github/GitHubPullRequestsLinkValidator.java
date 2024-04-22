@@ -55,7 +55,7 @@ public class GitHubPullRequestsLinkValidator extends AbstractGitHubLinkValidator
                 Map.entry("Created at", pullRequest.getCreatedAt()),
                 Map.entry("State", pullRequest.getState()),
                 Map.entry("Title", pullRequest.getTitle()),
-                Map.entry("Body", '"' + pullRequest.getBody() + '"')
+                Map.entry("Body", "\n{" + pullRequest.getBody() + "\n}")
             );
         }
         return Optional.of(builder.toString());

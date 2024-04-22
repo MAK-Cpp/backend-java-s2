@@ -55,7 +55,7 @@ public class GitHubCertainIssueLinkValidator extends AbstractGitHubLinkValidator
             processResponse(builder, i + 1,
                 Map.entry("Commentator", comment.getUser()),
                 Map.entry("Created at", comment.getCreatedAt()),
-                Map.entry("Text", '"' + comment.getBody() + '"')
+                Map.entry("Text", "\n{" + comment.getBody() + "\n}")
             );
         }
         return Optional.of(builder.toString());

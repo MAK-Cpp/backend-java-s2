@@ -8,6 +8,7 @@ import edu.java.dto.response.LinkAliasResponse;
 import edu.java.dto.response.ListChatResponse;
 import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
 import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
+import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.ChatService;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -16,12 +17,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class JdbcChatService implements ChatService {
-    private static final String NEGATE_ID_EXCEPTION_MESSAGE = "id cannot be negate";
-    private static final String SUCCESS_CHAT_REGISTER_FORMAT = "chat with id=%d registered successfully";
-    private static final String SUCCESS_CHAT_DELETED_FORMAT = "chat with id=%d deleted successfully";
-    private static final String LINK_IS_NOT_TRACKED_BY_CHAT_FORMAT = "there is no link with id %d in chat with id %d";
-
+public class JdbcChatService extends AbstractService implements ChatService {
     private final JdbcChatRepository chatRepository;
     private final JdbcChatsAndLinksRepository chatsAndLinksRepository;
 
@@ -33,23 +29,18 @@ public class JdbcChatService implements ChatService {
 
     @Override
     public void registerChat(Long chatId) throws DTOException {
-        if (chatId < 0) {
-            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        }
+        validateId(chatId);
         try {
             chatRepository.add(chatId);
             log.info(String.format(SUCCESS_CHAT_REGISTER_FORMAT, chatId));
         } catch (Exception e) {
-            throw new WrongParametersException("chat already exists", e);
+            throw new WrongParametersException(CHAT_ALREADY_EXISTS_EXCEPTION, e);
         }
-
     }
 
     @Override
     public void deleteChat(Long chatId) throws DTOException {
-        if (chatId < 0) {
-            throw new WrongParametersException(NEGATE_ID_EXCEPTION_MESSAGE);
-        }
+        validateId(chatId);
         chatsAndLinksRepository.remove(chatId);
         chatRepository.remove(chatId);
         log.info(String.format(SUCCESS_CHAT_DELETED_FORMAT, chatId));
@@ -63,21 +54,25 @@ public class JdbcChatService implements ChatService {
 
     @Override
     public ListChatResponse getAllChats(Long linkId) throws DTOException {
+        validateId(linkId);
         final ChatResponse[] response = chatsAndLinksRepository.findAllChats(linkId).toArray(ChatResponse[]::new);
         return new ListChatResponse(response, response.length);
     }
 
     @Override
     public ChatResponse getChat(Long chatId) throws DTOException {
+        validateId(chatId);
         List<ChatResponse> response = chatRepository.findAll(chatId);
         if (response.isEmpty()) {
-            throw new NonExistentChatException("chat with id " + chatId + " not found");
+            throw new NonExistentChatException(String.format(NON_EXISTING_CHAT_EXCEPTION_FORMAT, chatId));
         }
         return response.getFirst();
     }
 
     @Override
     public LinkAliasResponse getLinkAlias(Long chatId, Long linkId) throws DTOException {
+        validateId(chatId);
+        validateId(linkId);
         List<String> aliases = chatsAndLinksRepository.getAlias(chatId, linkId);
         if (aliases.isEmpty()) {
             throw new WrongParametersException(String.format(LINK_IS_NOT_TRACKED_BY_CHAT_FORMAT, linkId, chatId));

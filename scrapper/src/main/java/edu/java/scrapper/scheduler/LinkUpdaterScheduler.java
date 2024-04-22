@@ -7,6 +7,7 @@ import edu.java.scrapper.service.ChatService;
 import edu.java.scrapper.service.LinkService;
 import edu.java.scrapper.service.LinkUpdater;
 import edu.java.scrapper.validator.LinkValidator;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,9 @@ public class LinkUpdaterScheduler {
         ListLinkResponse links = linkService.getAllLinks();
         for (LinkResponse link : links.getLinks()) {
             // TODO: maybe contain in DB Class<? extends LinkValidator> for every link
+            log.debug("link: {}", link);
+            log.debug("now: {}", OffsetDateTime.now());
+            log.debug("now is after link last update?: {}", OffsetDateTime.now().isAfter(link.getLastUpdate()));
             for (LinkValidator linkValidator : linkValidators) {
                 final Optional<String> update =
                     linkValidator.getUpdateDescription(link.getUri().toString(), link.getLastUpdate());

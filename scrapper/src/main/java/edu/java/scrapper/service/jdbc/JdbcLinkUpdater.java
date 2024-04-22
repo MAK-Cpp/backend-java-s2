@@ -1,12 +1,13 @@
 package edu.java.scrapper.service.jdbc;
 
 import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
+import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.LinkUpdater;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class JdbcLinkUpdater implements LinkUpdater {
+public class JdbcLinkUpdater extends AbstractService implements LinkUpdater {
     private final JdbcLinkRepository jdbcLinkRepository;
 
     @Autowired

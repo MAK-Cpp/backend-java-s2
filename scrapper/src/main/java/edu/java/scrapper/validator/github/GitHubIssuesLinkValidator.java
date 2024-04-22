@@ -54,7 +54,7 @@ public class GitHubIssuesLinkValidator extends AbstractGitHubLinkValidator {
                 Map.entry("Created at", issue.getCreatedAt()),
                 Map.entry("State", issue.getState()),
                 Map.entry("Title", issue.getTitle()),
-                Map.entry("Body", '"' + issue.getBody() + '"')
+                Map.entry("Body", "\n{" + issue.getBody() + "\n}")
             );
         }
         return Optional.of(builder.toString());
