@@ -12,42 +12,41 @@ import edu.java.scrapper.service.ChatService;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
 @Slf4j
-@Primary
 public class JooqChatService extends AbstractService implements ChatService {
     private final DSLContext dslContext;
 
-    @Autowired
     public JooqChatService(DSLContext dslContext) {
         this.dslContext = dslContext;
     }
 
     @Override
+    @Transactional
     public void registerChat(Long chatId) throws DTOException {
         validateId(chatId);
         try {
-            dslContext.insertInto(Tables.CHATS, Tables.CHATS.CHAT_ID)
+            dslContext
+                .insertInto(Tables.CHATS, Tables.CHATS.CHAT_ID)
                 .values(chatId)
                 .execute();
             log.info(String.format(SUCCESS_CHAT_REGISTER_FORMAT, chatId));
         } catch (DataAccessException e) {
             throw new WrongParametersException(CHAT_ALREADY_EXISTS_EXCEPTION, e);
         }
-
     }
 
     @Override
+    @Transactional
     public void deleteChat(Long chatId) throws DTOException {
         validateId(chatId);
-        dslContext.deleteFrom(Tables.CHATS_AND_LINKS)
+        dslContext
+            .deleteFrom(Tables.CHATS_AND_LINKS)
             .where(Tables.CHATS_AND_LINKS.CHAT_ID.eq(chatId))
             .execute();
-        dslContext.deleteFrom(Tables.CHATS)
+        dslContext
+            .deleteFrom(Tables.CHATS)
             .where(Tables.CHATS.CHAT_ID.eq(chatId))
             .execute();
         log.info(String.format(SUCCESS_CHAT_DELETED_FORMAT, chatId));

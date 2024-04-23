@@ -1,7 +1,7 @@
-package edu.java.scrapper;
+package edu.java.scrapper.repository.jdbc;
 
 import edu.java.dto.response.LinkResponse;
-import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
+import edu.java.scrapper.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,7 +15,7 @@ import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = {"app.database-access-type=jdbc"})
 public class JdbcLinkTest extends IntegrationTest {
     private static final URI[] LINKS = new URI[] {
         URI.create("https://google.com"),

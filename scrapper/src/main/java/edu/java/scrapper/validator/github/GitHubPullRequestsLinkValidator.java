@@ -24,6 +24,11 @@ public class GitHubPullRequestsLinkValidator extends AbstractGitHubLinkValidator
     }
 
     @Override
+    public Pattern getPattern() {
+        return GITHUB_PULL_REQUESTS_PATTERN;
+    }
+
+    @Override
     public Matcher match(String rawLink) {
         return GITHUB_PULL_REQUESTS_PATTERN.matcher(rawLink);
     }
@@ -55,7 +60,7 @@ public class GitHubPullRequestsLinkValidator extends AbstractGitHubLinkValidator
                 Map.entry("Created at", pullRequest.getCreatedAt()),
                 Map.entry("State", pullRequest.getState()),
                 Map.entry("Title", pullRequest.getTitle()),
-                Map.entry("Body", "\n{" + pullRequest.getBody() + "\n}")
+                Map.entry("Body", "{\n" + pullRequest.getBody() + "\n}")
             );
         }
         return Optional.of(builder.toString());

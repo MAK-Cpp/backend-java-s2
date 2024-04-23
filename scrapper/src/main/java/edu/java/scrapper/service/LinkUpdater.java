@@ -1,5 +1,7 @@
 package edu.java.scrapper.service;
 
+import edu.java.dto.response.LinkResponse;
+
 public interface LinkUpdater {
-    void updateLink(Long linkId);
+    LinkResponse updateLink(Long linkId);
 }

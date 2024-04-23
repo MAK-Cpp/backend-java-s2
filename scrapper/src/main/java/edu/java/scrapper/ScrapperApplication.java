@@ -7,7 +7,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties(value = {ApplicationConfig.class, ClientConfig.class})
+@EnableConfigurationProperties(value = {
+    ApplicationConfig.class,
+    ClientConfig.class,
+})
 public class ScrapperApplication {
     public static void main(String[] args) {
         SpringApplication.run(ScrapperApplication.class, args);

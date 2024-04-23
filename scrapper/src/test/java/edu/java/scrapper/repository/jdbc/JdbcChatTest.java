@@ -1,7 +1,7 @@
-package edu.java.scrapper;
+package edu.java.scrapper.repository.jdbc;
 
 import edu.java.dto.response.ChatResponse;
-import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
+import edu.java.scrapper.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = {"app.database-access-type=jdbc"})
 public class JdbcChatTest extends IntegrationTest {
     private static final List<ChatResponse> CHATS = List.of(
         new ChatResponse(123L),

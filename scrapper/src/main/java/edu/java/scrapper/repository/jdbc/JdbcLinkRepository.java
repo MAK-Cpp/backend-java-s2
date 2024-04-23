@@ -25,7 +25,7 @@ public class JdbcLinkRepository extends JdbcTemplate {
     public static final String GET_LINK_BY_URI = "SELECT link_id, uri, last_update FROM links WHERE uri = ?";
     @SuppressWarnings("checkstyle:LineLength")
     public static final String ADD_AND_GET_UNIQUE_LINK =
-        "INSERT INTO links (uri) VALUES (?) ON CONFLICT (uri) DO UPDATE SET last_update = EXCLUDED.last_update RETURNING link_id, uri, last_update";
+        "INSERT INTO links (uri) VALUES (?) ON CONFLICT (uri) DO UPDATE SET uri = EXCLUDED.uri RETURNING link_id, uri, last_update";
 
     @Autowired
     public JdbcLinkRepository(DataSource dataSource) {
@@ -47,8 +47,12 @@ public class JdbcLinkRepository extends JdbcTemplate {
     }
 
     @Transactional
-    public void update(Long linkId) {
-        update("UPDATE links SET last_update = ? WHERE link_id = ?", OffsetDateTime.now(), linkId);
+    public List<LinkResponse> update(Long linkId) {
+        return query(
+            "UPDATE links SET last_update = ? WHERE link_id = ? RETURNING link_id, uri, last_update",
+            LINK_DTO_ROW_MAPPER,
+            OffsetDateTime.now(), linkId
+        );
     }
 
     public List<LinkResponse> findAll() {

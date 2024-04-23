@@ -23,6 +23,11 @@ public class GitHubIssuesLinkValidator extends AbstractGitHubLinkValidator {
     }
 
     @Override
+    public Pattern getPattern() {
+        return GITHUB_ISSUES_PATTERN;
+    }
+
+    @Override
     public Matcher match(String rawLink) {
         return GITHUB_ISSUES_PATTERN.matcher(rawLink);
     }
@@ -54,7 +59,7 @@ public class GitHubIssuesLinkValidator extends AbstractGitHubLinkValidator {
                 Map.entry("Created at", issue.getCreatedAt()),
                 Map.entry("State", issue.getState()),
                 Map.entry("Title", issue.getTitle()),
-                Map.entry("Body", "\n{" + issue.getBody() + "\n}")
+                Map.entry("Body", "{\n" + issue.getBody() + "\n}")
             );
         }
         return Optional.of(builder.toString());

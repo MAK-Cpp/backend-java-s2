@@ -1,8 +1,17 @@
 package edu.java.scrapper.service;
 
 import edu.java.dto.exception.DTOException;
+import edu.java.dto.exception.InvalidLinkException;
+import edu.java.dto.exception.UnsupportedLinkException;
 import edu.java.dto.exception.WrongParametersException;
+import edu.java.scrapper.validator.LinkValidator;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
+@Slf4j
 public abstract class AbstractService {
     protected static final String NEGATE_ID_EXCEPTION_FORMAT = "wrong id %d: id cannot be negate";
     protected static final String CHAT_ALREADY_EXISTS_EXCEPTION = "chat already exists";
@@ -25,5 +34,21 @@ public abstract class AbstractService {
         if (id < 0) {
             throw new WrongParametersException(String.format(NEGATE_ID_EXCEPTION_FORMAT, id));
         }
+    }
+
+    @NotNull
+    protected static URI validateLink(String link, List<LinkValidator> linkValidators) {
+        final URI result;
+        try {
+            result = new URI(link);
+        } catch (URISyntaxException e) {
+            throw new InvalidLinkException(String.format(INVALID_LINK_EXCEPTION_FORMAT, link), e);
+        }
+        for (LinkValidator linkValidator : linkValidators) {
+            if (linkValidator.isValid(link)) {
+                return result;
+            }
+        }
+        throw new UnsupportedLinkException(String.format(UNSUPPORTED_LINK_EXCEPTION_FORMAT, link));
     }
 }

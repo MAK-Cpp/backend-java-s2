@@ -12,16 +12,12 @@ import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.ChatService;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
-@Service
 @Slf4j
 public class JdbcChatService extends AbstractService implements ChatService {
     private final JdbcChatRepository chatRepository;
     private final JdbcChatsAndLinksRepository chatsAndLinksRepository;
 
-    @Autowired
     public JdbcChatService(JdbcChatRepository chatRepository, JdbcChatsAndLinksRepository chatsAndLinksRepository) {
         this.chatRepository = chatRepository;
         this.chatsAndLinksRepository = chatsAndLinksRepository;

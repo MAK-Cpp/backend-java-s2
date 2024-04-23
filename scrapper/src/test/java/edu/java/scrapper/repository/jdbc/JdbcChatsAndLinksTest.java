@@ -1,10 +1,8 @@
-package edu.java.scrapper;
+package edu.java.scrapper.repository.jdbc;
 
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.UserLinkResponse;
-import edu.java.scrapper.repository.jdbc.JdbcChatRepository;
-import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
-import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
+import edu.java.scrapper.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = {"app.database-access-type=jdbc"})
 public class JdbcChatsAndLinksTest extends IntegrationTest {
     private static Map.Entry<URI, String> link(String uri, String alias) {
         return Map.entry(URI.create(uri), alias);

@@ -15,16 +15,12 @@ import edu.java.scrapper.repository.jdbc.JdbcChatsAndLinksRepository;
 import edu.java.scrapper.repository.jdbc.JdbcLinkRepository;
 import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.LinkService;
-import edu.java.scrapper.service.jooq.JooqLinkService;
 import edu.java.scrapper.validator.LinkValidator;
 import java.net.URI;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.stereotype.Service;
 
-@Service
 @Slf4j
 public class JdbcLinkService extends AbstractService implements LinkService {
     private final JdbcChatRepository chatRepository;
@@ -32,7 +28,6 @@ public class JdbcLinkService extends AbstractService implements LinkService {
     private final JdbcChatsAndLinksRepository chatsAndLinksRepository;
     private final List<LinkValidator> linkValidators;
 
-    @Autowired
     public JdbcLinkService(
         JdbcChatRepository chatRepository,
         JdbcLinkRepository linkRepository,
@@ -50,15 +45,6 @@ public class JdbcLinkService extends AbstractService implements LinkService {
         if (!chatRepository.exists(chatId)) {
             throw new NonExistentChatException(String.format(NON_EXISTING_CHAT_EXCEPTION_FORMAT, chatId));
         }
-    }
-
-    private URI validateLink(String link) throws DTOException {
-        return JooqLinkService.uri(
-            link,
-            String.format(INVALID_LINK_EXCEPTION_FORMAT, link),
-            linkValidators,
-            String.format(UNSUPPORTED_LINK_EXCEPTION_FORMAT, link)
-        );
     }
 
     @Override
@@ -88,7 +74,7 @@ public class JdbcLinkService extends AbstractService implements LinkService {
     @Override
     public UserLinkResponse addLink(Long chatId, String link, String alias) throws DTOException {
         validateChatId(chatId);
-        final URI uri = validateLink(link);
+        final URI uri = validateLink(link, linkValidators);
         final LinkResponse response = linkRepository.add(uri);
         try {
             chatsAndLinksRepository.add(chatId, response.getId(), alias);

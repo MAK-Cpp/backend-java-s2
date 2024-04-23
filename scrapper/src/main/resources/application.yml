@@ -1,17 +1,19 @@
 app:
+  database-access-type: jpa
   scheduler:
     enable: true
-    interval: PT60S
+    interval: PT120S
     force-check-delay: PT10S
 
 
+
 spring:
+  application:
+    name: scrapper
   jooq:
     sql-dialect: postgres
   liquibase:
     enabled: false
-  application:
-    name: scrapper
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${SCRAPPER_URL}
