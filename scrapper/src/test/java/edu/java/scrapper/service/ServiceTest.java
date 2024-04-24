@@ -3,6 +3,7 @@ package edu.java.scrapper.service;
 import edu.java.dto.response.UserLinkResponse;
 import edu.java.scrapper.IntegrationTest;
 import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,18 +34,16 @@ public abstract class ServiceTest extends IntegrationTest {
         this.chatService = chatService;
     }
 
-    protected void fillDB() {
-        log.info("All chats: {}", chatService.getAllChats());
-        log.info("All links: {}", linkService.getAllLinks());
+    protected List<Map.Entry<Long, UserLinkResponse>> fillDB() {
+        final List<Map.Entry<Long, UserLinkResponse>> addedLinks = new ArrayList<>();
         for (Map.Entry<Long, List<LinkRecord>> entry : DATABASE_START_VALUES.entrySet()) {
             final Long chatId = entry.getKey();
             chatService.registerChat(chatId);
-            log.info("Registered chat {}", chatId);
             for (LinkRecord linkRecord : entry.getValue()) {
-                final UserLinkResponse addedLink = linkService.addLink(chatId, linkRecord.link, linkRecord.alias);
-                log.info("Added link {}", addedLink);
+                addedLinks.add(Map.entry(chatId, linkService.addLink(chatId, linkRecord.link, linkRecord.alias)));
             }
         }
+        return addedLinks;
     }
 
     protected record LinkRecord(String link, String alias) {

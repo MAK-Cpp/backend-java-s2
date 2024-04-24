@@ -33,7 +33,7 @@ public class JooqChatService extends AbstractService implements ChatService {
                 .execute();
             log.info(String.format(SUCCESS_CHAT_REGISTER_FORMAT, chatId));
         } catch (DataAccessException e) {
-            throw new WrongParametersException(CHAT_ALREADY_EXISTS_EXCEPTION, e);
+            throw new WrongParametersException(String.format(CHAT_ALREADY_EXISTS_EXCEPTION_FORMAT, chatId), e);
         }
     }
 
@@ -41,6 +41,9 @@ public class JooqChatService extends AbstractService implements ChatService {
     @Transactional
     public void deleteChat(Long chatId) throws DTOException {
         validateId(chatId);
+        if (dslContext.selectFrom(Tables.CHATS).where(Tables.CHATS.CHAT_ID.eq(chatId)).fetch().isEmpty()) {
+            throw new NonExistentChatException(String.format(NON_EXISTING_CHAT_EXCEPTION_FORMAT, chatId));
+        }
         dslContext
             .deleteFrom(Tables.CHATS_AND_LINKS)
             .where(Tables.CHATS_AND_LINKS.CHAT_ID.eq(chatId))

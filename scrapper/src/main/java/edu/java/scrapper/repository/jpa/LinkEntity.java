@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "links")
 @NoArgsConstructor
 public class LinkEntity {
+    private static final ZoneOffset ZONE_OFFSET = OffsetDateTime.now().getOffset();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "link_id")
@@ -34,7 +36,7 @@ public class LinkEntity {
     }
 
     public OffsetDateTime getLastUpdate() {
-        return OffsetDateTime.of(lastUpdate.toLocalDateTime(), ZoneOffset.UTC);
+        return OffsetDateTime.of(lastUpdate.toLocalDateTime(), ZONE_OFFSET);
     }
 
     public void setLastUpdate(OffsetDateTime lastUpdate) {

@@ -5,28 +5,25 @@ import edu.java.scrapper.repository.jpa.LinkEntity;
 import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.LinkUpdater;
 import java.time.OffsetDateTime;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
+import jakarta.persistence.EntityManager;
+import org.springframework.transaction.annotation.Transactional;
 
 public class JpaLinkUpdater extends AbstractService implements LinkUpdater {
-    private final SessionFactory sessionFactory;
+    private final EntityManager entityManager;
 
-    public JpaLinkUpdater(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    public JpaLinkUpdater(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     @Override
+    @Transactional
     public LinkResponse updateLink(Long linkId) {
         validateId(linkId);
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
-            final LinkEntity link = session.get(LinkEntity.class, linkId);
-            session.detach(link);
-            link.setLastUpdate(OffsetDateTime.now());
-            session.merge(link);
-            session.flush();
-            session.getTransaction().commit();
-            return JpaLinkService.LINK_RESPONSE_MAPPER.apply(link);
-        }
+        final LinkEntity link = entityManager.find(LinkEntity.class, linkId);
+        entityManager.detach(link);
+        link.setLastUpdate(OffsetDateTime.now());
+        entityManager.merge(link);
+        entityManager.flush();
+        return JpaLinkService.LINK_RESPONSE_MAPPER.apply(link);
     }
 }

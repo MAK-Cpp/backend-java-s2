@@ -1,6 +1,7 @@
 package edu.java.scrapper.service;
 
-import edu.java.scrapper.IntegrationTest;
-
-public abstract class LinkServiceTest extends IntegrationTest {
+public abstract class LinkServiceTest extends ServiceTest {
+    public LinkServiceTest(LinkUpdater linkUpdater, LinkService linkService, ChatService chatService) {
+        super(linkUpdater, linkService, chatService);
+    }
 }

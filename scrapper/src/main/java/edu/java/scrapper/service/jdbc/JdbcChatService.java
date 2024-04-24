@@ -30,13 +30,16 @@ public class JdbcChatService extends AbstractService implements ChatService {
             chatRepository.add(chatId);
             log.info(String.format(SUCCESS_CHAT_REGISTER_FORMAT, chatId));
         } catch (Exception e) {
-            throw new WrongParametersException(CHAT_ALREADY_EXISTS_EXCEPTION, e);
+            throw new WrongParametersException(String.format(CHAT_ALREADY_EXISTS_EXCEPTION_FORMAT, chatId), e);
         }
     }
 
     @Override
     public void deleteChat(Long chatId) throws DTOException {
         validateId(chatId);
+        if (!chatRepository.exists(chatId)) {
+            throw new NonExistentChatException(String.format(NON_EXISTING_CHAT_EXCEPTION_FORMAT, chatId));
+        }
         chatsAndLinksRepository.remove(chatId);
         chatRepository.remove(chatId);
         log.info(String.format(SUCCESS_CHAT_DELETED_FORMAT, chatId));

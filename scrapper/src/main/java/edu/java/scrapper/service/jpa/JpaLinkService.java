@@ -16,15 +16,13 @@ import edu.java.scrapper.repository.jpa.LinkEntity;
 import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.LinkService;
 import edu.java.scrapper.validator.LinkValidator;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import java.net.URI;
 import java.util.List;
 import java.util.function.Function;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.springframework.transaction.annotation.Transactional;
 
 public class JpaLinkService extends AbstractService implements LinkService {
@@ -39,17 +37,17 @@ public class JpaLinkService extends AbstractService implements LinkService {
             LINK_RESPONSE_MAPPER.apply(chatsAndLinksEntity.getLink()),
             chatsAndLinksEntity.getAlias()
         );
-    private final SessionFactory sessionFactory;
+    private final EntityManager entityManager;
     private final List<LinkValidator> linkValidators;
 
-    public JpaLinkService(SessionFactory sessionFactory, List<LinkValidator> linkValidators) {
-        this.sessionFactory = sessionFactory;
+    public JpaLinkService(EntityManager entityManager, List<LinkValidator> linkValidators) {
+        this.entityManager = entityManager;
         this.linkValidators = linkValidators;
     }
 
-    private static ChatEntity validateChatId(Session session, Long chatId) throws DTOException {
+    private static ChatEntity validateChatId(EntityManager entityManager, Long chatId) throws DTOException {
         validateId(chatId);
-        final ChatEntity chatEntity = session.get(ChatEntity.class, chatId);
+        final ChatEntity chatEntity = entityManager.find(ChatEntity.class, chatId);
         if (chatEntity == null) {
             throw new NonExistentChatException(String.format(NON_EXISTING_CHAT_EXCEPTION_FORMAT, chatId));
         }
@@ -58,38 +56,34 @@ public class JpaLinkService extends AbstractService implements LinkService {
 
     @Override
     public ListLinkResponse getAllLinks() throws DTOException {
-        try (Session session = sessionFactory.openSession()) {
-            final CriteriaBuilder builder = session.getCriteriaBuilder();
-            final CriteriaQuery<LinkEntity> criteria = builder.createQuery(LinkEntity.class);
-            final Root<LinkEntity> linkRoot = criteria.from(LinkEntity.class);
-            final CriteriaQuery<LinkEntity> all = criteria.select(linkRoot);
+        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        final CriteriaQuery<LinkEntity> criteria = builder.createQuery(LinkEntity.class);
+        final Root<LinkEntity> linkRoot = criteria.from(LinkEntity.class);
+        final CriteriaQuery<LinkEntity> all = criteria.select(linkRoot);
 
-            final LinkResponse[] responses = session.createQuery(all)
-                .getResultStream()
-                .map(LINK_RESPONSE_MAPPER)
-                .toArray(LinkResponse[]::new);
+        final LinkResponse[] responses = entityManager.createQuery(all)
+            .getResultStream()
+            .map(LINK_RESPONSE_MAPPER)
+            .toArray(LinkResponse[]::new);
 
-            return new ListLinkResponse(responses, responses.length);
-        }
+        return new ListLinkResponse(responses, responses.length);
     }
 
     @Override
     public ListUserLinkResponse getAllLinks(Long chatId) throws DTOException {
-        try (Session session = sessionFactory.openSession()) {
-            validateChatId(session, chatId);
-            final CriteriaBuilder builder = session.getCriteriaBuilder();
-            final CriteriaQuery<ChatsAndLinksEntity> criteria = builder.createQuery(ChatsAndLinksEntity.class);
-            final Root<ChatsAndLinksEntity> chatsAndLinksRoot = criteria.from(ChatsAndLinksEntity.class);
-            final CriteriaQuery<ChatsAndLinksEntity> allWhere = criteria.select(chatsAndLinksRoot)
-                .where(builder.equal(chatsAndLinksRoot.get("key").get("chatId"), chatId));
+        validateChatId(entityManager, chatId);
+        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        final CriteriaQuery<ChatsAndLinksEntity> criteria = builder.createQuery(ChatsAndLinksEntity.class);
+        final Root<ChatsAndLinksEntity> chatsAndLinksRoot = criteria.from(ChatsAndLinksEntity.class);
+        final CriteriaQuery<ChatsAndLinksEntity> allWhere = criteria.select(chatsAndLinksRoot)
+            .where(builder.equal(chatsAndLinksRoot.get("key").get("chatId"), chatId));
 
-            final UserLinkResponse[] responses = session.createQuery(allWhere)
-                .getResultStream()
-                .map(USER_LINK_RESPONSE_MAPPER)
-                .toArray(UserLinkResponse[]::new);
+        final UserLinkResponse[] responses = entityManager.createQuery(allWhere)
+            .getResultStream()
+            .map(USER_LINK_RESPONSE_MAPPER)
+            .toArray(UserLinkResponse[]::new);
 
-            return new ListUserLinkResponse(responses, responses.length);
-        }
+        return new ListUserLinkResponse(responses, responses.length);
     }
 
     private static CriteriaQuery<ChatsAndLinksEntity> chatsAndLinksWhereEqChatIdAndAlias(
@@ -100,99 +94,85 @@ public class JpaLinkService extends AbstractService implements LinkService {
         final CriteriaQuery<ChatsAndLinksEntity> criteria = builder.createQuery(ChatsAndLinksEntity.class);
         final Root<ChatsAndLinksEntity> chatsAndLinksRoot = criteria.from(ChatsAndLinksEntity.class);
         return criteria.select(chatsAndLinksRoot)
-            .where(builder.equal(chatsAndLinksRoot.get("key").get("chatId"), chatId))
-            .where(builder.equal(chatsAndLinksRoot.get("alias"), alias));
+            .where(
+                builder.equal(chatsAndLinksRoot.get("key").get("chatId"), chatId),
+                builder.equal(chatsAndLinksRoot.get("alias"), alias)
+            );
     }
 
     @Override
     public UserLinkResponse getLink(Long chatId, String alias) throws DTOException {
-        try (Session session = sessionFactory.openSession()) {
-            validateChatId(session, chatId);
-            final CriteriaBuilder builder = session.getCriteriaBuilder();
+        validateChatId(entityManager, chatId);
+        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
 
-            UserLinkResponse[] responses =
-                session.createQuery(chatsAndLinksWhereEqChatIdAndAlias(builder, chatId, alias))
-                    .getResultStream()
-                    .map(USER_LINK_RESPONSE_MAPPER)
-                    .toArray(UserLinkResponse[]::new);
+        UserLinkResponse[] responses =
+            entityManager.createQuery(chatsAndLinksWhereEqChatIdAndAlias(builder, chatId, alias))
+                .getResultStream()
+                .map(USER_LINK_RESPONSE_MAPPER)
+                .toArray(UserLinkResponse[]::new);
 
-            if (responses.length == 0) {
-                throw new NonExistentLinkAliasException(String.format(
-                    NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT,
-                    alias,
-                    chatId
-                ));
-            }
-
-            return responses[0];
+        if (responses.length == 0) {
+            throw new NonExistentLinkAliasException(String.format(
+                NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT,
+                alias,
+                chatId
+            ));
         }
+
+        return responses[0];
     }
 
     @Override
     @Transactional
     public UserLinkResponse addLink(Long chatId, String link, String alias) throws DTOException {
         final URI uri = validateLink(link, linkValidators);
-        Transaction transaction = null;
-        try (Session session = sessionFactory.openSession()) {
-            final ChatEntity chatEntity = validateChatId(session, chatId);
-            transaction = session.beginTransaction();
-            final CriteriaBuilder builder = session.getCriteriaBuilder();
-            final CriteriaQuery<LinkEntity> linkCriteria = builder.createQuery(LinkEntity.class);
-            final Root<LinkEntity> linkRoot = linkCriteria.from(LinkEntity.class);
-            final CriteriaQuery<LinkEntity> linkEntityAllWhere = linkCriteria.select(linkRoot)
-                .where(builder.equal(linkRoot.get("uri"), uri.toString()));
-
-            final List<LinkEntity> responses = session.createQuery(linkEntityAllWhere).getResultList();
-            final LinkEntity linkEntity;
-            if (responses.isEmpty()) {
-                linkEntity = new LinkEntity(uri);
-                session.persist(linkEntity);
-            } else {
-                linkEntity = responses.getFirst();
-            }
-            final var key = new ChatsAndLinksEntity.ChatsAndLinksPK(chatId, linkEntity.getId());
-            if (session.get(ChatsAndLinksEntity.class, key) != null) {
-                transaction.rollback();
-                throw new LinkAlreadyTrackedException(
-                    String.format(LINK_ALREADY_TRACKED_EXCEPTION_FORMAT, linkEntity.getId(), chatId)
-                );
-            }
-            final List<ChatsAndLinksEntity> chatsAndLinksEntities =
-                session.createQuery(chatsAndLinksWhereEqChatIdAndAlias(builder, chatId, alias))
-                    .getResultList();
-            if (!chatsAndLinksEntities.isEmpty()) {
-                transaction.rollback();
-                throw new AliasAlreadyTakenException(
-                    String.format(ALIAS_ALREADY_TAKEN_EXCEPTION_FORMAT, alias, chatId)
-                );
-            }
-            final ChatsAndLinksEntity chatsAndLinksEntity = new ChatsAndLinksEntity(key, alias, chatEntity, linkEntity);
-            session.persist(chatsAndLinksEntity);
-            session.flush();
-            transaction.commit();
-            return USER_LINK_RESPONSE_MAPPER.apply(chatsAndLinksEntity);
+        final ChatEntity chatEntity = validateChatId(entityManager, chatId);
+        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        final CriteriaQuery<LinkEntity> linkCriteria = builder.createQuery(LinkEntity.class);
+        final Root<LinkEntity> linkRoot = linkCriteria.from(LinkEntity.class);
+        final CriteriaQuery<LinkEntity> linkEntityAllWhere = linkCriteria.select(linkRoot)
+            .where(builder.equal(linkRoot.get("uri"), uri.toString()));
+        final List<LinkEntity> responses = entityManager.createQuery(linkEntityAllWhere).getResultList();
+        final LinkEntity linkEntity;
+        if (responses.isEmpty()) {
+            linkEntity = new LinkEntity(uri);
+            entityManager.persist(linkEntity);
+        } else {
+            linkEntity = responses.getFirst();
         }
+        final var key = new ChatsAndLinksEntity.ChatsAndLinksPK(chatId, linkEntity.getId());
+        if (entityManager.find(ChatsAndLinksEntity.class, key) != null) {
+            throw new LinkAlreadyTrackedException(
+                String.format(LINK_ALREADY_TRACKED_EXCEPTION_FORMAT, linkEntity.getId(), chatId)
+            );
+        }
+        final List<ChatsAndLinksEntity> chatsAndLinksEntities =
+            entityManager.createQuery(chatsAndLinksWhereEqChatIdAndAlias(builder, chatId, alias))
+                .getResultList();
+        if (!chatsAndLinksEntities.isEmpty()) {
+            throw new AliasAlreadyTakenException(
+                String.format(ALIAS_ALREADY_TAKEN_EXCEPTION_FORMAT, alias, chatId)
+            );
+        }
+        final ChatsAndLinksEntity chatsAndLinksEntity = new ChatsAndLinksEntity(key, alias, chatEntity, linkEntity);
+        entityManager.persist(chatsAndLinksEntity);
+        entityManager.flush();
+        return USER_LINK_RESPONSE_MAPPER.apply(chatsAndLinksEntity);
     }
 
     @Override
     @Transactional
     public UserLinkResponse removeLink(Long chatId, String alias) throws DTOException {
-        Transaction transaction = null;
-        try (Session session = sessionFactory.openSession()) {
-            validateChatId(session, chatId);
-            transaction = session.beginTransaction();
-            final CriteriaBuilder builder = session.getCriteriaBuilder();
-            final List<ChatsAndLinksEntity> chatsAndLinksEntities =
-                session.createQuery(chatsAndLinksWhereEqChatIdAndAlias(builder, chatId, alias))
-                    .getResultList();
-            if (chatsAndLinksEntities.isEmpty()) {
-                transaction.rollback();
-                throw new LinkNotFoundException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias, chatId));
-            }
-            session.remove(chatsAndLinksEntities.getFirst());
-            session.flush();
-            transaction.commit();
-            return USER_LINK_RESPONSE_MAPPER.apply(chatsAndLinksEntities.getFirst());
+        validateChatId(entityManager, chatId);
+        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        final List<ChatsAndLinksEntity> chatsAndLinksEntities =
+            entityManager.createQuery(chatsAndLinksWhereEqChatIdAndAlias(builder, chatId, alias))
+                .getResultList();
+        if (chatsAndLinksEntities.isEmpty()) {
+            throw new LinkNotFoundException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias, chatId));
         }
+        entityManager.remove(chatsAndLinksEntities.getFirst());
+        entityManager.flush();
+        return USER_LINK_RESPONSE_MAPPER.apply(chatsAndLinksEntities.getFirst());
     }
 }

@@ -6,6 +6,7 @@ import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.LinkUpdater;
 import java.time.OffsetDateTime;
 import org.jooq.DSLContext;
+import org.springframework.transaction.annotation.Transactional;
 
 public class JooqLinkUpdater extends AbstractService implements LinkUpdater {
     private final DSLContext dslContext;
@@ -15,6 +16,7 @@ public class JooqLinkUpdater extends AbstractService implements LinkUpdater {
     }
 
     @Override
+    @Transactional
     public LinkResponse updateLink(Long linkId) {
         return dslContext.update(Tables.LINKS)
             .set(Tables.LINKS.LAST_UPDATE, OffsetDateTime.now().toLocalDateTime())

@@ -9,7 +9,7 @@ public abstract class LinkUpdaterTest extends ServiceTest {
         super(linkUpdater, linkService, chatService);
     }
 
-    public void testUpdateFunction(Long linkId) {
+    protected void testUpdateFunction(Long linkId) {
         final OffsetDateTime start = OffsetDateTime.now();
         final LinkResponse updatedLink = linkUpdater.updateLink(linkId);
         final OffsetDateTime end = OffsetDateTime.now();

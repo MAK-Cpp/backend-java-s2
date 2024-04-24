@@ -8,7 +8,7 @@ import edu.java.scrapper.service.jpa.JpaLinkService;
 import edu.java.scrapper.service.jpa.JpaLinkUpdater;
 import edu.java.scrapper.validator.LinkValidator;
 import java.util.List;
-import org.hibernate.SessionFactory;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -21,20 +21,20 @@ import javax.sql.DataSource;
 public class JpaAccessConfig {
     @Bean
     @Autowired
-    public ChatService chatService(SessionFactory sessionFactory) {
-        return new JpaChatService(sessionFactory);
+    public ChatService chatService(EntityManager entityManager) {
+        return new JpaChatService(entityManager);
     }
 
     @Bean
     @Autowired
-    public LinkService linkService(SessionFactory sessionFactory, List<LinkValidator> linkValidators) {
-        return new JpaLinkService(sessionFactory, linkValidators);
+    public LinkService linkService(EntityManager entityManager, List<LinkValidator> linkValidators) {
+        return new JpaLinkService(entityManager, linkValidators);
     }
 
     @Bean
     @Autowired
-    public LinkUpdater linkUpdater(SessionFactory sessionFactory) {
-        return new JpaLinkUpdater(sessionFactory);
+    public LinkUpdater linkUpdater(EntityManager entityManager) {
+        return new JpaLinkUpdater(entityManager);
     }
 
     @Bean(name = "entityManagerFactory")
