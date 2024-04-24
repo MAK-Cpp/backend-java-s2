@@ -15,14 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.stream.Stream;
 
 @SpringBootTest(properties = "app.database-access-type=jdbc")
+@Transactional
+@Rollback
 public class JdbcLinkUpdaterTest extends LinkUpdaterTest {
     @Autowired
     public JdbcLinkUpdaterTest(LinkUpdater linkUpdater, LinkService linkService, ChatService chatService) {
         super(linkUpdater, linkService, chatService);
     }
-
-    @Transactional
-    @Rollback
     @Test
     void testUpdate() {
         fillDB();

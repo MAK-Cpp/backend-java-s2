@@ -1,6 +1,5 @@
 package edu.java.scrapper.service.jdbc;
 
-import edu.java.dto.response.UserLinkResponse;
 import edu.java.scrapper.service.ChatService;
 import edu.java.scrapper.service.ChatServiceTest;
 import edu.java.scrapper.service.LinkService;
@@ -14,8 +13,6 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @SpringBootTest(properties = "app.database-access-type=jdbc")
 @Transactional
