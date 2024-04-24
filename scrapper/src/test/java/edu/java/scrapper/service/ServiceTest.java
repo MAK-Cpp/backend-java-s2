@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.LongStream;
 
 @Slf4j
 public abstract class ServiceTest extends IntegrationTest {
@@ -46,6 +48,26 @@ public abstract class ServiceTest extends IntegrationTest {
         return addedLinks;
     }
 
+    protected static LongStream chatIdsStream() {
+        return LongStream.of(
+            3L, 0L, -1L, 5L, 1L, 2L, 8L, -100L
+        );
+    }
+
     protected record LinkRecord(String link, String alias) {
+        @Override public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            LinkRecord that = (LinkRecord) o;
+            return Objects.equals(link, that.link) && Objects.equals(alias, that.alias);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hashCode(link);
+            result = 31 * result + Objects.hashCode(alias);
+            return result;
+        }
     }
 }

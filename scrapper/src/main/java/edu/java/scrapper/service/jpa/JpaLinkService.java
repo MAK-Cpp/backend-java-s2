@@ -37,6 +37,8 @@ public class JpaLinkService extends AbstractService implements LinkService {
             LINK_RESPONSE_MAPPER.apply(chatsAndLinksEntity.getLink()),
             chatsAndLinksEntity.getAlias()
         );
+    public static final String KEY = "key";
+    public static final String CHAT_ID = "chatId";
     private final EntityManager entityManager;
     private final List<LinkValidator> linkValidators;
 
@@ -72,11 +74,7 @@ public class JpaLinkService extends AbstractService implements LinkService {
     @Override
     public ListUserLinkResponse getAllLinks(Long chatId) throws DTOException {
         validateChatId(entityManager, chatId);
-        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-        final CriteriaQuery<ChatsAndLinksEntity> criteria = builder.createQuery(ChatsAndLinksEntity.class);
-        final Root<ChatsAndLinksEntity> chatsAndLinksRoot = criteria.from(ChatsAndLinksEntity.class);
-        final CriteriaQuery<ChatsAndLinksEntity> allWhere = criteria.select(chatsAndLinksRoot)
-            .where(builder.equal(chatsAndLinksRoot.get("key").get("chatId"), chatId));
+        CriteriaQuery<ChatsAndLinksEntity> allWhere = selectFromChatsAndLinksWhereChatIdEq(chatId, entityManager);
 
         final UserLinkResponse[] responses = entityManager.createQuery(allWhere)
             .getResultStream()
@@ -84,6 +82,17 @@ public class JpaLinkService extends AbstractService implements LinkService {
             .toArray(UserLinkResponse[]::new);
 
         return new ListUserLinkResponse(responses, responses.length);
+    }
+
+    static CriteriaQuery<ChatsAndLinksEntity> selectFromChatsAndLinksWhereChatIdEq(
+        Long chatId,
+        EntityManager entityManager
+    ) {
+        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        final CriteriaQuery<ChatsAndLinksEntity> criteria = builder.createQuery(ChatsAndLinksEntity.class);
+        final Root<ChatsAndLinksEntity> chatsAndLinksRoot = criteria.from(ChatsAndLinksEntity.class);
+        return criteria.select(chatsAndLinksRoot)
+            .where(builder.equal(chatsAndLinksRoot.get(KEY).get(CHAT_ID), chatId));
     }
 
     private static CriteriaQuery<ChatsAndLinksEntity> chatsAndLinksWhereEqChatIdAndAlias(
@@ -95,7 +104,7 @@ public class JpaLinkService extends AbstractService implements LinkService {
         final Root<ChatsAndLinksEntity> chatsAndLinksRoot = criteria.from(ChatsAndLinksEntity.class);
         return criteria.select(chatsAndLinksRoot)
             .where(
-                builder.equal(chatsAndLinksRoot.get("key").get("chatId"), chatId),
+                builder.equal(chatsAndLinksRoot.get(KEY).get(CHAT_ID), chatId),
                 builder.equal(chatsAndLinksRoot.get("alias"), alias)
             );
     }

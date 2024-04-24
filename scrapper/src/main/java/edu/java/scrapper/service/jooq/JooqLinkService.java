@@ -25,8 +25,8 @@ import org.jooq.Record1;
 import org.jooq.Record3;
 import org.jooq.Record4;
 import org.jooq.RecordMapper;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.annotation.Transactional;
 
 public class JooqLinkService extends AbstractService implements LinkService {
@@ -145,7 +145,7 @@ public class JooqLinkService extends AbstractService implements LinkService {
             dslContext.insertInto(Tables.CHATS_AND_LINKS)
                 .values(chatId, linkResponse.getId(), alias)
                 .execute();
-        } catch (DuplicateKeyException e) {
+        } catch (DataAccessException e) {
             final String exceptionMessage = e.getMessage();
             if (exceptionMessage.contains("chats_and_links_pkey")) {
                 throw new LinkAlreadyTrackedException(

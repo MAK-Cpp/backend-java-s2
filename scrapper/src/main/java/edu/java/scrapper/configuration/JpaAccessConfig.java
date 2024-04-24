@@ -7,14 +7,14 @@ import edu.java.scrapper.service.jpa.JpaChatService;
 import edu.java.scrapper.service.jpa.JpaLinkService;
 import edu.java.scrapper.service.jpa.JpaLinkUpdater;
 import edu.java.scrapper.validator.LinkValidator;
-import java.util.List;
 import jakarta.persistence.EntityManager;
+import java.util.List;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
-import javax.sql.DataSource;
 
 @Configuration
 @ConditionalOnProperty(prefix = "app", name = "database-access-type", havingValue = "jpa")

@@ -4,8 +4,8 @@ import edu.java.dto.response.LinkResponse;
 import edu.java.scrapper.repository.jpa.LinkEntity;
 import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.LinkUpdater;
-import java.time.OffsetDateTime;
 import jakarta.persistence.EntityManager;
+import java.time.OffsetDateTime;
 import org.springframework.transaction.annotation.Transactional;
 
 public class JpaLinkUpdater extends AbstractService implements LinkUpdater {

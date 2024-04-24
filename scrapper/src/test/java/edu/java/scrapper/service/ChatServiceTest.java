@@ -69,12 +69,6 @@ public abstract class ChatServiceTest extends ServiceTest {
         }
     }
 
-    protected static LongStream chatIdsStream() {
-        return LongStream.of(
-            3L, 0L, -1L, 5L, 1L, 2L, 8L, -100L
-        );
-    }
-
     // DELETE USER
 
     private void testSuccessDeleteUser(Long chatId) {

@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 public class JpaChatService extends AbstractService implements ChatService {
+    public static final String KEY = "key";
+    public static final String CHAT_ID = "chatId";
     private final EntityManager entityManager;
 
     public JpaChatService(EntityManager entityManager) {
@@ -45,11 +47,7 @@ public class JpaChatService extends AbstractService implements ChatService {
         if (chatEntity == null) {
             throw new NonExistentChatException(String.format(NON_EXISTING_CHAT_EXCEPTION_FORMAT, chatId));
         }
-        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-        final CriteriaQuery<ChatsAndLinksEntity> criteria = builder.createQuery(ChatsAndLinksEntity.class);
-        final Root<ChatsAndLinksEntity> chatsAndLinksEntityRoot = criteria.from(ChatsAndLinksEntity.class);
-        final CriteriaQuery<ChatsAndLinksEntity> allWhere = criteria.select(chatsAndLinksEntityRoot)
-            .where(builder.equal(chatsAndLinksEntityRoot.get("key").get("chatId"), chatId));
+        var allWhere = JpaLinkService.selectFromChatsAndLinksWhereChatIdEq(chatId, entityManager);
         entityManager.createQuery(allWhere).getResultStream().forEach(entityManager::remove);
         entityManager.remove(chatEntity);
         entityManager.flush();
@@ -77,7 +75,7 @@ public class JpaChatService extends AbstractService implements ChatService {
         final CriteriaQuery<ChatsAndLinksEntity> criteria = builder.createQuery(ChatsAndLinksEntity.class);
         final Root<ChatsAndLinksEntity> chatsAndLinksEntityRoot = criteria.from(ChatsAndLinksEntity.class);
         final CriteriaQuery<ChatsAndLinksEntity> allWhere = criteria.select(chatsAndLinksEntityRoot)
-            .where(builder.equal(chatsAndLinksEntityRoot.get("key").get("linkId"), linkId));
+            .where(builder.equal(chatsAndLinksEntityRoot.get(KEY).get("linkId"), linkId));
 
         final ChatResponse[] responses = entityManager.createQuery(allWhere)
             .getResultStream()

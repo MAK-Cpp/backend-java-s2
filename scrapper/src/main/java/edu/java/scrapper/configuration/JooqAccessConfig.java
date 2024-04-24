@@ -8,6 +8,7 @@ import edu.java.scrapper.service.jooq.JooqLinkService;
 import edu.java.scrapper.service.jooq.JooqLinkUpdater;
 import edu.java.scrapper.validator.LinkValidator;
 import java.util.List;
+import javax.sql.DataSource;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.conf.RenderNameCase;
@@ -17,13 +18,11 @@ import org.jooq.impl.DataSourceConnectionProvider;
 import org.jooq.impl.DefaultConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.jooq.DefaultConfigurationCustomizer;
 import org.springframework.boot.autoconfigure.jooq.SpringTransactionProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.transaction.PlatformTransactionManager;
-import javax.sql.DataSource;
 
 @Configuration
 @ConditionalOnProperty(prefix = "app", name = "database-access-type", havingValue = "jooq")
