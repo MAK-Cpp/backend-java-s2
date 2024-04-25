@@ -1,6 +1,7 @@
 app:
   telegram-token: ${BACKEND_JAVA_BOT_TOKEN}
 
+
 spring:
   application:
     name: bot
@@ -17,3 +18,11 @@ springdoc:
   swagger-ui:
     path: /swagger-ui
     enabled: true
+
+client:
+  scrapper:
+    url: unset
+    interval: PT60S
+    back-off: linear
+    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    max-attempts: 10

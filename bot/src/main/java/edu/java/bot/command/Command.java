@@ -1,6 +1,7 @@
 package edu.java.bot.command;
 
 import edu.java.bot.TelegramBotComponent;
+import edu.java.dto.exception.APIException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.ListUserLinkResponse;
@@ -23,7 +24,7 @@ public abstract class Command {
     protected static boolean isRegistered(final TelegramBotComponent bot, long chatId) {
         try {
             return bot.getScrapperHttpClient().getChat(chatId).getId() == chatId;
-        } catch (NonExistentChatException e) {
+        } catch (APIException e) {
             bot.sendMessage(chatId, UNREGISTERED_USER_ERROR);
             return false;
         }
@@ -36,11 +37,12 @@ public abstract class Command {
                 bot.sendMessage(chatId, NO_TRACKING_LINKS_ERROR);
             }
             return userLinks.getSize() > 0;
-        } catch (WrongParametersException e) {
-            bot.sendMessage(chatId, NO_TRACKING_LINKS_ERROR);
-            return false;
-        } catch (NonExistentChatException e) {
-            bot.sendMessage(chatId, UNREGISTERED_USER_ERROR);
+        } catch (APIException e) {
+            if (e.getCause() instanceof WrongParametersException) {
+                bot.sendMessage(chatId, NO_TRACKING_LINKS_ERROR);
+            } else {
+                bot.sendMessage(chatId, UNREGISTERED_USER_ERROR);
+            }
             return false;
         }
     }

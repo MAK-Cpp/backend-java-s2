@@ -59,14 +59,15 @@ class BotHttpClientImplTest extends ClientTest {
                     Map.entry(5L, "link5")
                 ),
                 HttpStatus.BAD_REQUEST,
-                "{\n" +
-                    "  \"description\": \"Некорректные параметры запроса\",\n" +
-                    "  \"code\": \"400\",\n" +
-                    "  \"exceptionName\": \"WrongParametersException\",\n" +
-                    "  \"exceptionMessage\": \"id cannot be negate\",\n" +
-                    "  \"stacktrace\": [\n" +
-                    "  ]\n" +
-                    "}"
+                """
+                    {
+                      "description": "Некорректные параметры запроса",
+                      "code": "400",
+                      "exceptionName": "WrongParametersException",
+                      "exceptionMessage": "id cannot be negate",
+                      "stacktrace": [
+                      ]
+                    }"""
             ),
             Arguments.of(
                 1L,
@@ -74,14 +75,15 @@ class BotHttpClientImplTest extends ClientTest {
                 "",
                 List.of(),
                 HttpStatus.BAD_REQUEST,
-                "{\n" +
-                    "  \"description\": \"Некорректные параметры запроса\",\n" +
-                    "  \"code\": \"400\",\n" +
-                    "  \"exceptionName\": \"WrongParametersException\",\n" +
-                    "  \"exceptionMessage\": \"link cannot be empty\",\n" +
-                    "  \"stacktrace\": [\n" +
-                    "  ]\n" +
-                    "}"
+                """
+                    {
+                      "description": "Некорректные параметры запроса",
+                      "code": "400",
+                      "exceptionName": "WrongParametersException",
+                      "exceptionMessage": "link cannot be empty",
+                      "stacktrace": [
+                      ]
+                    }"""
             )
         );
     }

@@ -4,6 +4,7 @@ import com.pengrad.telegrambot.model.Update;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
 import edu.java.bot.client.ScrapperHttpClient;
+import edu.java.dto.exception.APIException;
 import edu.java.dto.exception.DTOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +58,8 @@ public class Track extends Command {
                 try {
                     scrapperHttpClient.addLinkToTracking(chatId, link.getUri().toString(), link.getAlias());
                     results.add(Map.entry(link.toString(), Optional.empty()));
-                } catch (DTOException e) {
-                    results.add(Map.entry(link.toString(), Optional.of(e.getMessage())));
+                } catch (APIException e) {
+                    results.add(Map.entry(link.toString(), Optional.of(e.getCause().getMessage())));
                 }
             }
         });

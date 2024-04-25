@@ -12,6 +12,7 @@ import edu.java.bot.command.Command;
 import edu.java.bot.command.Start;
 import edu.java.bot.command.Track;
 import edu.java.bot.command.Untrack;
+import edu.java.dto.exception.APIException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.ChatResponse;
@@ -31,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -95,7 +97,10 @@ public class TelegramBotComponentTest {
             final Long chatId = ans.getArgument(0);
             log.debug("Get chat with id {}", chatId);
             if (!links.containsKey(chatId)) {
-                throw new NonExistentChatException(Command.UNREGISTERED_USER_ERROR);
+                throw new APIException(
+                    HttpStatus.NOT_FOUND,
+                    new NonExistentChatException(Command.UNREGISTERED_USER_ERROR)
+                );
             }
             return new ChatResponse(chatId);
         });
@@ -107,7 +112,10 @@ public class TelegramBotComponentTest {
                 .map(link -> new UserLinkResponse(new LinkResponse(0L, link.getUri(), null), link.getAlias()))
                 .toArray(UserLinkResponse[]::new);
             if (result.length == 0) {
-                throw new WrongParametersException(Command.UNREGISTERED_USER_ERROR);
+                throw new APIException(
+                    HttpStatus.BAD_REQUEST,
+                    new WrongParametersException(Command.UNREGISTERED_USER_ERROR)
+                );
             }
             return new ListUserLinkResponse(result, result.length);
         });
@@ -297,7 +305,7 @@ public class TelegramBotComponentTest {
         for (LinkWithCorrectness link : links) {
             final String line;
             if (link.isCorrect) {
-                line = link.link.getAlias() + " - " + link.link.getUri();
+                line = link.link.getAlias() + " = " + link.link.getUri();
                 results.add(Map.entry(link.link.toString(), Optional.empty()));
             } else {
                 line = link.link.getAlias() + link.link.getUri();

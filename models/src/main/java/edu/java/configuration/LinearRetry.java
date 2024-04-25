@@ -13,46 +13,22 @@ public final class LinearRetry extends Retry {
     public final Predicate<Throwable> errorFilter;
     private final int maxAttempts;
     private final Duration initialDelay;
-    private final Duration increment;
 
     private LinearRetry(
         int maxAttempts,
         Duration initialDelay,
-        Duration increment,
         List<HttpStatus> codes
     ) {
         this.maxAttempts = maxAttempts;
         this.initialDelay = initialDelay;
-        this.increment = increment;
         errorFilter = (exception) -> (exception instanceof ServiceException se) && codes.contains(se.code());
     }
-
-    // @Override
-    // public Flux<RetrySignal> generateCompanion(Flux<RetrySignal> retrySignals) {
-    //     return retrySignals
-    //         .filter(rs -> (rs.failure() instanceof ServiceException se) && codes.contains(se.code()))
-    //         .zipWith(Flux.range(1, maxAttempts), (signal, index) -> new Object[] {signal, index})
-    //         .flatMap(tuple -> {
-    //             RetrySignal signal = (RetrySignal) tuple[0];
-    //             int attemptNumber = (Integer) tuple[1];
-    //             System.out.println(signal);
-    //             System.out.println(attemptNumber);
-    //             if (attemptNumber < maxAttempts) {
-    //                 Duration delay = initialDelay.plus(increment.multipliedBy(attemptNumber - 1));
-    //                 System.out.println(delay);
-    //                 return Mono.delay(delay).then(Mono.just(signal));
-    //             } else {
-    //                 return Mono.error(signal.failure());
-    //             }
-    //         });
-    // }
 
     public static LinearRetry of(
         HttpClientConfig httpClientConfig
     ) {
         return new LinearRetry(
             httpClientConfig.maxAttempts(),
-            httpClientConfig.interval(),
             httpClientConfig.interval(),
             httpClientConfig.codes()
         );

@@ -3,6 +3,7 @@ package edu.java.bot.command;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponentTest;
 import edu.java.bot.request.chains.SendMessageChains;
+import edu.java.dto.exception.APIException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.ChatResponse;
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
+import org.springframework.http.HttpStatus;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,13 +83,20 @@ public class ListTest extends CommandTest {
             Mockito.when(SCRAPPER_HTTP_CLIENT.getChat(Mockito.eq(chatId))).thenReturn(new ChatResponse(chatId));
         } else if (registered) {
             Mockito.when(SCRAPPER_HTTP_CLIENT.getAllLinks(Mockito.eq(chatId)))
-                .thenThrow(new WrongParametersException(List.NO_TRACKING_LINKS_ERROR));
+                .thenThrow(new APIException(
+                    HttpStatus.BAD_REQUEST,
+                    new WrongParametersException(List.NO_TRACKING_LINKS_ERROR)
+                ));
             Mockito.when(SCRAPPER_HTTP_CLIENT.getChat(Mockito.eq(chatId))).thenReturn(new ChatResponse(chatId));
         } else {
+            APIException exception = new APIException(
+                HttpStatus.NOT_FOUND,
+                new NonExistentChatException(List.UNREGISTERED_USER_ERROR)
+            );
             Mockito.when(SCRAPPER_HTTP_CLIENT.getAllLinks(Mockito.eq(chatId)))
-                .thenThrow(new NonExistentChatException(List.UNREGISTERED_USER_ERROR));
+                .thenThrow(exception);
             Mockito.when(SCRAPPER_HTTP_CLIENT.getChat(Mockito.eq(chatId)))
-                .thenThrow(new NonExistentChatException(List.UNREGISTERED_USER_ERROR));
+                .thenThrow(exception);
         }
         assertThat(LIST.getFunction().apply(BOT, UPDATE)).isEqualTo(CommandFunction.END);
         verify(BOT, atLeastOnce()).sendMessage(
