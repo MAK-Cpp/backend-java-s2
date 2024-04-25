@@ -28,9 +28,9 @@ public class BotService {
         }
         log.debug("request processed: {}", request);
         for (LinkUpdateRequest.ChatAndAlias chatAndAlias : request.getChatsAndAliases()) {
-            final String chatDescription = String.format("New update for link [%s](%s):\n%s",
-                request.getUrl(),
+            final String chatDescription = String.format("New update for [%s](%s):\n%s",
                 chatAndAlias.getAlias(),
+                request.getUrl(),
                 request.getDescription()
             );
             telegramBot.sendMessage(chatAndAlias.getId(), chatDescription, SM_MARKDOWN, SM_DISABLE_PREVIEW);

@@ -16,7 +16,13 @@ import static edu.java.bot.request.chains.SendMessageChains.SM_MARKDOWN;
 @Component
 public class Track extends Command {
     public static final String DESCRIPTION_MESSAGE =
-        "Send link(s) for tracking\nFormat:\nlink_alias1 - link1\nlink_alias2 - link2\n...";
+        """
+            Send link(s) for tracking
+            Format:
+            link alias No.1 = link No.1
+            link alias No.2 = link No.2
+            ...
+            DO NOT USE '=' IN ALIAS BECAUSE IT IS USED AS SEPARATOR BETWEEN ALIAS AND LINK!!!""";
 
     public static String createResult(final List<Map.Entry<String, Optional<String>>> results) {
         final StringBuilder message = new StringBuilder("Result:\n");

@@ -64,7 +64,8 @@ public class JpaLinkService extends AbstractService implements LinkService {
         final CriteriaQuery<LinkEntity> all = criteria.select(linkRoot);
 
         final LinkResponse[] responses = entityManager.createQuery(all)
-            .getResultStream()
+            .getResultList()
+            .stream()
             .map(LINK_RESPONSE_MAPPER)
             .toArray(LinkResponse[]::new);
 
@@ -77,7 +78,8 @@ public class JpaLinkService extends AbstractService implements LinkService {
         CriteriaQuery<ChatsAndLinksEntity> allWhere = selectFromChatsAndLinksWhereChatIdEq(chatId, entityManager);
 
         final UserLinkResponse[] responses = entityManager.createQuery(allWhere)
-            .getResultStream()
+            .getResultList()
+            .stream()
             .map(USER_LINK_RESPONSE_MAPPER)
             .toArray(UserLinkResponse[]::new);
 
@@ -116,7 +118,8 @@ public class JpaLinkService extends AbstractService implements LinkService {
 
         UserLinkResponse[] responses =
             entityManager.createQuery(chatsAndLinksWhereEqChatIdAndAlias(builder, chatId, alias))
-                .getResultStream()
+                .getResultList()
+                .stream()
                 .map(USER_LINK_RESPONSE_MAPPER)
                 .toArray(UserLinkResponse[]::new);
 

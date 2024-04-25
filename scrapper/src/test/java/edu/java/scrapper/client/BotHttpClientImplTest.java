@@ -2,9 +2,11 @@ package edu.java.scrapper.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
-import edu.java.dto.exception.WrongParametersException;
+import edu.java.configuration.HttpClientConfig;
+import edu.java.dto.exception.ServiceException;
 import edu.java.scrapper.client.bot.BotHttpClient;
 import edu.java.scrapper.client.bot.BotHttpClientImpl;
+import edu.java.test.client.ClientTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,8 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class BotHttpClientImplTest extends ClientTest {
     private WireMockServer wireMockServer;
     private static final int HTTP_ENDPOINT_PORT = getPort();
-    private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
-    private static final BotHttpClient BOT_HTTP_CLIENT = new BotHttpClientImpl(WebClient.builder(), URL);
+    public static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
+    private static final BotHttpClient
+        BOT_HTTP_CLIENT = new BotHttpClientImpl(WebClient.builder(), URL, RETRY);
 
     public static Stream<Arguments> testSendUpdates() {
         return Stream.of(
@@ -109,10 +112,41 @@ class BotHttpClientImplTest extends ClientTest {
                 .withHeader("Content-Type", "application/json")
                 .withBody(body)));
             assertThrows(
-                WrongParametersException.class,
+                ServiceException.class,
                 () -> BOT_HTTP_CLIENT.sendUpdates(id, url, description, chatsAndAliases)
             );
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource("testRetryStream")
+    public void testRetrySendUpdates(
+        HttpClientConfig httpClientConfig,
+        int serverNotWorkingDuration,
+        boolean enoughTime,
+        HttpStatus failStatus
+    ) {
+        final Long id = 3L;
+        final String url = "GitHub.com";
+        final String description = "remote repositories";
+        final List<Map.Entry<Long, String>> chatsAndAliases = List.of(
+            Map.entry(1L, "link1"),
+            Map.entry(2L, "link2"),
+            Map.entry(3L, "link3"),
+            Map.entry(4L, "link4"),
+            Map.entry(5L, "link5")
+        );
+        final BotHttpClient botHttpClient = new BotHttpClientImpl(WebClient.builder(), URL, httpClientConfig.retry());
+        testRetry(
+            wireMockServer,
+            post("/updates"),
+            response -> response,
+            serverNotWorkingDuration,
+            enoughTime,
+            httpClientConfig.codes().contains(failStatus),
+            () -> botHttpClient.sendUpdates(id, url, description, chatsAndAliases),
+            failStatus
+        );
     }
 
     @AfterEach

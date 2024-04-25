@@ -5,8 +5,6 @@ app:
     interval: PT120S
     force-check-delay: PT10S
 
-
-
 spring:
   application:
     name: scrapper
@@ -20,7 +18,6 @@ spring:
     username: ${SCRAPPER_USERNAME}
     password: ${SCRAPPER_PASSWORD}
 
-
 server:
   port: 8080
 
@@ -28,8 +25,24 @@ logging:
   config: classpath:log4j2-plain.xml
 
 client:
-  github-url: unset
-  stack-overflow-url: unset
+  github:
+    url: unset
+    interval: PT60S
+    back-off: linear
+    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    max-attempts: 10
+  stack-overflow:
+    url: unset
+    interval: PT60S
+    back-off: exponential
+    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    max-attempts: 10
+  bot:
+    url: unset
+    interval: PT60S
+    back-off: constant
+    codes:
+    max-attempts: 10
 
 springdoc:
   swagger-ui:

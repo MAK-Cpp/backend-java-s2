@@ -2,14 +2,17 @@ package edu.java.scrapper.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import edu.java.configuration.HttpClientConfig;
 import edu.java.scrapper.client.stackoverflow.StackOverflowClient;
 import edu.java.scrapper.client.stackoverflow.StackOverflowClientImpl;
 import edu.java.scrapper.response.stackoverflow.AnswerResponse;
+import edu.java.test.client.ClientTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -28,38 +31,13 @@ class StackOverflowClientImplTest extends ClientTest {
     private static final int HTTP_ENDPOINT_PORT = getPort();
     private static final String URL = "http://localhost:" + HTTP_ENDPOINT_PORT;
     private static final StackOverflowClient STACK_OVERFLOW_CLIENT
-        = new StackOverflowClientImpl(WebClient.builder(), URL);
+        = new StackOverflowClientImpl(WebClient.builder(), URL, RETRY);
 
     public static Stream<Arguments> testGetQuestionAnswers() {
         return Stream.of(
             Arguments.of(
                 "65954571",
-                "{\n" +
-                    "    \"items\": [\n" +
-                    "        {\n" +
-                    "            \"owner\": {\n" +
-                    "                \"account_id\": 6691602,\n" +
-                    "                \"reputation\": 989,\n" +
-                    "                \"user_id\": 5160940,\n" +
-                    "                \"user_type\": \"registered\",\n" +
-                    "                \"profile_image\": \"https://i.stack.imgur.com/4w35p.jpg?s=256&g=1\",\n" +
-                    "                \"display_name\": \"DockYard\",\n" +
-                    "                \"link\": \"https://stackoverflow.com/users/5160940/dockyard\"\n" +
-                    "            },\n" +
-                    "            \"is_accepted\": false,\n" +
-                    "            \"score\": 1,\n" +
-                    "            \"last_activity_date\": 1693142293,\n" +
-                    "            \"creation_date\": 1693142293,\n" +
-                    "            \"answer_id\": 76987303,\n" +
-                    "            \"question_id\": 65954571,\n" +
-                    "            \"content_license\": \"CC BY-SA 4.0\",\n" +
-                    "            \"body_markdown\": \"Assuming you are facing this issue in your local Apple M1/M2, and if you don&#39;t want to add any additional dependencies then you can use this below solution:\\r\\n\\r\\nStep 1)Download any IntelX64 based JDK distribution.\\r\\n\\r\\nSample download source:\\r\\nhttps://learn.microsoft.com/en-us/java/openjdk/download(In my case, I was using jdk11 hence I downloaded ```microsoft-jdk-11.0.20-macOS-x64.tar.gz``` from this page)\\r\\n\\r\\n\\r\\nStep 2)Set your java to this new jdk from your IDE(Intellij Idea for my case)\\r\\n\\r\\n\\r\\n\\r\\n\\r\\nThis worked like a charm for me\"\n" +
-                    "        }\n" +
-                    "    ],\n" +
-                    "    \"has_more\": false,\n" +
-                    "    \"quota_max\": 300,\n" +
-                    "    \"quota_remaining\": 241\n" +
-                    "}\n",
+                ANSWERS_ON_65954571,
                 new AnswerResponse(List.of(
                     new AnswerResponse.Answer(
                         76987303,
@@ -185,8 +163,59 @@ class StackOverflowClientImplTest extends ClientTest {
         assertThat(output).isEqualTo(result);
     }
 
+    @ParameterizedTest
+    @MethodSource("testRetryStream")
+    public void testRetryGetQuestionAnswers(
+        HttpClientConfig httpClientConfig,
+        int serverNotWorkingDuration,
+        boolean enoughTime,
+        HttpStatus failStatus
+    ) {
+        final String questionId = "65954571";
+        final String body = ANSWERS_ON_65954571;
+        final StackOverflowClient stackOverflowClient =
+            new StackOverflowClientImpl(WebClient.builder(), URL, httpClientConfig.retry());
+        testRetry(
+            wireMockServer,
+            get("/questions/" + questionId + "/answers?filter=" + FILTER + "&order=" + ORDER + "&site=" + SITE + "&sort=" + SORT),
+            response -> response.withHeader("Content-Type", "application/json").withBody(body),
+            serverNotWorkingDuration,
+            enoughTime,
+            httpClientConfig.codes().contains(failStatus),
+            () -> stackOverflowClient.getQuestionAnswers(questionId),
+            failStatus
+        );
+    }
+
     @AfterEach
     public void afterEach() {
         wireMockServer.stop();
     }
+
+    public static final String ANSWERS_ON_65954571 = "{\n" +
+        "    \"items\": [\n" +
+        "        {\n" +
+        "            \"owner\": {\n" +
+        "                \"account_id\": 6691602,\n" +
+        "                \"reputation\": 989,\n" +
+        "                \"user_id\": 5160940,\n" +
+        "                \"user_type\": \"registered\",\n" +
+        "                \"profile_image\": \"https://i.stack.imgur.com/4w35p.jpg?s=256&g=1\",\n" +
+        "                \"display_name\": \"DockYard\",\n" +
+        "                \"link\": \"https://stackoverflow.com/users/5160940/dockyard\"\n" +
+        "            },\n" +
+        "            \"is_accepted\": false,\n" +
+        "            \"score\": 1,\n" +
+        "            \"last_activity_date\": 1693142293,\n" +
+        "            \"creation_date\": 1693142293,\n" +
+        "            \"answer_id\": 76987303,\n" +
+        "            \"question_id\": 65954571,\n" +
+        "            \"content_license\": \"CC BY-SA 4.0\",\n" +
+        "            \"body_markdown\": \"Assuming you are facing this issue in your local Apple M1/M2, and if you don&#39;t want to add any additional dependencies then you can use this below solution:\\r\\n\\r\\nStep 1)Download any IntelX64 based JDK distribution.\\r\\n\\r\\nSample download source:\\r\\nhttps://learn.microsoft.com/en-us/java/openjdk/download(In my case, I was using jdk11 hence I downloaded ```microsoft-jdk-11.0.20-macOS-x64.tar.gz``` from this page)\\r\\n\\r\\n\\r\\nStep 2)Set your java to this new jdk from your IDE(Intellij Idea for my case)\\r\\n\\r\\n\\r\\n\\r\\n\\r\\nThis worked like a charm for me\"\n" +
+        "        }\n" +
+        "    ],\n" +
+        "    \"has_more\": false,\n" +
+        "    \"quota_max\": 300,\n" +
+        "    \"quota_remaining\": 241\n" +
+        "}\n";
 }
