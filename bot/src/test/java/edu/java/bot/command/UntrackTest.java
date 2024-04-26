@@ -18,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
 import static edu.java.bot.TelegramBotComponentTest.GOOGLE;
@@ -61,22 +62,36 @@ public class UntrackTest extends CommandTest {
     }
 
     private static Arguments testUntrack(long chatId, int messageId, boolean contains, Link... links) {
+        ListUserLinkResponse response = new ListUserLinkResponse(
+            Arrays.stream(links)
+                .map(link -> new UserLinkResponse(
+                    new LinkResponse(0L, link.getUri(), null),
+                    link.getAlias()
+                )).toArray(UserLinkResponse[]::new),
+            links.length
+        );
         if (contains && (links.length > 0)) {
             return Arguments.of(
                 chatId,
+                contains,
                 messageId,
+                response,
                 DESCRIPTION_MESSAGE
             );
         } else if (!contains) {
             return Arguments.of(
                 chatId,
+                contains,
                 messageId,
+                response,
                 UNREGISTERED_USER_ERROR
             );
         } else {
             return Arguments.of(
                 chatId,
+                contains,
                 messageId,
+                response,
                 NO_TRACKING_LINKS_ERROR
             );
         }
@@ -99,9 +114,18 @@ public class UntrackTest extends CommandTest {
 
     @ParameterizedTest
     @MethodSource
-    void testUntrack(long chatId, int messageId, String result) {
+    void testUntrack(long chatId, boolean contains, int messageId, ListUserLinkResponse links, String result) {
         when(CHAT.id()).thenReturn(chatId);
         when(BOT_MESSAGE.messageId()).thenReturn(messageId);
+        if (contains) {
+            when(SCRAPPER_HTTP_CLIENT.getChat(eq(chatId))).thenReturn(new ChatResponse(chatId));
+        } else {
+            when(SCRAPPER_HTTP_CLIENT.getChat(eq(chatId))).thenThrow(new APIException(
+                HttpStatus.BAD_REQUEST,
+                new WrongParametersException("Wrong parameters!")
+            ));
+        }
+        when(SCRAPPER_HTTP_CLIENT.getAllLinks(eq(chatId))).thenReturn(links);
         untrack(BOT, UPDATE);
         verify(BOT, atLeastOnce()).sendMessage(
             eq(chatId),
