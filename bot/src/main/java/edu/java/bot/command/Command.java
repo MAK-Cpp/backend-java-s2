@@ -2,7 +2,6 @@ package edu.java.bot.command;
 
 import edu.java.bot.TelegramBotComponent;
 import edu.java.dto.exception.APIException;
-import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.ListUserLinkResponse;
 import jakarta.validation.constraints.NotEmpty;

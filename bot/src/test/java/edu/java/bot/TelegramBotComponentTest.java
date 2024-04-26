@@ -20,6 +20,7 @@ import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListUserLinkResponse;
 import edu.java.dto.response.UserLinkResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.http.HttpStatus;
 import java.net.URI;
 import java.security.SecureRandom;
@@ -39,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import static edu.java.bot.command.List.createLinksList;
@@ -88,7 +92,10 @@ public class TelegramBotComponentTest {
             final Long chatId = ans.getArgument(0);
             log.debug("Register chat with id {}", chatId);
             if (links.containsKey(chatId)) {
-                throw new WrongParametersException("Chat with id " + chatId + " already exists");
+                throw new APIException(
+                    HttpStatus.BAD_REQUEST,
+                    new WrongParametersException("Chat with id " + chatId + " already exists")
+                );
             }
             links.put(chatId, new ArrayList<>());
             return new ChatResponse(chatId);

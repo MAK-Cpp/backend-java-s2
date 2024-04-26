@@ -9,7 +9,7 @@ import edu.java.bot.TelegramBotComponent;
 import edu.java.bot.client.ScrapperHttpClient;
 import edu.java.bot.request.chains.Chains;
 import edu.java.bot.request.chains.SendMessageChains;
-import edu.java.dto.exception.WrongParametersException;
+import edu.java.dto.exception.APIException;
 import edu.java.dto.response.UserLinkResponse;
 import java.util.Arrays;
 import java.util.Objects;
@@ -109,7 +109,7 @@ public class Untrack extends Command {
                     EMT_MARKDOWN, EMT_DISABLE_PREVIEW, EMT_REPLY_MARKUP(yesNo)
                 );
                 return confirmDelete(messageId, alias);
-            } catch (WrongParametersException e) {
+            } catch (APIException e) {
                 bot.editMessageText(
                     chatId, messageId,
                     String.format(NO_LINK_ERROR_FORMAT, alias)

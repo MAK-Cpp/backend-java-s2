@@ -17,6 +17,29 @@ spring:
     url: ${SCRAPPER_URL}
     username: ${SCRAPPER_USERNAME}
     password: ${SCRAPPER_PASSWORD}
+  cache:
+    cache-names:
+      - rate-limit-bucket
+    jcache:
+      provider: com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider
+    caffeine:
+      spec: maximumSize=100000,expireAfterAccess=3600s
+    type: jcache
+
+
+bucket4j:
+  enabled: true
+  filters:
+    - cache-name: rate-limit-bucket
+      url: .*
+      http-response-body: "{ \"status\": 429, \"error\": \"Too Many Requests\", \"message\": \"You have exhausted your API Request Quota\" }"
+      rate-limits:
+        - bandwidths:
+            - capacity: ${rate.limit.capacity:10}
+              time: ${rate.limit.time:1}
+              unit: ${rate.limit.unit:seconds}
+          cache-key: "getHeader(\"X-Forwarded-For\")"
+  cache-to-use: jcache
 
 server:
   port: 8080

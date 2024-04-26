@@ -10,9 +10,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(properties = "app.database-access-type=jdbc")
+@ActiveProfiles("test")
 @Transactional
 @Rollback
 public class JdbcLinkServiceTest extends LinkServiceTest {

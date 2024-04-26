@@ -5,7 +5,6 @@ import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
 import edu.java.bot.client.ScrapperHttpClient;
 import edu.java.dto.exception.APIException;
-import edu.java.dto.exception.DTOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
