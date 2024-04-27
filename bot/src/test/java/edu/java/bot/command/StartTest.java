@@ -1,5 +1,6 @@
 package edu.java.bot.command;
 
+import edu.java.dto.exception.APIException;
 import edu.java.dto.exception.WrongParametersException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,7 +34,7 @@ public class StartTest extends CommandTest {
         when(CHAT.id()).thenReturn(chatId);
         when(CHAT.username()).thenReturn(username);
         if (contains) {
-            Mockito.doThrow(WrongParametersException.class).when(SCRAPPER_HTTP_CLIENT).registerChat(Mockito.eq(chatId));
+            Mockito.doThrow(APIException.class).when(SCRAPPER_HTTP_CLIENT).registerChat(Mockito.eq(chatId));
         }
         assertThat(START.getFunction().apply(BOT, UPDATE)).isEqualTo(CommandFunction.END);
         String resultFormat;

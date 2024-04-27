@@ -5,8 +5,6 @@ app:
     interval: PT120S
     force-check-delay: PT10S
 
-
-
 spring:
   application:
     name: scrapper
@@ -19,7 +17,29 @@ spring:
     url: ${SCRAPPER_URL}
     username: ${SCRAPPER_USERNAME}
     password: ${SCRAPPER_PASSWORD}
+  cache:
+    cache-names:
+      - rate-limit-bucket
+    jcache:
+      provider: com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider
+    caffeine:
+      spec: maximumSize=100000,expireAfterAccess=3600s
+    type: jcache
 
+
+bucket4j:
+  enabled: true
+  filters:
+    - cache-name: rate-limit-bucket
+      url: .*
+      http-response-body: "{ \"status\": 429, \"error\": \"Too Many Requests\", \"message\": \"You have exhausted your API Request Quota\" }"
+      rate-limits:
+        - bandwidths:
+            - capacity: ${rate.limit.capacity:10}
+              time: ${rate.limit.time:1}
+              unit: ${rate.limit.unit:seconds}
+          cache-key: "getHeader(\"X-Forwarded-For\")"
+  cache-to-use: jcache
 
 server:
   port: 8080
@@ -28,8 +48,24 @@ logging:
   config: classpath:log4j2-plain.xml
 
 client:
-  github-url: unset
-  stack-overflow-url: unset
+  github:
+    url: unset
+    interval: PT60S
+    back-off: linear
+    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    max-attempts: 10
+  stack-overflow:
+    url: unset
+    interval: PT60S
+    back-off: exponential
+    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    max-attempts: 10
+  bot:
+    url: unset
+    interval: PT60S
+    back-off: constant
+    codes:
+    max-attempts: 10
 
 springdoc:
   swagger-ui:

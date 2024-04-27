@@ -11,7 +11,7 @@ public class Link {
     @Getter private final URI uri;
     private final String markdownFormat;
     public static final String LINK_MARKDOWN_FORMAT = "[%s](%s)";
-    public static final String LINK_PARSE_REGEX = "^(.+)\\s+-\\s+(.+)$";
+    public static final String LINK_PARSE_REGEX = "^([^=]+)\\s+=\\s+(.+)$";
     private static final Pattern PATTERN = Pattern.compile(LINK_PARSE_REGEX);
 
     public Link(final String alias, final String uri) {

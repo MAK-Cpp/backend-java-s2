@@ -4,7 +4,7 @@ import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Update;
 import edu.java.bot.TelegramBotComponent;
 import edu.java.bot.client.ScrapperHttpClient;
-import edu.java.dto.exception.DTOException;
+import edu.java.dto.exception.APIException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,7 +21,7 @@ public class Start extends Command {
         try {
             scrapperHttpClient.registerChat(chatId);
             resultFormat = USER_REGISTER_SUCCESS_MESSAGE_FORMAT;
-        } catch (DTOException e) {
+        } catch (APIException e) {
             resultFormat = USER_REGISTER_FAILED_MESSAGE_FORMAT;
         }
         bot.sendMessage(chatId, String.format(resultFormat, username));

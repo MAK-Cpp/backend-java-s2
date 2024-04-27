@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.Objects;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {"app.database-access-type=jdbc"})
+@ActiveProfiles("test")
 public class JdbcChatsAndLinksTest extends IntegrationTest {
     private static Map.Entry<URI, String> link(String uri, String alias) {
         return Map.entry(URI.create(uri), alias);

@@ -4,7 +4,7 @@ import com.pengrad.telegrambot.model.Update;
 import edu.java.bot.Link;
 import edu.java.bot.TelegramBotComponent;
 import edu.java.bot.client.ScrapperHttpClient;
-import edu.java.dto.exception.DTOException;
+import edu.java.dto.exception.APIException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +16,13 @@ import static edu.java.bot.request.chains.SendMessageChains.SM_MARKDOWN;
 @Component
 public class Track extends Command {
     public static final String DESCRIPTION_MESSAGE =
-        "Send link(s) for tracking\nFormat:\nlink_alias1 - link1\nlink_alias2 - link2\n...";
+        """
+            Send link(s) for tracking
+            Format:
+            link alias No.1 = link No.1
+            link alias No.2 = link No.2
+            ...
+            DO NOT USE '=' IN ALIAS BECAUSE IT IS USED AS SEPARATOR BETWEEN ALIAS AND LINK!!!""";
 
     public static String createResult(final List<Map.Entry<String, Optional<String>>> results) {
         final StringBuilder message = new StringBuilder("Result:\n");
@@ -51,8 +57,8 @@ public class Track extends Command {
                 try {
                     scrapperHttpClient.addLinkToTracking(chatId, link.getUri().toString(), link.getAlias());
                     results.add(Map.entry(link.toString(), Optional.empty()));
-                } catch (DTOException e) {
-                    results.add(Map.entry(link.toString(), Optional.of(e.getMessage())));
+                } catch (APIException e) {
+                    results.add(Map.entry(link.toString(), Optional.of(e.getCause().getMessage())));
                 }
             }
         });

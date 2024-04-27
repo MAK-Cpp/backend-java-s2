@@ -2,11 +2,13 @@ package edu.java.bot.command;
 
 import edu.java.bot.Link;
 import edu.java.bot.request.chains.SendMessageChains;
+import edu.java.dto.exception.APIException;
 import edu.java.dto.exception.NonExistentChatException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
+import org.springframework.http.HttpStatus;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +55,10 @@ public class TrackTest extends CommandTest {
     void testTrack(long chatId, boolean registered, String result) {
         if (!registered) {
             Mockito.when(SCRAPPER_HTTP_CLIENT.getChat(Mockito.eq(chatId)))
-                .thenThrow(new NonExistentChatException(Command.UNREGISTERED_USER_ERROR));
+                .thenThrow(new APIException(
+                    HttpStatus.BAD_REQUEST,
+                    new NonExistentChatException(Command.UNREGISTERED_USER_ERROR)
+                ));
         }
         Mockito.when(CHAT.id()).thenReturn(chatId);
         TRACK.getFunction().apply(BOT, UPDATE);
@@ -73,7 +78,7 @@ public class TrackTest extends CommandTest {
             final Link link = entry.getKey();
             final Boolean isCorrect = entry.getValue();
             if (isCorrect) {
-                inputBuilder.append(link.getAlias()).append(" - ").append(link.getUri()).append('\n');
+                inputBuilder.append(link.getAlias()).append(" = ").append(link.getUri()).append('\n');
                 return Map.entry(link.toString(), empty);
             } else {
                 final String line = link.getAlias() + " @ " + link.getUri();

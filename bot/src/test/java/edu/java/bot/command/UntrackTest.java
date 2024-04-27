@@ -7,6 +7,7 @@ import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.Link;
 import edu.java.bot.request.chains.EditMessageTextChains;
 import edu.java.bot.request.chains.SendMessageChains;
+import edu.java.dto.exception.APIException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.response.ChatResponse;
 import edu.java.dto.response.LinkResponse;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.http.HttpStatus;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
 import static edu.java.bot.TelegramBotComponentTest.GOOGLE;
@@ -59,22 +62,36 @@ public class UntrackTest extends CommandTest {
     }
 
     private static Arguments testUntrack(long chatId, int messageId, boolean contains, Link... links) {
+        ListUserLinkResponse response = new ListUserLinkResponse(
+            Arrays.stream(links)
+                .map(link -> new UserLinkResponse(
+                    new LinkResponse(0L, link.getUri(), null),
+                    link.getAlias()
+                )).toArray(UserLinkResponse[]::new),
+            links.length
+        );
         if (contains && (links.length > 0)) {
             return Arguments.of(
                 chatId,
+                contains,
                 messageId,
+                response,
                 DESCRIPTION_MESSAGE
             );
         } else if (!contains) {
             return Arguments.of(
                 chatId,
+                contains,
                 messageId,
+                response,
                 UNREGISTERED_USER_ERROR
             );
         } else {
             return Arguments.of(
                 chatId,
+                contains,
                 messageId,
+                response,
                 NO_TRACKING_LINKS_ERROR
             );
         }
@@ -97,9 +114,18 @@ public class UntrackTest extends CommandTest {
 
     @ParameterizedTest
     @MethodSource
-    void testUntrack(long chatId, int messageId, String result) {
+    void testUntrack(long chatId, boolean contains, int messageId, ListUserLinkResponse links, String result) {
         when(CHAT.id()).thenReturn(chatId);
         when(BOT_MESSAGE.messageId()).thenReturn(messageId);
+        if (contains) {
+            when(SCRAPPER_HTTP_CLIENT.getChat(eq(chatId))).thenReturn(new ChatResponse(chatId));
+        } else {
+            when(SCRAPPER_HTTP_CLIENT.getChat(eq(chatId))).thenThrow(new APIException(
+                HttpStatus.BAD_REQUEST,
+                new WrongParametersException("Wrong parameters!")
+            ));
+        }
+        when(SCRAPPER_HTTP_CLIENT.getAllLinks(eq(chatId))).thenReturn(links);
         untrack(BOT, UPDATE);
         verify(BOT, atLeastOnce()).sendMessage(
             eq(chatId),
@@ -158,7 +184,12 @@ public class UntrackTest extends CommandTest {
                 .thenReturn(new UserLinkResponse(new LinkResponse(0L, chose.getUri(), null), chose.getAlias()));
         } else {
             when(SCRAPPER_HTTP_CLIENT.getLinkByChatIdAndAlias(eq(chatId), eq(chose.getAlias())))
-                .thenThrow(new WrongParametersException("There is no link"));
+                .thenThrow(
+                    new APIException(
+                        HttpStatus.BAD_REQUEST,
+                        new WrongParametersException("There is no link")
+                    )
+                );
         }
         function.apply(BOT, UPDATE);
         verify(BOT, atLeastOnce()).editMessageText(
@@ -202,7 +233,10 @@ public class UntrackTest extends CommandTest {
         CommandFunction function = confirmDelete(messageId, link.getAlias());
         when(CALLBACK_QUERY.data()).thenReturn(chose);
         when(SCRAPPER_HTTP_CLIENT.getChat(eq(chatId))).thenReturn(new ChatResponse(chatId));
-        when(SCRAPPER_HTTP_CLIENT.getAllLinks(eq(chatId))).thenReturn(new ListUserLinkResponse(new UserLinkResponse[0], 0));
+        when(SCRAPPER_HTTP_CLIENT.getAllLinks(eq(chatId))).thenReturn(new ListUserLinkResponse(
+            new UserLinkResponse[0],
+            0
+        ));
         when(TELEGRAM_USER.id()).thenReturn(chatId);
         when(SCRAPPER_HTTP_CLIENT.getLinkByChatIdAndAlias(eq(chatId), eq(link.getAlias())))
             .thenReturn(new UserLinkResponse(new LinkResponse(0L, link.getUri(), null), link.getAlias()));

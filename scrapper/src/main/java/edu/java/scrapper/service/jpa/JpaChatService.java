@@ -48,7 +48,9 @@ public class JpaChatService extends AbstractService implements ChatService {
             throw new NonExistentChatException(String.format(NON_EXISTING_CHAT_EXCEPTION_FORMAT, chatId));
         }
         var allWhere = JpaLinkService.selectFromChatsAndLinksWhereChatIdEq(chatId, entityManager);
-        entityManager.createQuery(allWhere).getResultStream().forEach(entityManager::remove);
+        entityManager.createQuery(allWhere)
+            .getResultList()
+            .forEach(entityManager::remove);
         entityManager.remove(chatEntity);
         entityManager.flush();
     }
@@ -60,8 +62,10 @@ public class JpaChatService extends AbstractService implements ChatService {
         final Root<ChatEntity> chatRoot = criteria.from(ChatEntity.class);
         final CriteriaQuery<ChatEntity> all = criteria.select(chatRoot);
 
+
         final ChatResponse[] responses = entityManager.createQuery(all)
-            .getResultStream()
+            .getResultList()
+            .stream()
             .map(chatEntity -> new ChatResponse(chatEntity.getId()))
             .toArray(ChatResponse[]::new);
 
@@ -78,7 +82,8 @@ public class JpaChatService extends AbstractService implements ChatService {
             .where(builder.equal(chatsAndLinksEntityRoot.get(KEY).get("linkId"), linkId));
 
         final ChatResponse[] responses = entityManager.createQuery(allWhere)
-            .getResultStream()
+            .getResultList()
+            .stream()
             .map(chatEntity -> new ChatResponse(chatEntity.getChat().getId()))
             .toArray(ChatResponse[]::new);
 
