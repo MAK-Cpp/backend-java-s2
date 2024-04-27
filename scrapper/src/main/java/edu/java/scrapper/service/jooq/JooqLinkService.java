@@ -2,12 +2,10 @@ package edu.java.scrapper.service.jooq;
 
 import edu.java.dto.exception.AliasAlreadyTakenException;
 import edu.java.dto.exception.DTOException;
-import edu.java.dto.exception.InvalidLinkException;
 import edu.java.dto.exception.LinkAlreadyTrackedException;
 import edu.java.dto.exception.LinkNotFoundException;
 import edu.java.dto.exception.NonExistentChatException;
 import edu.java.dto.exception.NonExistentLinkAliasException;
-import edu.java.dto.exception.UnsupportedLinkException;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinkResponse;
 import edu.java.dto.response.ListUserLinkResponse;
@@ -18,35 +16,30 @@ import edu.java.scrapper.service.AbstractService;
 import edu.java.scrapper.service.LinkService;
 import edu.java.scrapper.validator.LinkValidator;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
 import org.jooq.Record3;
 import org.jooq.Record4;
 import org.jooq.RecordMapper;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@Primary
 public class JooqLinkService extends AbstractService implements LinkService {
     private final DSLContext dslContext;
     private final List<LinkValidator> linkValidators;
-    private static final RecordMapper<? super LinksRecord, LinkResponse> LINK_RECORD_RESPONSE_MAPPER
+    /*package-private*/ static final RecordMapper<? super LinksRecord, LinkResponse> LINK_RECORD_RESPONSE_MAPPER
         = linksRecord -> new LinkResponse(
         linksRecord.getLinkId(),
         URI.create(linksRecord.getUri()),
         localToOffset(linksRecord.getLastUpdate())
     );
-    private static final RecordMapper<? super Record3<Long, String, LocalDateTime>, LinkResponse> LINK_RESPONSE_MAPPER =
+    /*package-private*/ static final RecordMapper<? super Record3<Long, String, LocalDateTime>, LinkResponse>
+        LINK_RESPONSE_MAPPER =
         record3 -> new LinkResponse(
             record3.get(Tables.LINKS.LINK_ID),
             URI.create(record3.get(Tables.LINKS.URI)),
@@ -61,12 +54,12 @@ public class JooqLinkService extends AbstractService implements LinkService {
         ),
         record4.component4()
     );
+    private static final ZoneOffset ZONE_OFFSET = OffsetDateTime.now().getOffset();
 
     private static OffsetDateTime localToOffset(LocalDateTime date) {
-        return OffsetDateTime.of(date, ZoneOffset.UTC);
+        return OffsetDateTime.of(date, ZONE_OFFSET);
     }
 
-    @Autowired
     public JooqLinkService(DSLContext dslContext, List<LinkValidator> linkValidators) {
         this.dslContext = dslContext;
         this.linkValidators = linkValidators;
@@ -81,30 +74,6 @@ public class JooqLinkService extends AbstractService implements LinkService {
         if (chatNotExists) {
             throw new NonExistentChatException(String.format(NON_EXISTING_CHAT_EXCEPTION_FORMAT, chatId));
         }
-    }
-
-    private URI validateLink(String link) throws DTOException {
-        return uri(
-            link,
-            String.format(INVALID_LINK_EXCEPTION_FORMAT, link),
-            linkValidators,
-            String.format(UNSUPPORTED_LINK_EXCEPTION_FORMAT, link)
-        );
-    }
-
-    @NotNull public static URI uri(String link, String format, List<LinkValidator> linkValidators, String format2) {
-        final URI result;
-        try {
-            result = new URI(link);
-        } catch (URISyntaxException e) {
-            throw new InvalidLinkException(format, e);
-        }
-        for (LinkValidator linkValidator : linkValidators) {
-            if (linkValidator.isValid(link)) {
-                return result;
-            }
-        }
-        throw new UnsupportedLinkException(format2);
     }
 
     @Override
@@ -158,14 +127,16 @@ public class JooqLinkService extends AbstractService implements LinkService {
     }
 
     @Override
+    @Transactional
     public UserLinkResponse addLink(Long chatId, String link, String alias) throws DTOException {
         validateChatId(chatId);
-        final URI uri = validateLink(alias);
-        final LinkResponse linkResponse = dslContext.insertInto(Tables.LINKS, Tables.LINKS.URI)
+        final URI uri = validateLink(link, linkValidators);
+        final LinkResponse linkResponse = dslContext
+            .insertInto(Tables.LINKS, Tables.LINKS.URI)
             .values(uri.toString())
             .onConflict(Tables.LINKS.URI)
             .doUpdate()
-            .set(Tables.LINKS.LAST_UPDATE, DSL.excluded(Tables.LINKS.LAST_UPDATE))
+            .set(Tables.LINKS.URI, DSL.excluded(Tables.LINKS.URI))
             .returningResult(Tables.LINKS.LINK_ID, Tables.LINKS.URI, Tables.LINKS.LAST_UPDATE)
             .fetch()
             .map(LINK_RESPONSE_MAPPER)
@@ -174,7 +145,7 @@ public class JooqLinkService extends AbstractService implements LinkService {
             dslContext.insertInto(Tables.CHATS_AND_LINKS)
                 .values(chatId, linkResponse.getId(), alias)
                 .execute();
-        } catch (DuplicateKeyException e) {
+        } catch (DataAccessException e) {
             final String exceptionMessage = e.getMessage();
             if (exceptionMessage.contains("chats_and_links_pkey")) {
                 throw new LinkAlreadyTrackedException(
@@ -192,15 +163,22 @@ public class JooqLinkService extends AbstractService implements LinkService {
     }
 
     @Override
+    @Transactional
     public UserLinkResponse removeLink(Long chatId, String alias) throws DTOException {
-        final List<Long> linkIds = dslContext.deleteFrom(Tables.CHATS_AND_LINKS)
+        validateChatId(chatId);
+        final List<Long> linkIds = dslContext
+            .deleteFrom(Tables.CHATS_AND_LINKS)
             .where(Tables.CHATS_AND_LINKS.CHAT_ID.eq(chatId))
             .and(Tables.CHATS_AND_LINKS.ALIAS.eq(alias))
             .returningResult(Tables.CHATS_AND_LINKS.LINK_ID)
             .fetch()
             .map(Record1::component1);
         if (linkIds.isEmpty()) {
-            throw new LinkNotFoundException(String.format(NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT, alias, chatId));
+            throw new LinkNotFoundException(String.format(
+                NON_EXISTENT_LINK_ALIAS_EXCEPTION_FORMAT,
+                alias,
+                chatId
+            ));
         }
         final LinkResponse linkResponse =
             dslContext.select(Tables.LINKS.LINK_ID, Tables.LINKS.URI, Tables.LINKS.LAST_UPDATE)

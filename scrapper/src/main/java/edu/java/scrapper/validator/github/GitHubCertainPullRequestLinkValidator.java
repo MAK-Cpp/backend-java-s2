@@ -25,6 +25,11 @@ public class GitHubCertainPullRequestLinkValidator extends AbstractGitHubLinkVal
     }
 
     @Override
+    public Pattern getPattern() {
+        return GITHUB_CERTAIN_PULL_REQUEST_PATTERN;
+    }
+
+    @Override
     public Matcher match(String rawLink) {
         return GITHUB_CERTAIN_PULL_REQUEST_PATTERN.matcher(rawLink);
     }
@@ -58,7 +63,7 @@ public class GitHubCertainPullRequestLinkValidator extends AbstractGitHubLinkVal
                 Map.entry("Author", author),
                 Map.entry("Commiter", commit.getCommitter()),
                 Map.entry("Date", author.getDate()),
-                Map.entry("Message", "\n{" + commit.getMessage() + "\n}")
+                Map.entry("Message", "{\n" + commit.getMessage() + "\n}")
             );
         }
         return Optional.of(builder.toString());

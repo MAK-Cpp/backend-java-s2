@@ -25,6 +25,11 @@ public class GitHubCertainIssueLinkValidator extends AbstractGitHubLinkValidator
     }
 
     @Override
+    public Pattern getPattern() {
+        return GITHUB_CERTAIN_ISSUE_PATTERN;
+    }
+
+    @Override
     public Matcher match(String rawLink) {
         return GITHUB_CERTAIN_ISSUE_PATTERN.matcher(rawLink);
     }
@@ -55,7 +60,7 @@ public class GitHubCertainIssueLinkValidator extends AbstractGitHubLinkValidator
             processResponse(builder, i + 1,
                 Map.entry("Commentator", comment.getUser()),
                 Map.entry("Created at", comment.getCreatedAt()),
-                Map.entry("Text", "\n{" + comment.getBody() + "\n}")
+                Map.entry("Text", "{\n" + comment.getBody() + "\n}")
             );
         }
         return Optional.of(builder.toString());
