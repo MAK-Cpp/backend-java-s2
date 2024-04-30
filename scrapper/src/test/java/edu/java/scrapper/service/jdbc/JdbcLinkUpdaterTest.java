@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.stream.Stream;
 
 @SpringBootTest(properties = "app.database-access-type=jdbc")
-@ActiveProfiles("test")
 @Transactional
 @Rollback
 public class JdbcLinkUpdaterTest extends LinkUpdaterTest {

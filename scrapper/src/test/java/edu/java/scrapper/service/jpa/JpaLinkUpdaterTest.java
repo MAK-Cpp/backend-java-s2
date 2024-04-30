@@ -12,7 +12,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(properties = "app.database-access-type=jpa")
-@ActiveProfiles("test")
 @Transactional
 @Rollback
 public class JpaLinkUpdaterTest extends LinkUpdaterTest {

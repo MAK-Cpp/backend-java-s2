@@ -1,4 +1,10 @@
 app:
+  kafka:
+    enable: true
+    group-id: bot
+    topic-name: link-update
+    partitions: 1
+    replication-factor: 1
   telegram-token: ${BACKEND_JAVA_BOT_TOKEN}
 
 
@@ -14,6 +20,10 @@ spring:
       provider: com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider
     caffeine:
       spec: maximumSize=100000,expireAfterAccess=3600s
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+    bootstrap-servers: localhost:9092
 
 bucket4j:
   enabled: true
