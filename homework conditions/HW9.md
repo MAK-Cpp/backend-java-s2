@@ -1,6 +1,6 @@
 # Домашнее задание №9
 
-###### Задача 1
+### Задача 1
 
 Документация: [https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html](https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html)
 
@@ -26,7 +26,7 @@
 
 
 
-###### Задача 2
+### Задача 2
 
 Добавьте в compose-файл образы **prom/prometheus** и **grafana/grafana-oss**:
 
@@ -45,7 +45,7 @@
 
 
 
-###### Задача 3
+### Задача 3
 
 Создайте дашборд ([http://localhost:3000/dashboard/new](http://localhost:3000/dashboard/new)) на основе стандартных метрик:
 
@@ -57,7 +57,7 @@
 
 
 
-###### Задача 4
+### Задача 4
 
 Добавьте на дашборд переменную приложения (**Dashboard Settings -> Variables**).
 
@@ -67,7 +67,7 @@
 
 
 
-###### Задача 5
+### Задача 5
 
 Документация: [https://micrometer.io/docs/concepts](https://micrometer.io/docs/concepts)
 
