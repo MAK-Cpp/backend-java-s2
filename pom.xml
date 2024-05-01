@@ -22,8 +22,13 @@
 
         <!-- Spring -->
         <spring-boot.version>3.2.2</spring-boot.version>
+        <spring-boot-starter-actuator.version>3.2.5</spring-boot-starter-actuator.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.3.0</springdoc-openapi-starter-webmvc-ui.version>
+
+        <!-- Micrometer -->
+        <micrometer-registry-prometheus.version>1.12.5</micrometer-registry-prometheus.version>
+        <micrometer-tracing-bridge-brave.version>1.2.5</micrometer-tracing-bridge-brave.version>
 
         <!-- bucket4j -->
         <bucket4j.version>8.9.0</bucket4j.version>

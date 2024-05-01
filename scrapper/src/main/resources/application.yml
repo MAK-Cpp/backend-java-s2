@@ -33,6 +33,33 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
 
+server:
+  port: 8080
+
+management:
+  server:
+    port: 8081
+
+  endpoints:
+    web:
+      base-path: /
+      path-mapping:
+        prometheus: metrics
+      exposure:
+        include: health, prometheus, info
+    enabled-by-default: false
+
+  endpoint:
+    health:
+      enabled: true
+    info:
+      enabled: true
+    prometheus:
+      enabled: true
+
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 bucket4j:
   enabled: true
@@ -48,8 +75,6 @@ bucket4j:
           cache-key: "getHeader(\"X-Forwarded-For\")"
   cache-to-use: jcache
 
-server:
-  port: 8080
 
 logging:
   config: classpath:log4j2-plain.xml
