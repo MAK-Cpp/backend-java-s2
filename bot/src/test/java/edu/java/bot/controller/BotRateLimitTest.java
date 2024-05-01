@@ -21,7 +21,10 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.cache.type=jcache",
+    "bucket4j.enabled=true"
+})
 @AutoConfigureMockMvc
 public class BotRateLimitTest extends AbstractBotTest {
     @MockBean
