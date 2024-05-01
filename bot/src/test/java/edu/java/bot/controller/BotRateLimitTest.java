@@ -1,5 +1,6 @@
 package edu.java.bot.controller;
 
+import edu.java.bot.AbstractBotTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class BotRateLimitTest {
+public class BotRateLimitTest extends AbstractBotTest {
     @MockBean
     private BotController botController;
 

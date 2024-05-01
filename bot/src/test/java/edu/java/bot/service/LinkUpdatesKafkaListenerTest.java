@@ -23,7 +23,9 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestConfig.class)
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.kafka.admin.auto-create=true"
+})
 @DirtiesContext
 @Slf4j
 public class LinkUpdatesKafkaListenerTest extends KafkaIntegrationTest {

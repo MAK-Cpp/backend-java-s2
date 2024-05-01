@@ -1,5 +1,6 @@
 package edu.java.bot.service;
 
+import edu.java.bot.AbstractBotTest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -9,7 +10,7 @@ import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
 @Slf4j
-public abstract class KafkaIntegrationTest {
+public abstract class KafkaIntegrationTest extends AbstractBotTest {
     public static KafkaContainer KAFKA;
 
     static {

@@ -58,7 +58,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Slf4j
-public class TelegramBotComponentTest {
+public class TelegramBotComponentTest extends AbstractBotTest {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final UserRecord TEST_USER_1 = new UserRecord(123456789L, "TEST_USER_1");
     private static final UserRecord TEST_USER_2 = new UserRecord(1556L, "TEST_USER_2");
