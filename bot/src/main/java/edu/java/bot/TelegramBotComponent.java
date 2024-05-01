@@ -31,7 +31,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public final class TelegramBotComponent extends TelegramBot {
     private final ConcurrentMap<String, CommandFunction> commandFunctions = new ConcurrentHashMap<>();
-    // private final ConcurrentMap<Long, User> users = new ConcurrentHashMap<>();
     private final ConcurrentMap<Long, CommandFunction> waitingFunctions = new ConcurrentHashMap<>();
     @Getter private final String usage;
     @Getter private final ScrapperHttpClient scrapperHttpClient;
@@ -52,28 +51,6 @@ public final class TelegramBotComponent extends TelegramBot {
         usage = setCommands(commands);
         log.debug("Created bot with token {}", getToken());
     }
-
-/*    public void addUser(long id) {
-        log.debug("Adding user {}", id);
-        scrapperHttpClient.registerChat(id);
-    }
-
-    public Optional<User> deleteUser(long id) {
-        log.debug("Deleting user {}", id);
-        return maybe(users.remove(id));
-    }*/
-
-    // public void deleteAllUsers() {
-    //     users.clear();
-    // }
-
-    // public boolean containUser(long id) {
-    //     return users.containsKey(id);
-    // }
-
-    // public Optional<User> getUser(long id) {
-    //     return maybe(users.get(id));
-    // }
 
     public SendResponse sendMessage(long chatId, final String text, final SendMessageChains... operations) {
         SendMessage toExecute = new SendMessage(chatId, text);

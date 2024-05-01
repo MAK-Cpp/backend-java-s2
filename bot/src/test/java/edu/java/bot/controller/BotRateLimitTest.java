@@ -1,5 +1,6 @@
 package edu.java.bot.controller;
 
+import edu.java.bot.AbstractBotTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,9 +21,12 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.cache.type=jcache",
+    "bucket4j.enabled=true"
+})
 @AutoConfigureMockMvc
-public class BotRateLimitTest {
+public class BotRateLimitTest extends AbstractBotTest {
     @MockBean
     private BotController botController;
 

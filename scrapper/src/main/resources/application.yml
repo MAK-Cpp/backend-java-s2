@@ -1,4 +1,9 @@
 app:
+  kafka:
+    enable: true
+    topic-name: link-update
+    partitions: 1
+    replication-factor: 1
   database-access-type: jpa
   scheduler:
     enable: true
@@ -25,6 +30,8 @@ spring:
     caffeine:
       spec: maximumSize=100000,expireAfterAccess=3600s
     type: jcache
+  kafka:
+    bootstrap-servers: localhost:9092
 
 
 bucket4j:

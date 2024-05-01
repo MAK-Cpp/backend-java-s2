@@ -1,8 +1,7 @@
 package edu.java.scrapper.client.bot;
 
-import java.util.List;
-import java.util.Map;
+import edu.java.dto.request.LinkUpdateRequest;
 
 public interface BotHttpClient {
-    void sendUpdates(Long id, String url, String description, List<Map.Entry<Long, String>> chatsAndAliases);
+    void sendUpdates(LinkUpdateRequest request);
 }
