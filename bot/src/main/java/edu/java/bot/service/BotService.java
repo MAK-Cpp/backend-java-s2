@@ -1,6 +1,7 @@
 package edu.java.bot.service;
 
 import edu.java.bot.TelegramBotComponent;
+import edu.java.dto.exception.DTOException;
 import edu.java.dto.exception.WrongParametersException;
 import edu.java.dto.request.LinkUpdateRequest;
 import java.util.Objects;
@@ -20,7 +21,7 @@ public class BotService {
         this.telegramBot = telegramBot;
     }
 
-    public void updateLink(LinkUpdateRequest request) {
+    public void updateLink(LinkUpdateRequest request) throws DTOException {
         if (Objects.equals(request.getUrl(), "")) {
             throw new WrongParametersException("link cannot be empty");
         } else if (request.getId() < 0) {

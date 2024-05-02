@@ -187,7 +187,7 @@ org.jooq:jooq-codegen
 org.jooq:jooq-meta-extensions-liquibase
 org.liquibase:liquibase-core
 ```
-В модуле напишите функцию-генератор при помощи программного API.
+В модуле напишите функцию-генератор при помощи [программного API](https://www.jooq.org/doc/latest/manual/code-generation/codegen-programmatic/).
 
 Новый код нужно генерировать в модуле scrapper в пакете edu.java.scrapper.domain.jooq.
 

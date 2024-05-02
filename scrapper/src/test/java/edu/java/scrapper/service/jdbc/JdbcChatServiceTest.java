@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SpringBootTest(properties = "app.database-access-type=jdbc")
-@ActiveProfiles("test")
 @Transactional
 @Rollback
 public class JdbcChatServiceTest extends ChatServiceTest {
