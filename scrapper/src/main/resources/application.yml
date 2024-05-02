@@ -46,16 +46,12 @@ management:
       path-mapping:
         prometheus: metrics
       exposure:
-        include: health, prometheus, info
-    enabled-by-default: false
+        include: prometheus, info, health
+    enabled-by-default: true
 
   endpoint:
-    health:
-      enabled: true
-    info:
-      enabled: true
-    prometheus:
-      enabled: true
+    metrics:
+      enabled: false
 
   metrics:
     tags:
@@ -84,13 +80,13 @@ client:
     url: unset
     interval: PT60S
     back-off: linear
-    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    codes:
     max-attempts: 10
   stack-overflow:
     url: unset
     interval: PT60S
     back-off: exponential
-    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    codes:
     max-attempts: 10
   bot:
     url: unset

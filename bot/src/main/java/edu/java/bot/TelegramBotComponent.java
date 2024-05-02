@@ -18,6 +18,8 @@ import edu.java.bot.configuration.ApplicationConfig;
 import edu.java.bot.request.chains.Chains;
 import edu.java.bot.request.chains.EditMessageTextChains;
 import edu.java.bot.request.chains.SendMessageChains;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +34,7 @@ import org.springframework.stereotype.Component;
 public final class TelegramBotComponent extends TelegramBot {
     private final ConcurrentMap<String, CommandFunction> commandFunctions = new ConcurrentHashMap<>();
     private final ConcurrentMap<Long, CommandFunction> waitingFunctions = new ConcurrentHashMap<>();
+    private final Counter messageCounter;
     @Getter private final String usage;
     @Getter private final ScrapperHttpClient scrapperHttpClient;
 
@@ -43,12 +46,16 @@ public final class TelegramBotComponent extends TelegramBot {
     public TelegramBotComponent(
         ApplicationConfig config,
         List<Command> commands,
-        ScrapperHttpClient scrapperHttpClient
+        ScrapperHttpClient scrapperHttpClient,
+        MeterRegistry meterRegistry
     ) {
         super(config.telegramToken());
         this.scrapperHttpClient = scrapperHttpClient;
         setUpdatesListener(this::updateListener, this::exceptionHandler);
         usage = setCommands(commands);
+        messageCounter = Counter.builder("messages_processed")
+            .description("Number of processed messages")
+            .register(meterRegistry);
         log.debug("Created bot with token {}", getToken());
     }
 
@@ -57,6 +64,7 @@ public final class TelegramBotComponent extends TelegramBot {
         if (operations.length > 0) {
             toExecute = Chains.allOf(operations).apply(toExecute);
         }
+        messageCounter.increment();
         return execute(toExecute);
     }
 
@@ -70,6 +78,7 @@ public final class TelegramBotComponent extends TelegramBot {
         if (operations.length > 0) {
             toExecute = Chains.allOf(operations).apply(toExecute);
         }
+        messageCounter.increment();
         return execute(toExecute);
     }
 

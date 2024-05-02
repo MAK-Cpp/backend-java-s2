@@ -47,16 +47,12 @@ management:
       path-mapping:
         prometheus: metrics
       exposure:
-        include: health, prometheus, info
-    enabled-by-default: false
+        include: prometheus, info, health
+    enabled-by-default: true
 
   endpoint:
-    health:
-      enabled: true
-    info:
-      enabled: true
-    prometheus:
-      enabled: true
+    metrics:
+      enabled: false
 
   metrics:
     tags:

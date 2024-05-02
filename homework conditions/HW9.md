@@ -39,7 +39,7 @@
 
 Зайдите в **Grafana** ([http://localhost:3000](http://localhost:3000/)) и добавьте **Prometheus** как источник данных (**DataSource**).
 
-Вероятно подойдет следующий **URL** для **Prometheus** -- [http://localhost:9090](http://localhost:9090/) (если вы ничего не меняли).
+Вероятно подойдет следующий **URL** для **Prometheus** -- [http://prometheus:9090](http://localhost:9090/) (т.к. он в контейнере).
 
 Проверьте, что на странице [http://localhost:3000/explore](http://localhost:3000/explore) появились метрики ваших приложений: метрики с префиксом **jvm_, tomcat_** и т.п.
 
