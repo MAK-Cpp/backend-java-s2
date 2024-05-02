@@ -73,12 +73,12 @@ public abstract class ClientTest {
     protected static Stream<Arguments> testRetryStream() {
         return Stream.of(
             Arguments.of(
-                // 3 + 3 + 3 + 3 + 3 = 15
+                // 3 + 3 + 3 = 9
                 constant(
-                    3, 5,
+                    3, 3,
                     HttpStatus.BAD_GATEWAY, HttpStatus.FORBIDDEN
                 ),
-                10, true, HttpStatus.FORBIDDEN
+                8, true, HttpStatus.FORBIDDEN
             ),
             Arguments.of(
                 // 6 = 6
@@ -97,12 +97,12 @@ public abstract class ClientTest {
                 10, true, HttpStatus.FORBIDDEN
             ),
             Arguments.of(
-                // 2 + 4 + 6 + 8 = 20
+                // 1 + 2 + 3 = 6
                 linear(
-                    2, 4,
+                    1, 3,
                     HttpStatus.BAD_GATEWAY, HttpStatus.FORBIDDEN
                 ),
-                19, true, HttpStatus.BAD_GATEWAY
+                5, true, HttpStatus.BAD_GATEWAY
             ),
             Arguments.of(
                 // 1 + 2 + 3 = 6
