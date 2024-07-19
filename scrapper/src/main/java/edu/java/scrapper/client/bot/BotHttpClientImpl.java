@@ -4,8 +4,6 @@ import edu.java.dto.exception.ServiceException;
 import edu.java.dto.request.LinkUpdateRequest;
 import edu.java.dto.response.ApiErrorResponse;
 import edu.java.scrapper.client.ExternalServiceClient;
-import java.util.List;
-import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -36,20 +34,10 @@ public class BotHttpClientImpl implements BotHttpClient {
     }
 
     @Override
-    public final void sendUpdates(
-        Long id,
-        String url,
-        String description,
-        List<Map.Entry<Long, String>> chatsAndAliases
-    ) {
+    public final void sendUpdates(LinkUpdateRequest request) {
         botWebClient.post()
             .uri("/updates")
-            .body(Mono.just(new LinkUpdateRequest(
-                id, url, description,
-                chatsAndAliases.stream()
-                    .map(x -> new LinkUpdateRequest.ChatAndAlias(x.getKey(), x.getValue()))
-                    .toArray(LinkUpdateRequest.ChatAndAlias[]::new)
-            )), LinkUpdateRequest.class)
+            .body(Mono.just(request), LinkUpdateRequest.class)
             .retrieve()
             .onStatus(HttpStatus.BAD_REQUEST::equals, BotHttpClientImpl::apiError)
             .onStatus(HttpStatusCode::is4xxClientError, ExternalServiceClient::clientError)

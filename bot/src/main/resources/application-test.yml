@@ -1,0 +1,19 @@
+app:
+  kafka:
+    enable: false
+
+
+
+spring:
+  kafka:
+    bootstrap-servers:
+    admin:
+      auto-create: false
+
+  cache:
+    type: none
+
+
+
+bucket4j:
+  enabled: false

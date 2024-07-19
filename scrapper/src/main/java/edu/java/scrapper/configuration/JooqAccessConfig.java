@@ -58,11 +58,4 @@ public class JooqAccessConfig {
 
         return DSL.using(jooqConfiguration);
     }
-
-/*    @Bean
-    public DefaultConfigurationCustomizer jooqDefaultConfigurationCustomizer() {
-        return c -> c.settings()
-            .withRenderNameCase(RenderNameCase.LOWER)
-            .withRenderQuotedNames(RenderQuotedNames.NEVER);
-    }*/
 }

@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import edu.java.configuration.HttpClientConfig;
 import edu.java.dto.exception.ServiceException;
+import edu.java.dto.request.LinkUpdateRequest;
 import edu.java.scrapper.client.bot.BotHttpClient;
 import edu.java.scrapper.client.bot.BotHttpClientImpl;
 import edu.java.test.client.ClientTest;
@@ -105,17 +106,22 @@ class BotHttpClientImplTest extends ClientTest {
         HttpStatus status,
         String body
     ) {
+        LinkUpdateRequest request = new LinkUpdateRequest(
+            id, url, description, chatsAndAliases.stream()
+            .map(x -> new LinkUpdateRequest.ChatAndAlias(x.getKey(), x.getValue()))
+            .toArray(LinkUpdateRequest.ChatAndAlias[]::new)
+        );
         MappingBuilder builder = post("/updates");
         if (status == HttpStatus.OK) {
             stubFor(builder.willReturn(aResponse().withStatus(200)));
-            assertDoesNotThrow(() -> BOT_HTTP_CLIENT.sendUpdates(id, url, description, chatsAndAliases));
+            assertDoesNotThrow(() -> BOT_HTTP_CLIENT.sendUpdates(request));
         } else {
             stubFor(builder.willReturn(aResponse().withStatus(status.value())
                 .withHeader("Content-Type", "application/json")
                 .withBody(body)));
             assertThrows(
                 ServiceException.class,
-                () -> BOT_HTTP_CLIENT.sendUpdates(id, url, description, chatsAndAliases)
+                () -> BOT_HTTP_CLIENT.sendUpdates(request)
             );
         }
     }
@@ -138,6 +144,11 @@ class BotHttpClientImplTest extends ClientTest {
             Map.entry(4L, "link4"),
             Map.entry(5L, "link5")
         );
+        LinkUpdateRequest request = new LinkUpdateRequest(
+            id, url, description, chatsAndAliases.stream()
+            .map(x -> new LinkUpdateRequest.ChatAndAlias(x.getKey(), x.getValue()))
+            .toArray(LinkUpdateRequest.ChatAndAlias[]::new)
+        );
         final BotHttpClient botHttpClient = new BotHttpClientImpl(WebClient.builder(), URL, httpClientConfig.retry());
         testRetry(
             wireMockServer,
@@ -146,7 +157,7 @@ class BotHttpClientImplTest extends ClientTest {
             serverNotWorkingDuration,
             enoughTime,
             httpClientConfig.codes().contains(failStatus),
-            () -> botHttpClient.sendUpdates(id, url, description, chatsAndAliases),
+            () -> botHttpClient.sendUpdates(request),
             failStatus
         );
     }
