@@ -33,6 +33,29 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
 
+server:
+  port: 8080
+
+management:
+  server:
+    port: 8081
+
+  endpoints:
+    web:
+      base-path: /
+      path-mapping:
+        prometheus: metrics
+      exposure:
+        include: prometheus, info, health
+    enabled-by-default: true
+
+  endpoint:
+    metrics:
+      enabled: false
+
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 bucket4j:
   enabled: true
@@ -48,8 +71,6 @@ bucket4j:
           cache-key: "getHeader(\"X-Forwarded-For\")"
   cache-to-use: jcache
 
-server:
-  port: 8080
 
 logging:
   config: classpath:log4j2-plain.xml
@@ -59,13 +80,13 @@ client:
     url: unset
     interval: PT60S
     back-off: linear
-    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    codes:
     max-attempts: 10
   stack-overflow:
     url: unset
     interval: PT60S
     back-off: exponential
-    codes: bad_gateway, internal_server_error, service_unavailable, forbidden
+    codes:
     max-attempts: 10
   bot:
     url: unset

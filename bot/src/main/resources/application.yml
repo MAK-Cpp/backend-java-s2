@@ -32,6 +32,35 @@ spring:
 
 
 
+server:
+  port: 8090
+
+
+
+management:
+  server:
+    port: 8091
+
+  endpoints:
+    web:
+      base-path: /
+      path-mapping:
+        prometheus: metrics
+      exposure:
+        include: prometheus, info, health
+    enabled-by-default: true
+
+  endpoint:
+    metrics:
+      enabled: false
+
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+
+
+
 bucket4j:
   enabled: true
 
@@ -47,11 +76,6 @@ bucket4j:
           cache-key: "getHeader(\"X-Forwarded-For\")"
 
   cache-to-use: jcache
-
-
-
-server:
-  port: 8090
 
 
 
